@@ -1,0 +1,17 @@
+{
+  "short_name": "Tansha",
+  "name": "Tansha Hospitality",
+  "description": "Tansha Hospitality Business Management App",
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#6366F1",
+  "background_color": "#F7F8FA",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64 32x32 24x24 16x16",
+      "type": "image/x-icon"
+    }
+  ]
+}
