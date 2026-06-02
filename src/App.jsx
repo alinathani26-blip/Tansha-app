@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { api } from "./api";
 
 // ── Soft, subtle colour system — easy on the eyes ──
 const C={
@@ -39,10 +38,32 @@ function Av({name,size=30,online}){
   const i=name.split(" ").slice(0,2).map(w=>w[0]).join("").toUpperCase();
   return (<div style={{position:"relative",flexShrink:0,width:size,height:size,borderRadius:"50%",background:c+"15",border:`1.5px solid ${c}30`,display:"flex",alignItems:"center",justifyContent:"center",color:c,fontWeight:800,fontSize:size*.34}}>{i}{online!==undefined&&<div style={{position:"absolute",bottom:1,right:1,width:size*.25,height:size*.25,borderRadius:"50%",background:online?C.green:C.dim,border:`2px solid ${C.card}`}}/>}</div>);
 }
-function Bdg({label,color,bg,border}){return (<span style={{background:bg||"#F3F4F6",color:color||C.muted,border:`1px solid ${border||C.cb}`,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{label}</span>);}
-function Pill({label,value,color}){return (<div style={{background:color+"22",border:`1px solid ${color}44`,borderRadius:8,padding:"4px 12px",display:"flex",alignItems:"center",gap:6}}><span style={{color,fontWeight:800,fontSize:14}}>{value}</span><span style={{color:C.muted,fontSize:11}}>{label}</span></div>);}
-function Card({children,a,style={}}){return (<div style={{background:C.card,border:`1px solid ${a?a+"44":C.cb}`,borderRadius:12,padding:14,...style}}>{children}</div>);}
-function SL({text,color=C.dim}){return (<div style={{color,fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8,display:"flex",alignItems:"center",gap:5}}><span style={{width:5,height:5,borderRadius:"50%",background:color,display:"inline-block"}}/>{text}</div>);}
+function Bdg({label,color,bg,border}){
+  return (
+    <span style={{background:bg||"#F3F4F6",color:color||C.muted,border:`1px solid ${border||C.cb}`,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{label}</span>
+  );
+}
+function Pill({label,value,color}){
+  return (
+    <div style={{background:color+"22",border:`1px solid ${color}44`,borderRadius:8,padding:"4px 12px",display:"flex",alignItems:"center",gap:6}}>
+      <span style={{color,fontWeight:800,fontSize:14}}>{value}</span>
+      <span style={{color:C.muted,fontSize:11}}>{label}</span>
+    </div>
+  );
+}
+function Card({children,a,style={}}){
+  return (
+    <div style={{background:C.card,border:`1px solid ${a?a+"44":C.cb}`,borderRadius:12,padding:14,...style}}>{children}</div>
+  );
+}
+function SL({text,color=C.dim}){
+  return (
+    <div style={{color,fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
+      <span style={{width:5,height:5,borderRadius:"50%",background:color,display:"inline-block"}}/>
+      {text}
+    </div>
+  );
+}
 function Mod({onClose,title,sub,children}){
   return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
     <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",padding:20,border:`1px solid ${C.cb}`,animation:"sU .25s ease"}}>
@@ -136,9 +157,8 @@ function Tasks({role,currentUser,setNotifs}){
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
   const cnt={Pending:tasks.filter(t=>t.status==="Pending").length,"In Progress":tasks.filter(t=>t.status==="In Progress").length,Done:tasks.filter(t=>t.status==="Done").length};
   const disp=filter==="All"?tasks:tasks.filter(t=>t.status===filter);
-  useEffect(()=>{api.getTasks().then(d=>{if(d)setTasks(d);});},[]);
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"})};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);api.addTask({...form,status:"Pending",by:currentUser}).catch(()=>{});setShowNew(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:""});}
-  function advance(id){let updated;setTasks(p=>p.map(t=>{if(t.id!==id)return t;const n=t.status==="Pending"?"In Progress":"Done";if(n==="Done")setNotifs(prev=>[{id:Date.now(),icon:"✅",title:"Task Done ✅",body:`${t.title}`,time:"Just now",read:false,color:C.green},...prev]);updated={...t,status:n};return updated;}));if(sel?.id===id)setSel(p=>({...p,status:p.status==="Pending"?"In Progress":"Done"}));if(updated?._rowIndex)api.updateTask(updated._rowIndex,updated).catch(()=>{});}
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"})};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:""});}
+  function advance(id){setTasks(p=>p.map(t=>{if(t.id!==id)return t;const n=t.status==="Pending"?"In Progress":"Done";if(n==="Done")setNotifs(prev=>[{id:Date.now(),icon:"✅",title:"Task Done ✅",body:`${t.title}`,time:"Just now",read:false,color:C.green},...prev]);return{...t,status:n};}));if(sel?.id===id)setSel(p=>({...p,status:p.status==="Pending"?"In Progress":"Done"}));}
   return (<div>
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Task" sub={`Assigning as ${currentUser}`}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
@@ -194,11 +214,10 @@ function Dispatch({role}){
   const pend=all.filter(d=>d.status==="Pending");
   const disp=all.filter(d=>d.status==="Dispatched");
   const TR=["Rajesh","Munshi","Tukaram","Gujarat","VRL","Thane Motor","New Super","Porter","Hand Delivery"];
-  useEffect(()=>{api.getDispatch().then(data=>{if(!data)return;const grp={Bhiwandi:[],"Local Tansha":[],"Local Kaizen":[]};data.forEach(i=>{const l=i.location||"Bhiwandi";if(grp[l])grp[l].push(i);});setDisps(grp);});},[]);
-  function tog(id){let updated;setDisps(p=>({...p,[loc]:p[loc].map(d=>{if(d.id!==id)return d;updated={...d,status:d.status==="Pending"?"Dispatched":"Pending"};return updated;})}));if(updated?._rowIndex)api.updateDispatch(updated._rowIndex,updated).catch(()=>{});}
-  function togLR(id){let updated;setDisps(p=>({...p,[loc]:p[loc].map(d=>{if(d.id!==id)return d;updated={...d,lr:!d.lr};return updated;})}));if(updated?._rowIndex)api.updateDispatch(updated._rowIndex,updated).catch(()=>{});}
-  function add(){if(!form.client.trim())return;const item={id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",location:loc};setDisps(p=>({...p,[loc]:[...p[loc],item]}));api.addDispatch(item,loc).catch(()=>{});setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
-  function saveQty(id,qty,unit){let updated;setDisps(p=>({...p,[loc]:p[loc].map(d=>{if(d.id!==id)return d;updated={...d,qty,unit};return updated;})}));if(updated?._rowIndex)api.updateDispatch(updated._rowIndex,updated).catch(()=>{});setEditE(null);}
+  function tog(id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,status:d.status==="Pending"?"Dispatched":"Pending"}:d)}));}
+  function togLR(id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,lr:!d.lr}:d)}));}
+  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending"}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
+  function saveQty(id,qty,unit){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,qty,unit}:d)}));setEditE(null);}
   return (<div>
     {editE&&<Mod onClose={()=>setEditE(null)} title={editE.client} sub="Add quantity">
       <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:10,marginBottom:12}}>
@@ -230,7 +249,6 @@ function Stocks(){
   const [search,setSearch]=useState("");
   const [stocks,setStocks]=useState(ST0);
   const [editIt,setEditIt]=useState(null);
-  useEffect(()=>{api.getStocks().then(data=>{if(!data)return;const grp={Ocean:[],Ukiyo:[]};data.forEach(s=>{const c=s.category||"Ocean";if(grp[c])grp[c].push(s);});setStocks(grp);});},[]);
   const items=stocks[tab].map(it=>{const tot=it.k2d+it.k1f+it.k2f;return{...it,tot,val:tot*it.cmrp,isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||i.code.toLowerCase().includes(search.toLowerCase())):items;
   const ac=tab==="Ocean"?C.blue:C.teal;
@@ -239,7 +257,7 @@ function Stocks(){
     {editIt&&<Mod onClose={()=>setEditIt(null)} title={editIt.name} sub={editIt.code}>
       <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:12}}>{[["K2 Down","k2d",C.blue],["K1 1st Flr","k1f",C.purple],["K2 2nd Flr","k2f",C.teal]].map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
       <div style={{background:C.bg,borderRadius:7,padding:"7px 11px",marginBottom:12,display:"flex",justifyContent:"space-between"}}><span style={{color:C.muted,fontSize:13}}>Total: <b style={{color:C.text}}>{(editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0)} CTN</b></span><span style={{color:C.green,fontWeight:700}}>{fmt(((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*editIt.cmrp)}</span></div>
-      <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));if(editIt._rowIndex)api.updateStock(editIt._rowIndex,editIt).catch(()=>{});setEditIt(null);}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
+      <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));setEditIt(null);}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>setTab(t)} style={{flex:1,background:tab===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${tab===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:tab===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t}</span></button>)}</div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}</div>
@@ -298,11 +316,10 @@ const SD0={Ocean:[{id:1,date:"2026-04-01",client:"Adams & Company",city:"Mumbai"
 function Sales(){
   const [team,setTeam]=useState("Ocean");const [sales,setSales]=useState(SD0);const [view,setView]=useState("daily");const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);
   const [form,setForm]=useState({date:TODAY,client:"",city:"",invNo:"",amount:""});
-  useEffect(()=>{api.getSales().then(data=>{if(!data)return;const grp={Ocean:[],Ukiyo:[]};data.forEach(s=>{const t=s.team||"Ocean";if(grp[t])grp[t].push(s);});setSales(grp);});},[]);
   const cur=sales[team];const total=cur.reduce((s,e)=>s+e.amount,0);const ac=team==="Ocean"?C.blue:C.teal;
   const grouped=cur.reduce((g,s)=>{if(!g[s.date])g[s.date]=[];g[s.date].push(s);return g;},{});
   const clientMap=useMemo(()=>{const map={};cur.forEach(s=>{const mi=new Date(s.date+"T00:00:00").getMonth();const k=s.client.toLowerCase();if(!map[k])map[k]={client:s.client,city:s.city,months:{}};if(!map[k].months[mi])map[k].months[mi]=0;map[k].months[mi]+=s.amount;});return Object.values(map);},[cur]);
-  function addSale(){if(!form.client||!form.amount)return;const e={...form,id:Date.now(),amount:parseFloat(form.amount),team};setSales(p=>({...p,[team]:[e,...p[team]]}));api.addSale(e,team).catch(()=>{});setForm({date:TODAY,client:"",city:"",invNo:"",amount:""});setShowNew(false);}
+  function addSale(){if(!form.client||!form.amount)return;setSales(p=>({...p,[team]:[{...form,id:Date.now(),amount:parseFloat(form.amount)},...p[team]]}));setForm({date:TODAY,client:"",city:"",invNo:"",amount:""});setShowNew(false);}
   return (<div>
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Sale"><div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Date</label><input type="date" style={INP} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div><div><label style={LBL}>Invoice No</label><input style={INP} value={form.invNo} onChange={e=>setForm({...form,invNo:e.target.value})}/></div></div>
@@ -317,7 +334,7 @@ function Sales(){
         <div><label style={LBL}>Client</label><input style={INP} value={editE.client} onChange={e=>setEditE(p=>({...p,client:e.target.value}))}/></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>City</label><input style={INP} value={editE.city} onChange={e=>setEditE(p=>({...p,city:e.target.value}))}/></div><div><label style={LBL}>Amount ₹</label><input type="number" style={INP} value={editE.amount} onChange={e=>setEditE(p=>({...p,amount:parseFloat(e.target.value)||0}))}/></div></div>
         <div style={{background:C.blue+"11",border:`1px solid ${C.blue}33`,borderRadius:7,padding:"7px 11px",fontSize:11,color:C.blue}}>ℹ️ Monthly report auto-updates when saved</div>
-        <div style={{display:"flex",gap:7}}><button onClick={()=>{if(editE._rowIndex)api.deleteSale(editE._rowIndex).catch(()=>{});setSales(p=>({...p,[team]:p[team].filter(s=>s.id!==editE.id)}));setEditE(null);}} style={{flex:1,background:C.red+"22",border:`1px solid ${C.red}44`,color:C.red,borderRadius:7,padding:"9px",fontWeight:700,cursor:"pointer"}}>🗑</button><button onClick={()=>{if(editE._rowIndex)api.updateSale(editE._rowIndex,editE,team).catch(()=>{});setSales(p=>({...p,[team]:p[team].map(s=>s.id===editE.id?{...s,...editE}:s)}));setEditE(null);}} style={{flex:2,background:ac,border:"none",color:"#fff",borderRadius:7,padding:"9px",fontWeight:800,cursor:"pointer"}}>Save ✓</button></div>
+        <div style={{display:"flex",gap:7}}><button onClick={()=>{setSales(p=>({...p,[team]:p[team].filter(s=>s.id!==editE.id)}));setEditE(null);}} style={{flex:1,background:C.red+"22",border:`1px solid ${C.red}44`,color:C.red,borderRadius:7,padding:"9px",fontWeight:700,cursor:"pointer"}}>🗑</button><button onClick={()=>{setSales(p=>({...p,[team]:p[team].map(s=>s.id===editE.id?{...s,...editE}:s)}));setEditE(null);}} style={{flex:2,background:ac,border:"none",color:"#fff",borderRadius:7,padding:"9px",fontWeight:800,cursor:"pointer"}}>Save ✓</button></div>
       </div>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>setTeam(t)} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.dim,fontSize:10}}>{fmt(sales[t].reduce((s,e)=>s+e.amount,0))}</span></button>)}</div>
@@ -344,17 +361,16 @@ const PAY0=[{id:1,client:"Ornate Glassware",month:"Apr",totalBal:1333659,currBal
 const MC={Jan:C.blue,Feb:C.purple,Mar:C.teal,Apr:C.acc,May:C.green};
 function Payment(){
   const [entries,setEntries]=useState(PAY0);const [am,setAm]=useState("All");const [sel,setSel]=useState(null);const [pa,setPa]=useState("");const [sp,setSp]=useState(false);const today=TODAY;
-  useEffect(()=>{api.getPayments().then(d=>{if(d)setEntries(d);});},[]);
   const months=[...new Set(entries.map(e=>e.month))];const fil=am==="All"?entries:entries.filter(e=>e.month===am);
   const pend=fil.filter(e=>e.status==="Pending").sort((a,b)=>b.currBal-a.currBal);const paid=fil.filter(e=>e.status==="Paid");
   const tot=pend.reduce((s,e)=>s+e.currBal,0);const od=entries.filter(e=>e.status==="Pending"&&e.followUpDate&&e.followUpDate<=today).length;
-  function recP(){const amt=parseFloat(pa)||0;if(amt<=0||!sel)return;const nb=Math.max(0,sel.currBal-amt);const u={...sel,currBal:nb,status:nb===0?"Paid":"Pending"};setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setPa("");if(u._rowIndex)api.updatePayment(u._rowIndex,u).catch(()=>{});}
+  function recP(){const amt=parseFloat(pa)||0;if(amt<=0||!sel)return;const nb=Math.max(0,sel.currBal-amt);const u={...sel,currBal:nb,status:nb===0?"Paid":"Pending"};setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setPa("");}
   return (<div>
     {sel&&<Mod onClose={()=>setSel(null)} title={sel.client} sub={`${sel.month} Outstanding`}>
       <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Bdg label={sel.month} color={MC[sel.month]||C.acc} bg={(MC[sel.month]||C.acc)+"22"} border={(MC[sel.month]||C.acc)+"44"}/>{sel.assignee&&<Bdg label={sel.assignee} color={sel.assignee==="Saud Bhai"?C.purple:C.blue} bg={(sel.assignee==="Saud Bhai"?C.purple:C.blue)+"22"} border={(sel.assignee==="Saud Bhai"?C.purple:C.blue)+"44"}/>}</div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:12}}><div style={{background:"#F9FAFB",border:`1px solid ${C.cb}`,borderRadius:9,padding:"9px 11px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>Total</div><div style={{color:C.text,fontWeight:800,fontSize:15,marginTop:2}}>{fmt(sel.totalBal)}</div></div><div style={{background:sel.currBal===0?C.green+"22":C.red+"22",border:`1px solid ${sel.currBal===0?C.green:C.red}44`,borderRadius:9,padding:"9px 11px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>Current Balance</div><div style={{color:sel.currBal===0?C.green:C.red,fontWeight:800,fontSize:15,marginTop:2}}>{fmt(sel.currBal)}</div></div></div>
       {sel.status==="Pending"&&sel.currBal>0&&<><div style={{background:"#F9FAFB",border:`1px solid ${C.green}33`,borderRadius:11,padding:13,marginBottom:9}}><div style={{color:C.green,fontWeight:700,fontSize:13,marginBottom:7}}>💳 Record Payment</div><div style={{display:"flex",gap:7,marginBottom:7}}><input type="number" style={{...INP,flex:1}} placeholder="Amount..." value={pa} onChange={e=>setPa(e.target.value)}/><button onClick={recP} style={{background:C.green,border:"none",color:"#fff",borderRadius:7,padding:"0 13px",fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>Save ✓</button></div>{parseFloat(pa)>0&&<div style={{display:"flex",justifyContent:"space-between",background:C.card,borderRadius:5,padding:"5px 9px"}}><span style={{color:C.muted,fontSize:11}}>Balance after:</span><span style={{color:C.green,fontWeight:700}}>{fmt(Math.max(0,sel.currBal-parseFloat(pa)))}</span></div>}</div>
-      <button onClick={()=>{const u={...sel,currBal:0,status:"Paid"};setEntries(p=>p.map(e=>e.id===sel.id?u:e));if(u._rowIndex)api.updatePayment(u._rowIndex,u).catch(()=>{});setSel(null);}} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:7,padding:"9px",fontWeight:700,cursor:"pointer",width:"100%",marginBottom:9}}>✅ Mark Fully Paid ({fmt(sel.currBal)})</button></>}
+      <button onClick={()=>{const u={...sel,currBal:0,status:"Paid"};setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(null);}} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:7,padding:"9px",fontWeight:700,cursor:"pointer",width:"100%",marginBottom:9}}>✅ Mark Fully Paid ({fmt(sel.currBal)})</button></>}
       {sel.notes&&<div style={{background:C.bg,borderRadius:7,padding:"8px 11px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:3}}>Notes</div><div style={{color:C.text,fontSize:12}}>{sel.notes}</div></div>}
     </Mod>}
     {od>0&&<div style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,borderRadius:9,padding:"9px 13px",marginBottom:12,display:"flex",gap:9,alignItems:"center"}}><span style={{fontSize:16}}>⏰</span><div style={{color:C.orange,fontWeight:700,fontSize:12}}>{od} Follow-up{od>1?"s":""} Due / Overdue</div></div>}
