@@ -370,10 +370,24 @@ const OP=[
 const UP=[{n:"UKIYO SAKE SET",a:"UK-SS-01",p:850,g:18},{n:"STONE BOWL 8001",a:"BU-S-8001",p:1260,g:5},{n:"BAR CADDY PREMIUM",a:"UK-BC-PRM",p:268,g:18},{n:"BELIZE SOUP SPOON",a:"",p:1235,g:18},{n:"CHEF KNIFE 08\"",a:"UK-CK-08G",p:275,g:18}];
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
-  const [saved,setSaved]=useState([{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr"},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr"}]);
+  const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");
+  const [saved,setSaved]=useState([
+    {id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},
+    {id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}
+  ]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
-  const qNo="TH-Q"+(200+saved.length+1);
+  const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
+  function loadForEdit(q){setTeam(q.team);setClient(q.client);setItems((q.items||[]).map(i=>({...i})));setDisc(q.disc||0);setEditingId(q.id);window.scrollTo(0,0);}
+  function cancelEdit(){setEditingId(null);setClient("");setItems([]);setDisc(0);setSearch("");}
+  function findByNumber(){const q=saved.find(s=>s.q.toLowerCase()===qSearch.trim().toLowerCase());if(q){loadForEdit(q);setQSearch("");}else alert(`Quote "${qSearch}" not found`);}
+  function saveQuotation(){
+    if(!client||!items.length)return;
+    const entry={id:editingId||Date.now(),q:qNo,client,team,grand,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"}),items:items.map(i=>({...i})),disc};
+    if(editingId){setSaved(p=>p.map(s=>s.id===editingId?entry:s));setEditingId(null);}
+    else setSaved(p=>[entry,...p]);
+    setClient("");setItems([]);setDisc(0);setSearch("");
+  }
   const fmtN=n=>Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
   function generatePDF(){
     if(!client||!items.length)return;
@@ -393,6 +407,7 @@ function Quotation(){
     window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,"_blank");
   }
   return (<div>
+    {editingId&&<div style={{background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.orange,fontWeight:700,fontSize:13}}>✏️ Editing {qNo}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>Make changes then save to update</div></div><button onClick={cancelEdit} style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,color:C.orange,borderRadius:7,padding:"4px 11px",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button></div>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>{setTeam(t);setItems([]);}} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t} Team</span></button>)}</div>
     <Card style={{marginBottom:11}}><label style={LBL}>Client Name</label><input style={INP} placeholder="e.g. Taj Hotels" value={client} onChange={e=>setClient(e.target.value)}/></Card>
     <Card style={{marginBottom:11}}>
@@ -415,8 +430,35 @@ function Quotation(){
       <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${C.cb}`,paddingTop:9}}><span style={{color:C.text,fontWeight:800,fontSize:15}}>Grand Total</span><span style={{color:C.green,fontWeight:800,fontSize:19}}>{fmt(grand)}</span></div>
     </Card>
     <div style={{display:"flex",gap:7,marginBottom:11}}><button onClick={shareWhatsApp} style={{flex:1,background:"#25D36615",border:`1px solid #25D36640`,color:"#16a34a",borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📱 WhatsApp</button><button onClick={generatePDF} style={{flex:1,background:C.blue+"15",border:`1px solid ${C.blue}40`,color:C.blue,borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📄 Export PDF</button></div>
-    <button onClick={()=>{if(client&&items.length){setSaved(p=>[{id:Date.now(),q:"TH-Q"+(200+p.length),client,team,grand,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})},...p]);setClient("");setItems([]);setDisc(0);}}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:14}}>Save Quotation ✓</button></>}
-    {saved.length>0&&<><SL text={`Saved (${saved.length})`}/><div style={{display:"flex",flexDirection:"column",gap:6}}>{saved.map(q=><div key={q.id} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,padding:"11px 13px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",gap:6,marginBottom:3}}><span style={{color:C.acc,fontFamily:"monospace",fontSize:11}}>{q.q}</span><Bdg label={q.team} color={q.team==="Ocean"?C.blue:C.teal} bg={(q.team==="Ocean"?C.blue:C.teal)+"22"} border={(q.team==="Ocean"?C.blue:C.teal)+"44"}/></div><div style={{color:C.text,fontWeight:600,fontSize:12}}>{q.client}</div><div style={{color:C.muted,fontSize:10}}>{q.date}</div></div><div style={{color:C.green,fontWeight:800,fontSize:14}}>{fmt(q.grand)}</div></div>)}</div></>}
+    <button onClick={saveQuotation} style={{background:editingId?C.orange:C.green,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:14}}>{editingId?"Update Quotation ✓":"Save Quotation ✓"}</button></>}
+    {saved.length>0&&<>
+      <SL text={`Saved Quotations (${saved.length})`}/>
+      <Card style={{marginBottom:11}}>
+        <label style={LBL}>Find by Quote Number</label>
+        <div style={{display:"flex",gap:7}}>
+          <input style={{...INP,flex:1}} placeholder="e.g. TH-Q101" value={qSearch} onChange={e=>setQSearch(e.target.value)} onKeyDown={e=>e.key==="Enter"&&findByNumber()}/>
+          <button onClick={findByNumber} style={{background:C.acc,border:"none",color:"#fff",borderRadius:8,padding:"0 16px",fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>Load</button>
+        </div>
+      </Card>
+      <div style={{display:"flex",flexDirection:"column",gap:7}}>{saved.map(q=><div key={q.id} style={{background:editingId===q.id?C.orange+"0D":C.card,border:`1px solid ${editingId===q.id?C.orange+"55":C.cb}`,borderRadius:11,padding:"11px 13px"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{display:"flex",gap:6,marginBottom:4,flexWrap:"wrap"}}>
+              <span style={{color:C.acc,fontFamily:"monospace",fontSize:11,fontWeight:700}}>{q.q}</span>
+              <Bdg label={q.team} color={q.team==="Ocean"?C.blue:C.teal} bg={(q.team==="Ocean"?C.blue:C.teal)+"18"} border={(q.team==="Ocean"?C.blue:C.teal)+"33"}/>
+              {q.disc>0&&<Bdg label={`${q.disc}% off`} color={C.orange} bg={C.orange+"18"} border={C.orange+"33"}/>}
+            </div>
+            <div style={{color:C.text,fontWeight:600,fontSize:13}}>{q.client}</div>
+            <div style={{color:C.muted,fontSize:11,marginTop:2}}>{q.date}{q.items?.length>0&&` · ${q.items.length} item${q.items.length!==1?"s":""}`}</div>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
+            <div style={{color:C.green,fontWeight:800,fontSize:14}}>{fmt(q.grand)}</div>
+            <button onClick={()=>loadForEdit(q)} style={{background:C.acc+"18",border:`1px solid ${C.acc}33`,color:C.acc,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏️ Edit</button>
+          </div>
+        </div>
+      </div>)}
+      </div>
+    </>}
   </div>);
 }
 
