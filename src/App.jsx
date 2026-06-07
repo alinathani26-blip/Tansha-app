@@ -280,13 +280,118 @@ function Stocks(){
 }
 
 // ── Quotation ──
-const OP=[{n:"ALOHA 09 OZ",a:"B01709",p:595,g:18},{n:"CONNECTION HI BALL",a:"P02808",p:949,g:18},{n:"BANGKOK BLISS 745ML",a:"1LS01BD26E",p:2184,g:18},{n:"HANSA 11 OZ",a:"B07711",p:571,g:18},{n:"ETHAN 13 (360ML)",a:"B21413",p:810,g:18},{n:"IMPERIAL 16 OZ",a:"R00216",p:1185,g:18}];
+const OP=[
+{n:"ALASKA BANANA SPLIT DISH",a:"P00116",p:1149,g:18},{n:"ALASKA ICE CREAM CUP 205 ML",a:"P00115",p:974,g:18},{n:"ALASKA SODA CUP 355 ML",a:"P00415",p:1928,g:18},{n:"ALASKA SUNDAE CUP 225 ML",a:"P00315",p:1169,g:18},
+{n:"ALLURE BORDEAUX 620 ML",a:"032A22",p:2298,g:18},{n:"ALLURE SPARKLING 220 ML",a:"032F08",p:2064,g:18},{n:"ALLURE UNIVERSAL 435 ML",a:"032R15",p:2064,g:18},
+{n:"ALOHA 09 280 ML",a:"B01709",p:682,g:18},{n:"ALOHA 12 360 ML",a:"B01712",p:721,g:18},
+{n:"ASSURANCE BOWL 5.75\" (6 PCS)",a:"P00724",p:818,g:18},{n:"ASSURANCE BOWL 4.5\" (6 PCS)",a:"P00723",p:643,g:18},{n:"ASSURANCE BOWL 7\" (6 PCS)",a:"P00725",p:1266,g:18},
+{n:"BANQUET WATER GOBLET 308 ML",a:"1500G11",p:1149,g:18},{n:"BAVARIA 16 455 ML",a:"B03616",p:740,g:18},
+{n:"BELLY MUG 365 ML",a:"P04340",p:1500,g:18},{n:"BELLY PILSNER 410 ML",a:"B25414",p:1539,g:18},{n:"BELLY TUMBLER 355 ML",a:"B25412",p:799,g:18},
+{n:"BERLINER BEER MUG 365 ML",a:"P00940",p:2084,g:18},
+{n:"BISTRO CARAFE 290 ML",a:"V13610",p:1130,g:18},{n:"BISTRO CARAFE 610 ML",a:"V13621",p:1363,g:18},{n:"BISTRO CARAFE 940 ML",a:"V13633",p:2123,g:18},
+{n:"BONDI DOUBLE ROCK 360 ML",a:"B25312",p:1110,g:18},{n:"BONDI HI BALL 380 ML",a:"B25313",p:1110,g:18},{n:"BONDI ROCK 280 ML",a:"B25310",p:1032,g:18},
+{n:"CAFFE AMERICANO 355 ML",a:"P02440",p:1208,g:18},{n:"CAFFE CAPPUCCINO 195 ML",a:"P02441",p:1149,g:18},{n:"CAFFE ESPRESSO 70 ML",a:"P02442",p:877,g:18},{n:"CAFFE EXPRESSO SAUCER 4.75\"",a:"P02472",p:701,g:18},{n:"CAFFE LATTE 260 ML",a:"P02443",p:1208,g:18},{n:"CAFFE LATTE MODERNO 280 ML",a:"P02407",p:993,g:18},{n:"CAFFE SAUCER 5.75\"",a:"P02471",p:877,g:18},
+{n:"CENTIQUE DOUBLE ROCK 345 ML",a:"P03161",p:974,g:18},{n:"CENTIQUE HI BALL 370 ML",a:"P03162",p:1149,g:18},{n:"CENTIQUE ROCK 245 ML",a:"P03160",p:838,g:18},
+{n:"CENTRA HI BALL 300 ML",a:"P01961",p:799,g:18},{n:"CENTRA LONG DRINK 420 ML",a:"P01962",p:935,g:18},{n:"CENTRA LONG DRINK 495 ML",a:"P01963",p:1110,g:18},{n:"CENTRA ROCK 200 ML",a:"P01964",p:507,g:18},{n:"CENTRA ROCK 300 ML",a:"P01960",p:799,g:18},
+{n:"CHARISMA LONG DRINK 415 ML",a:"B17115",p:896,g:18},{n:"CHARISMA ROCK 340 ML",a:"B17112",p:838,g:18},
+{n:"CLASSIC BEER 420 ML",a:"1501B15",p:1344,g:18},{n:"CLASSIC BRANDY 255 ML",a:"1501X09",p:1149,g:18},{n:"CLASSIC BRANDY 340 ML",a:"1501X12",p:1266,g:18},{n:"CLASSIC COCKTAIL 140 ML",a:"1501C05",p:1227,g:18},{n:"CLASSIC COCKTAIL 95 ML",a:"1501C03",p:1227,g:18},{n:"CLASSIC FLUTE CHAMPAGNE 185 ML",a:"1501F07",p:1149,g:18},{n:"CLASSIC JUICE 310 ML",a:"1501J11",p:1266,g:18},{n:"CLASSIC LIQUEUR 30 ML",a:"1501L01",p:916,g:18},{n:"CLASSIC LIQUEUR 60 ML",a:"1501L02",p:1149,g:18},{n:"CLASSIC MARGARITA 200 ML",a:"1501M07",p:1266,g:18},{n:"CLASSIC RED WINE 230 ML",a:"1501R08",p:1149,g:18},{n:"CLASSIC SAUCER CHAMPAGNE 135 ML",a:"1501S05",p:1149,g:18},{n:"CLASSIC SAUCER CHAMPAGNE 200 ML",a:"1501S07",p:1149,g:18},{n:"CLASSIC SHERRY 130 ML",a:"1501P04",p:1149,g:18},{n:"CLASSIC WATER GOBLET 350 ML",a:"1501G12",p:1266,g:18},{n:"CLASSIC WHITE WINE 195 ML",a:"1501W07",p:1149,g:18},
+{n:"COASTER 3.375\" (12 PCS)",a:"P00911",p:936,g:18},
+{n:"CONICAL SUPER 285 ML",a:"B01010",p:604,g:18},{n:"CONICAL SUPER 425 ML",a:"B01015",p:662,g:18},{n:"CONICAL SUPER 620 ML",a:"B01022",p:857,g:18},
+{n:"CONNEXION COCKTAIL 215 ML",a:"1527C07",p:2084,g:18},{n:"CONNEXION CONDIMENT BOWL 255 ML",a:"P02820",p:1091,g:18},{n:"CONNEXION COUPE 215 ML",a:"1527S07",p:2084,g:18},{n:"CONNEXION DOUBLE ROCK 350 ML",a:"1P02807",p:1071,g:18},{n:"CONNEXION GIN COCKTAILS 600 ML",a:"1527D21",p:2181,g:18},{n:"CONNEXION HI BALL 350 ML",a:"P02808",p:1071,g:18},{n:"CONNEXION LONG DRINK 430 ML",a:"P02809",p:1266,g:18},{n:"CONNEXION MIXING GLASS 625 ML",a:"P02810",p:2558,g:18},{n:"CONNEXION WHISKY ROCK 305 ML",a:"P02880",p:1149,g:18},
+{n:"CRAFTSMAN STEMWARE 390 ML",a:"1529B14",p:1655,g:18},{n:"CRAFTSMAN TUMBLER 565 ML",a:"B23220",p:1247,g:18},
+{n:"CUBA HURRICANE 450 ML",a:"1522H16",p:2395,g:18},{n:"CUBA POCO GRANDE 350 ML",a:"1522H12",p:1324,g:18},{n:"CUBA ROCK 270 ML",a:"J14209",p:760,g:18},
+{n:"DELIGHT BANANA SPLIT DISH",a:"P02616",p:1305,g:18},{n:"DELIGHT ICE CREAM CUP 5.5\"",a:"P02615",p:1130,g:18},{n:"DELIGHT SUNDAE CUP 5.25 OZ",a:"P02617",p:1130,g:18},{n:"DELIGHT SUNDAE CUP 6.75\"",a:"P02618",p:1266,g:18},
+{n:"DIAMOND BOWL 5\"",a:"P00123",p:701,g:18},{n:"DIAMOND BOWL 8\"",a:"P00124",p:1441,g:18},
+{n:"DIVANO PITCHER 1660 ML",a:"V20558",p:860,g:18},
+{n:"DUCHESS COCKTAIL 210 ML",a:"1503C07",p:1402,g:18},{n:"DUCHESS FLUTE CHAMPAGNE 165 ML",a:"1503F06",p:1461,g:18},{n:"DUCHESS RED WINE 255 ML",a:"1503R09",p:1461,g:18},{n:"DUCHESS WATER GOBLET 350 ML",a:"1503G12",p:1461,g:18},{n:"DUCHESS WHITE WINE 200 ML",a:"1503W07",p:1461,g:18},
+{n:"ETHAN DOUBLE ROCK 360 ML",a:"B21413",p:896,g:18},{n:"ETHAN LONG DRINK 445 ML",a:"B21416",p:896,g:18},{n:"ETHAN ROCK 265 ML",a:"B21409",p:764,g:18},
+{n:"FIN LINE HI BALL 280 ML",a:"B01210",p:565,g:18},{n:"FIN LINE HI BALL 355 ML",a:"B01213",p:643,g:18},{n:"FIN LINE JUICE 175 ML",a:"B01206",p:468,g:18},
+{n:"FINE DRINK LONG DRINK 380 ML",a:"B01913",p:624,g:18},{n:"FINE DRINK LONG DRINK 485 ML",a:"B01916",p:624,g:18},
+{n:"FYN DOUBLE ROCK 395 ML",a:"C24014",p:1208,g:18},{n:"FYN HI BALL 350 ML",a:"C24012",p:974,g:18},{n:"FYN LONG DRINK 460 ML",a:"C24016",p:1208,g:18},{n:"FYN ROCK 290 ML",a:"C24010",p:974,g:18},
+{n:"GATSBY BLUE ROCK 350 ML",a:"4GB005A113O01",p:2240,g:18},{n:"GATSBY GREEN ROCK 350 ML",a:"4GB005A113O03",p:2240,g:18},{n:"GATSBY VIOLET ROCK 350 ML",a:"4GB005A113O02",p:2240,g:18},
+{n:"HAIKU SHOT 60 ML (6 PCS)",a:"B17202",p:546,g:18},
+{n:"HANSA LONG DRINK 375 ML",a:"B07713",p:721,g:18},{n:"HANSA ROCK 300 ML",a:"B07711",p:643,g:18},
+{n:"HIGH BALL 245 ML",a:"B01408",p:487,g:18},
+{n:"IMPERIAL 350 ML",a:"B13412",p:721,g:18},{n:"IMPERIAL 475 ML",a:"R00216",p:1344,g:18},{n:"IMPERIAL 545 ML",a:"R00219",p:1402,g:18},
+{n:"IRIS HI BALL 370 ML",a:"C13013",p:1149,g:18},{n:"IRIS ROCK 320 ML",a:"C13011",p:1091,g:18},
+{n:"IVORY HI BALL 370 ML",a:"B13013",p:760,g:18},{n:"IVORY HI BALL GOLD 370 ML",a:"B13013G",p:1095,g:18},{n:"IVORY HI BALL PLATINUM 370 ML",a:"B13013P",p:1095,g:18},{n:"IVORY LONG DRINK 460 ML",a:"B13016",p:818,g:18},{n:"IVORY ROCK 265 ML",a:"B13009",p:701,g:18},{n:"IVORY ROCK 320 ML",a:"B13011",p:760,g:18},{n:"IVORY ROCK GOLD 320 ML",a:"B13011G",p:1095,g:18},{n:"IVORY ROCK PLATINUM 320 ML",a:"B13011P",p:1095,g:18},
+{n:"JUBILEE HI BALL 335 ML",a:"B22711",p:935,g:18},{n:"JUBILEE ROCK 340 ML",a:"B22712",p:877,g:18},
+{n:"KENYA CAPPUCCINO CUP 245 ML",a:"P01641",p:1052,g:18},{n:"KENYA CAPPUCCINO SAUCER 6\"",a:"P01671",p:799,g:18},{n:"KENYA ESPRESSO CUP 65 ML",a:"P01642",p:799,g:18},{n:"KENYA ESPRESSO SAUCER 4.25\"",a:"P01672",p:662,g:18},{n:"KENYA IRISH COFFEE MUG 230 ML",a:"P01643",p:1578,g:18},{n:"KENYA MUG 320 ML",a:"P01640",p:1149,g:18},{n:"KENYA SLIM MUG 320 ML",a:"P01644",p:1558,g:18},
+{n:"LEXINGTON COCKTAIL 205 ML",a:"1019C07",p:1539,g:18},{n:"LEXINGTON FLUTE CHAMPAGNE 185 ML",a:"1019F06",p:1539,g:18},{n:"LEXINGTON HI BALL 370 ML",a:"1C18513",p:1227,g:18},{n:"LEXINGTON RED WINE 315 ML",a:"1019R11",p:1539,g:18},{n:"LEXINGTON RED WINE 455 ML",a:"1019R16",p:1889,g:18},{n:"LEXINGTON ROCK 345 ML",a:"C18512",p:1208,g:18},{n:"LEXINGTON WATER GOBLET 370 ML",a:"1019G13",p:1539,g:18},{n:"LEXINGTON WHITE WINE 240 ML",a:"1019W08",p:1539,g:18},
+{n:"LONG COOL 245 ML",a:"B00208",p:624,g:18},{n:"LONG COOL 315 ML",a:"B00210",p:643,g:18},
+{n:"LUGANO BEER MUG 330 ML",a:"P00740",p:1500,g:18},{n:"LYRA JUICE 170 ML",a:"B07206",p:565,g:18},
+{n:"MADISON BORDEAUX 600 ML",a:"1015A21",p:2103,g:18},{n:"MADISON BURGUNDY 650 ML",a:"1015D22",p:2103,g:18},{n:"MADISON COCKTAIL 285 ML",a:"1015C10",p:1850,g:18},{n:"MADISON COGNAC 650 ML",a:"1015N22",p:1889,g:18},{n:"MADISON FLUTE CHAMPAGNE 210 ML",a:"1015F07",p:1889,g:18},{n:"MADISON FLUTE CHAMPAGNE PLATINUM",a:"1015F07P",p:1995,g:18},{n:"MADISON HI BALL 390 ML",a:"C18414",p:1441,g:18},{n:"MADISON LIQUEUR 85 ML",a:"1015L03",p:1853,g:18},{n:"MADISON MARGARITA 345 ML",a:"1015M12",p:1967,g:18},{n:"MADISON RED WINE 425 ML",a:"1015R15",p:1889,g:18},{n:"MADISON RED WINE GOLD",a:"1015R15G",p:1995,g:18},{n:"MADISON RED WINE PLATINUM",a:"1015R15P",p:1995,g:18},{n:"MADISON ROCK 395 ML",a:"1C18413",p:1249,g:18},{n:"MADISON STRIPE FLUTE 210 ML",a:"1035F07",p:1967,g:18},{n:"MADISON STRIPE RED WINE 425 ML",a:"1035R15",p:1967,g:18},{n:"MADISON STRIPE WHITE WINE 350 ML",a:"1035W12",p:1967,g:18},{n:"MADISON WATER GOBLET 425 ML",a:"1015G15",p:1753,g:18},{n:"MADISON WHITE WINE 350 ML",a:"1015W12",p:1889,g:18},
+{n:"MATTER FIX DOUBLE ROCK 350 ML",a:"P04261",p:1286,g:18},{n:"MATTER FLOW DOUBLE ROCK 350 ML",a:"P04262",p:1286,g:18},{n:"MATTER FRESH DOUBLE ROCK 350 ML",a:"P04263",p:1286,g:18},
+{n:"METROPOLITAN 210 ML",a:"B21307",p:585,g:18},{n:"METROPOLITAN 330 ML",a:"B21312",p:740,g:18},{n:"METROPOLITAN 400 ML",a:"B21314",p:993,g:18},{n:"METROPOLITAN 410 ML",a:"B21315",p:1597,g:18},{n:"METROPOLITAN 655 ML",a:"B21323",p:1811,g:18},
+{n:"MODULAR HI BALL 460 ML",a:"B24516",p:721,g:18},{n:"MODULAR LONG DRINK 630 ML",a:"B24522",p:896,g:18},
+{n:"MUNICH BEER MUG 355 ML",a:"P00840",p:1500,g:18},{n:"MUNICH BEER MUG 640 ML",a:"P00843",p:2337,g:18},
+{n:"NEW YORK 205 ML",a:"B07807",p:701,g:18},{n:"NEW YORK 320 ML",a:"B07811",p:701,g:18},{n:"NEW YORK HI BALL 340 ML",a:"B07812",p:701,g:18},
+{n:"NOUVEAU MUG 200 ML",a:"P02040",p:993,g:18},{n:"NOUVEAU MUG 315 ML",a:"P02041",p:1188,g:18},
+{n:"NOVA 300 ML",a:"B06511",p:662,g:18},
+{n:"PATIO HI BALL 290 ML",a:"B18310",p:682,g:18},{n:"PATIO PITCHER 1265 ML",a:"V18344",p:775,g:18},
+{n:"PILSNER 200 ML",a:"B00907",p:585,g:18},{n:"PILSNER 300 ML",a:"B00910",p:701,g:18},{n:"PILSNER 315 ML",a:"B05011",p:818,g:18},{n:"PILSNER 340 ML",a:"B00912",p:701,g:18},{n:"PILSNER 400 ML",a:"B00914",p:857,g:18},
+{n:"PLAYBOY BEER MUG 357 ML",a:"P00140",p:1500,g:18},
+{n:"PLAZA HI BALL 320 ML",a:"B11011",p:818,g:18},{n:"PLAZA LONG DRINK 405 ML",a:"B11014",p:877,g:18},{n:"PLAZA ROCK 195 ML",a:"B11007",p:701,g:18},{n:"PLAZA ROCK 295 ML",a:"B11010",p:818,g:18},{n:"PLAZA SHOT 55 ML (12 PCS)",a:"P00210",p:1364,g:18},
+{n:"POP JAR 325 ML GLASS COVER",a:"B02511G",p:1091,g:18},{n:"POP JAR 325 ML WOOD COVER",a:"B02511W",p:1753,g:18},{n:"POP JAR 500 ML GLASS COVER",a:"B02517G",p:1324,g:18},{n:"POP JAR 500 ML WOOD COVER",a:"B02517W",p:1967,g:18},{n:"POP JAR 750 ML GLASS COVER",a:"B02526G",p:1539,g:18},{n:"POP JAR 750 ML WOOD COVER",a:"B02526W",p:2220,g:18},{n:"POP JAR 1000 ML GLASS COVER",a:"B02536G",p:1753,g:18},{n:"POP JAR 1000 ML WOOD COVER",a:"B02536W",p:2356,g:18},
+{n:"PULSE DOUBLE ROCK 355 ML",a:"B24612",p:799,g:18},{n:"PULSE HI BALL 285 ML",a:"B24610",p:799,g:18},{n:"PULSE LONG DRINK 370 ML",a:"B24613",p:838,g:18},{n:"PULSE ROCK 235 ML",a:"B24608",p:799,g:18},
+{n:"PYRAMID HI BALL 300 ML",a:"B02310",p:682,g:18},{n:"PYRAMID LONG DRINK 380 ML",a:"B02313",p:760,g:18},{n:"PYRAMID ROCK 260 ML",a:"B02309",p:585,g:18},{n:"PYRAMID ROCK 330 ML",a:"B02311",p:682,g:18},
+{n:"REYA BOWL 5\" (6 PCS)",a:"P03420",p:779,g:18},{n:"REYA BOWL 8\" (6 PCS)",a:"P03421",p:1578,g:18},{n:"REYA COASTER 4\" (12 PCS)",a:"P03411",p:1130,g:18},{n:"REYA SALAD BOWL 10\" (3 PCS)",a:"P03422",p:1519,g:18},
+{n:"RIO MUG 320 ML",a:"P02740",p:1091,g:18},
+{n:"ROCK 245 ML",a:"B00209",p:624,g:18},{n:"ROCK 285 ML",a:"B00710",p:624,g:18},
+{n:"ROYAL 355 ML",a:"R00312",p:1344,g:18},
+{n:"SALSA COCKTAIL 210 ML",a:"1521C07",p:1675,g:18},{n:"SALSA FLUTE CHAMPAGNE 165 ML",a:"1521F06",p:1850,g:18},{n:"SALSA HI BALL 385 ML",a:"B19212",p:955,g:18},
+{n:"SAN MARINO DOUBLE ROCK 385 ML",a:"B00414",p:877,g:18},{n:"SAN MARINO HI BALL 290 ML",a:"B00410",p:643,g:18},{n:"SAN MARINO HI BALL 350 ML",a:"B00412",p:701,g:18},{n:"SAN MARINO JUICE 175 ML",a:"B00406",p:585,g:18},{n:"SAN MARINO LONG DRINK 480 ML",a:"B00416",p:877,g:18},{n:"SAN MARINO ROCK 245 ML",a:"B00409",p:662,g:18},{n:"SAN MARINO ROCK 290-300 ML",a:"B00411",p:701,g:18},{n:"SAN MARINO SHOT 65 ML (12 PCS)",a:"P03010",p:1092,g:18},
+{n:"SANTE BORDEAUX 595 ML",a:"1026A21",p:2103,g:18},{n:"SANTE BURGUNDY 635 ML",a:"1026D22",p:2103,g:18},{n:"SANTE FLUTE CHAMPAGNE 210 ML",a:"1026F07",p:1889,g:18},{n:"SANTE RED WINE 420 ML",a:"1026R15",p:1889,g:18},{n:"SANTE STEMLESS 455 ML",a:"1C24216",p:1324,g:18},{n:"SANTE WATER GOBLET 405 ML",a:"1026G14",p:1753,g:18},{n:"SANTE WHITE WINE 340 ML",a:"1026W12",p:1889,g:18},
+{n:"SCIROCCO LONG DRINK 410 ML",a:"B17014",p:760,g:18},{n:"SCIROCCO ROCK 340 ML",a:"B17012",p:760,g:18},
+{n:"SENSATION HI BALL 325 ML",a:"B21611",p:738,g:18},{n:"SENSATION LONG DRINK 390 ML",a:"B21614",p:766,g:18},{n:"SENSATION ROCK 285 ML",a:"B21610",p:738,g:18},
+{n:"SOCIETY FLUTE CHAMPAGNE 190 ML",a:"523F07",p:1149,g:18},{n:"SOCIETY GOBLET 345 ML",a:"1523G12",p:1149,g:18},{n:"SOCIETY RED WINE 260 ML",a:"1523R09",p:1149,g:18},{n:"SOCIETY WHITE WINE 210 ML",a:"1523W07",p:1149,g:18},
+{n:"SOLO SHOT 60 ML (12 PCS)",a:"P00110",p:1014,g:18},{n:"SONOMA SALAD BOWL 10\" (3 PCS)",a:"P01825",p:1519,g:18},
+{n:"SPACE LEAF HI BALL 300 ML",a:"P03861",p:721,g:18},{n:"SPACE STRIPE HI BALL 300 ML",a:"P03862",p:721,g:18},{n:"SPACE WAVE HI BALL 300 ML",a:"P03863",p:721,g:18},
+{n:"STACK 245 ML",a:"1B00109",p:507,g:18},{n:"STACK BOWL 4\" (10 CM)",a:"P00623",p:507,g:18},{n:"STACK BOWL 5\" (12.5 CM)",a:"P00624",p:721,g:18},{n:"STACK BOWL 6\"",a:"P00625",p:857,g:18},{n:"STACK NOIR COFFEE MUG 485 ML",a:"P00341",p:1344,g:18},{n:"STACK TEA CUP 200 ML",a:"1P00340",p:1052,g:18},{n:"STACK TEA SAUCER",a:"1P00271",p:760,g:18},
+{n:"STUDIO 345 ML",a:"B16112",p:760,g:18},{n:"STUDIO 435 ML",a:"B16115",p:818,g:18},
+{n:"SWEET BELL 235 ML",a:"B00808",p:662,g:18},{n:"SWEET BELL 345 ML",a:"B00812",p:662,g:18},
+{n:"TANGO 255 ML",a:"B13309",p:721,g:18},{n:"TANGO 315 ML",a:"B13311",p:779,g:18},{n:"TANGO 350 ML",a:"B13312",p:818,g:18},{n:"TANGO 425 ML",a:"B13315",p:838,g:18},
+{n:"TEMPO CARAFE 290 ML",a:"B13610",p:877,g:18},{n:"TEMPO CARAFE 610 ML",a:"B13621",p:1188,g:18},{n:"TEMPO CARAFE 970 ML",a:"B13634",p:2123,g:18},
+{n:"TERRA PITCHER 1390 ML",a:"B24349H",p:1025,g:18},
+{n:"THE PALETTE CHALICE 300 ML",a:"1533E11L",p:2181,g:18},{n:"THE PALETTE COUPE 205 ML",a:"1533S07",p:2298,g:18},{n:"THE PALETTE GIN COCKTAIL 540 ML",a:"1533D19",p:2395,g:18},{n:"THE PALETTE MARTINI 220 ML",a:"1533C07",p:2298,g:18},{n:"THE PALETTE NICK & NORA 190 ML",a:"1533K07",p:2181,g:18},
+{n:"TIARA 270 ML",a:"B12009",p:721,g:18},{n:"TIARA 355 ML",a:"B12012",p:682,g:18},{n:"TIARA 365 ML",a:"B12013",p:799,g:18},{n:"TIARA 465 ML",a:"B12016",p:857,g:18},{n:"TIARA FOOTED 395 ML",a:"B17514",p:1422,g:18},
+{n:"TOP DRINK 235 ML",a:"B00309",p:624,g:18},{n:"TOP DRINK 305 ML",a:"B00310",p:643,g:18},{n:"TOP DRINK 325 ML",a:"B00311",p:662,g:18},{n:"TOP DRINK 375 ML",a:"B00313",p:662,g:18},{n:"TOP DRINK 625 ML",a:"B00322",p:896,g:18},
+{n:"TRAZE FTR DOUBLE ROCK 350 ML",a:"P03663",p:1500,g:18},{n:"TRAZE FTR HI BALL 350 ML",a:"P03666",p:1500,g:18},{n:"TRAZE PRE DOUBLE ROCK 350 ML",a:"P03662",p:1500,g:18},{n:"TRAZE PRE HI BALL 350 ML",a:"P03665",p:1500,g:18},{n:"TRAZE PST DOUBLE ROCK 350 ML",a:"P03661",p:1500,g:18},{n:"TRAZE PST HI BALL 350 ML",a:"P03664",p:1500,g:18},
+{n:"TRINITY 305 ML",a:"B19811",p:896,g:18},{n:"TRINITY 380 ML",a:"B19813",p:974,g:18},
+{n:"TULIP JAR 350 ML GLASS COVER",a:"B03912",p:1077,g:18},{n:"TULIP JAR 350 ML WOOD COVER",a:"B03912W",p:1706,g:18},{n:"TULIP JAR 510 ML GLASS COVER",a:"B03918",p:1314,g:18},{n:"TULIP JAR 510 ML WOOD COVER",a:"B03918W",p:1901,g:18},{n:"TULIP JAR 780 ML GLASS COVER",a:"B03927",p:1526,g:18},{n:"TULIP JAR 780 ML WOOD COVER",a:"B03927W",p:2152,g:18},
+{n:"TWILIGHT BRONZE ROCK 370 ML",a:"4GB005A014C02",p:2700,g:18},{n:"TWILIGHT INDIGO ROCK 370 ML",a:"4GB005A014C01",p:2700,g:18},{n:"TWILIGHT PURPLE ROCK 370 ML",a:"4GB005A014C03",p:2700,g:18},
+{n:"UNITY 255 ML",a:"B02109",p:624,g:18},{n:"UNITY 290 ML",a:"B02110",p:643,g:18},{n:"UNITY 370 ML",a:"B02113",p:701,g:18},
+{n:"UNO SHOT 35 ML (12 PCS)",a:"P02910",p:974,g:18},
+{n:"VERRINE DEEP BOWL 3\"",a:"P03721",p:916,g:18},{n:"VERRINE SHALLOW BOWL 3\"",a:"P03720",p:799,g:18},{n:"VERRINE SHOT 60 ML (12 PCS)",a:"3710",p:1364,g:18},
+{n:"VICTORIA 295 ML",a:"B04410",p:662,g:18},
+{n:"VINO RED WINE 470 ML",a:"1530R16",p:1286,g:18},{n:"VINO WATER GOBLET 395 ML",a:"1530G14",p:1286,g:18},{n:"VINO WHITE WINE 335 ML",a:"1530W12",p:1052,g:18},
+{n:"VIVA FOOTED 420 ML",a:"B16315",p:1811,g:18},
+];
 const UP=[{n:"UKIYO SAKE SET",a:"UK-SS-01",p:850,g:18},{n:"STONE BOWL 8001",a:"BU-S-8001",p:1260,g:5},{n:"BAR CADDY PREMIUM",a:"UK-BC-PRM",p:268,g:18},{n:"BELIZE SOUP SPOON",a:"",p:1235,g:18},{n:"CHEF KNIFE 08\"",a:"UK-CK-08G",p:275,g:18}];
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
   const [saved,setSaved]=useState([{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr"},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr"}]);
-  const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())):[];
+  const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
+  const qNo="TH-Q"+(200+saved.length+1);
+  const fmtN=n=>Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
+  function generatePDF(){
+    if(!client||!items.length)return;
+    const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
+    const rows=items.map(it=>`<tr><td>${it.n}</td><td style="color:#64748B">${it.a}</td><td style="text-align:center">${it.qty}</td><td style="text-align:right">₹${fmtN(it.p)}</td><td style="text-align:right;font-weight:600">₹${fmtN(it.qty*it.p)}</td></tr>`).join("");
+    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${qNo}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;padding:32px;color:#0F172A;font-size:13px}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #4F46E5}.co{font-size:22px;font-weight:800;color:#4F46E5;letter-spacing:-.5px}.cosub{color:#64748B;font-size:11px;margin-top:4px}.qno{font-size:20px;font-weight:700;text-align:right}.qdate{color:#64748B;font-size:11px;margin-top:4px;text-align:right}.to{margin-bottom:20px;padding:14px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid #4F46E5}.tolbl{color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}.toname{font-size:16px;font-weight:700}table{width:100%;border-collapse:collapse;margin-bottom:20px}th{background:#0F172A;color:#fff;padding:9px 10px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.3px}td{padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:12px}tr:hover td{background:#F8FAFC}.totals{margin-left:auto;width:260px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden}.totals td{padding:8px 14px;border-bottom:1px solid #F1F5F9}.grand td{background:#0F172A;color:#fff;font-weight:800;font-size:15px;border-bottom:none}.footer{margin-top:28px;text-align:center;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;padding-top:14px}@media print{body{padding:16px}}</style></head><body><div class="hdr"><div><div class="co">TANSHA HOSPITALITY</div><div class="cosub">Mumbai &nbsp;|&nbsp; Ocean Division</div></div><div><div class="qno">${qNo}</div><div class="qdate">Date: ${date}</div></div></div><div class="to"><div class="tolbl">Quotation For</div><div class="toname">${client}</div></div><table><thead><tr><th>Product</th><th>Code</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><table class="totals"><tbody><tr><td>Subtotal</td><td style="text-align:right">₹${fmtN(sub)}</td></tr>${disc>0?`<tr><td>Discount (${disc}%)</td><td style="text-align:right;color:#DC2626">−₹${fmtN(sub*disc/100)}</td></tr>`:""}<tr><td>GST @18%</td><td style="text-align:right">₹${fmtN(gst)}</td></tr></tbody><tfoot><tr class="grand"><td>Grand Total</td><td style="text-align:right">₹${fmtN(grand)}</td></tr></tfoot></table><div class="footer">Thank you for your business &nbsp;·&nbsp; Tansha Hospitality &nbsp;·&nbsp; Mumbai</div><script>window.onload=()=>window.print();<\/script></body></html>`;
+    const w=window.open("","_blank","width=900,height=700");w.document.write(html);w.document.close();
+  }
+  function shareWhatsApp(){
+    if(!client||!items.length)return;
+    const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
+    let t=`🏢 *TANSHA HOSPITALITY*\n📋 Quotation *${qNo}*\n📅 ${date}\n👤 *${client}*\n\n*Items:*\n`;
+    items.forEach(it=>{t+=`• ${it.n} (${it.a}) × ${it.qty} = ₹${fmtN(it.qty*it.p)}\n`;});
+    t+=`\nSubtotal: ₹${fmtN(sub)}`;
+    if(disc>0)t+=`\nDiscount (${disc}%): −₹${fmtN(sub*disc/100)}`;
+    t+=`\nGST: ₹${fmtN(gst)}\n*Grand Total: ₹${fmtN(grand)}*\n\n_Thank you — Tansha Hospitality_`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,"_blank");
+  }
   return (<div>
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>{setTeam(t);setItems([]);}} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t} Team</span></button>)}</div>
     <Card style={{marginBottom:11}}><label style={LBL}>Client Name</label><input style={INP} placeholder="e.g. Taj Hotels" value={client} onChange={e=>setClient(e.target.value)}/></Card>
@@ -309,7 +414,7 @@ function Quotation(){
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:9}}><span style={{color:C.muted}}>GST</span><span style={{color:C.text,fontWeight:600}}>{fmt(gst)}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${C.cb}`,paddingTop:9}}><span style={{color:C.text,fontWeight:800,fontSize:15}}>Grand Total</span><span style={{color:C.green,fontWeight:800,fontSize:19}}>{fmt(grand)}</span></div>
     </Card>
-    <div style={{display:"flex",gap:7,marginBottom:11}}><button style={{flex:1,background:"#25D36622",border:`1px solid #25D36644`,color:"#25D366",borderRadius:9,padding:11,fontWeight:700,cursor:"pointer"}}>📱 WhatsApp</button><button style={{flex:1,background:C.red+"22",border:`1px solid ${C.red}44`,color:C.red,borderRadius:9,padding:11,fontWeight:700,cursor:"pointer"}}>📄 PDF</button></div>
+    <div style={{display:"flex",gap:7,marginBottom:11}}><button onClick={shareWhatsApp} style={{flex:1,background:"#25D36615",border:`1px solid #25D36640`,color:"#16a34a",borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📱 WhatsApp</button><button onClick={generatePDF} style={{flex:1,background:C.blue+"15",border:`1px solid ${C.blue}40`,color:C.blue,borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📄 Export PDF</button></div>
     <button onClick={()=>{if(client&&items.length){setSaved(p=>[{id:Date.now(),q:"TH-Q"+(200+p.length),client,team,grand,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"})},...p]);setClient("");setItems([]);setDisc(0);}}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:14}}>Save Quotation ✓</button></>}
     {saved.length>0&&<><SL text={`Saved (${saved.length})`}/><div style={{display:"flex",flexDirection:"column",gap:6}}>{saved.map(q=><div key={q.id} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,padding:"11px 13px",display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{display:"flex",gap:6,marginBottom:3}}><span style={{color:C.acc,fontFamily:"monospace",fontSize:11}}>{q.q}</span><Bdg label={q.team} color={q.team==="Ocean"?C.blue:C.teal} bg={(q.team==="Ocean"?C.blue:C.teal)+"22"} border={(q.team==="Ocean"?C.blue:C.teal)+"44"}/></div><div style={{color:C.text,fontWeight:600,fontSize:12}}>{q.client}</div><div style={{color:C.muted,fontSize:10}}>{q.date}</div></div><div style={{color:C.green,fontWeight:800,fontSize:14}}>{fmt(q.grand)}</div></div>)}</div></>}
   </div>);
