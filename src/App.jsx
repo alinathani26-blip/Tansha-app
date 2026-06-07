@@ -588,9 +588,12 @@ const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Qu
 
 export default function App(){
   const [role,setRole]=useState("Owner");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
+  const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
+  useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
-  return (<div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:"#F7F8FA",minHeight:"100vh",color:C.text,maxWidth:480,margin:"0 auto",position:"relative",fontFamily:"'Inter','DM Sans','Segoe UI',sans-serif"}}>
+  const SW=220;
+  return (<div style={{fontFamily:"'Inter','DM Sans','Segoe UI',sans-serif",background:"#F7F8FA",minHeight:"100vh",color:C.text,position:"relative"}}>
     <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
     {showN&&<NotifPanel notifs={notifs} setNotifs={setNotifs} onClose={()=>setShowN(false)}/>}
     {showNav&&<div style={{position:"fixed",inset:0,background:"#000B",zIndex:400}} onClick={()=>setShowNav(false)}>
@@ -606,10 +609,21 @@ export default function App(){
       </div>
     </div>}
 
+    {/* Desktop sidebar */}
+    {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.card,borderRight:`1px solid ${C.cb}`,overflowY:"auto",zIndex:200}}>
+      <div style={{padding:"16px 15px 13px",borderBottom:`1px solid ${C.cb}`}}>
+        <div style={{color:C.acc,fontWeight:900,fontSize:17,letterSpacing:-.5,marginBottom:12}}>TANSHA</div>
+        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:10}}><Av name={cu} size={36}/><div><div style={{color:C.text,fontWeight:700,fontSize:12}}>{cu}</div><span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
+        <div style={{color:C.dim,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Switch Role</div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");}} style={{background:role===r?RC[r].bg:C.cb,color:role===r?RC[r].text:C.muted,border:`1px solid ${role===r?RC[r].border:"transparent"}`,borderRadius:5,padding:"3px 7px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
+      </div>
+      <div style={{padding:"9px 9px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:9,alignItems:"center",background:active===n.id?C.acc+"22":"transparent",border:`1px solid ${active===n.id?C.acc+"44":"transparent"}`,borderRadius:7,padding:"9px 9px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?C.acc:C.text,fontWeight:active===n.id?700:500,fontSize:12}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:16,height:16,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
+    </div>}
+
     {/* Topbar */}
-    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:"0 15px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
+    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:"0 15px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 3px rgba(0,0,0,0.06)",marginLeft:isDesktop?SW:0}}>
       <div style={{display:"flex",alignItems:"center",gap:9}}>
-        <button onClick={()=>setShowNav(true)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:19,padding:0}}>☰</button>
+        {!isDesktop&&<button onClick={()=>setShowNav(true)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:19,padding:0}}>☰</button>}
         <div><span style={{color:C.acc,fontWeight:900,fontSize:15,letterSpacing:-.5}}>TANSHA</span><span style={{color:C.dim,fontSize:10,marginLeft:5}}>· {TITLES[active]}</span></div>
       </div>
       <div style={{display:"flex",alignItems:"center",gap:9}}>
@@ -622,7 +636,7 @@ export default function App(){
     </div>
 
     {/* Content */}
-    <div style={{padding:active==="chat"?0:15,paddingBottom:active==="chat"?0:75,minHeight:"calc(100vh - 52px - 56px)"}}>
+    <div style={{padding:active==="chat"?0:15,paddingBottom:active==="chat"?0:isDesktop?15:75,minHeight:"calc(100vh - 52px - 56px)",marginLeft:isDesktop?SW:0,maxWidth:isDesktop?"none":480,margin:isDesktop?`0 0 0 ${SW}px`:"0 auto"}}>
       {active!=="chat"&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
         <h2 style={{margin:0,fontSize:17,fontWeight:800}}>{NAV.find(n=>n.id===active)?.i} {TITLES[active]}</h2>
         <span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:5,padding:"2px 9px",fontSize:9,fontWeight:700}}>{role}</span>
@@ -640,7 +654,7 @@ export default function App(){
     </div>
 
     {/* Bottom nav */}
-    <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.card,borderTop:`1px solid ${C.cb}`,boxShadow:'0 -1px 0 #E5E7EB',display:"flex",zIndex:100}}>
+    {!isDesktop&&<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.card,borderTop:`1px solid ${C.cb}`,boxShadow:'0 -1px 0 #E5E7EB',display:"flex",zIndex:100}}>
       {bnav.map(n=>{const isA=active===n.id;return<button key={n.id} onClick={()=>nav(n.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"7px 3px",background:"transparent",border:"none",cursor:"pointer",position:"relative"}}>
         {isA&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:C.acc,borderRadius:"0 0 2px 2px"}}/>}
         <span style={{fontSize:16}}>{n.i}</span>
@@ -648,6 +662,6 @@ export default function App(){
         {n.id==="tasks"&&unread>0&&<div style={{position:"absolute",top:4,right:"16%",width:13,height:13,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:800}}>{unread}</div>}
       </button>;})}
       <button onClick={()=>setShowNav(true)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"7px 3px",background:"transparent",border:"none",cursor:"pointer"}}><span style={{fontSize:16}}>⋯</span><span style={{fontSize:8,color:C.muted}}>More</span></button>
-    </div>
+    </div>}
   </div>);
 }
