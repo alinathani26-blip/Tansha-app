@@ -1,21 +1,24 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 
-// ── Soft, subtle colour system — easy on the eyes ──
 const C={
-  bg:"#F7F8FA",          // soft off-white background
-  card:"#FFFFFF",        // clean white cards
-  cb:"#E5E7EB",          // light grey borders
-  acc:"#6366F1",         // muted indigo accent
-  green:"#16A34A",       // calm green
-  red:"#DC2626",         // soft red
-  blue:"#2563EB",        // professional blue
-  purple:"#7C3AED",      // gentle purple
-  teal:"#0891B2",        // calm teal
-  orange:"#EA580C",      // warm orange
-  text:"#111827",        // near-black text
-  muted:"#6B7280",       // medium grey
-  dim:"#9CA3AF",         // light grey
-  cardBg:"#F9FAFB",      // very subtle card tint
+  bg:"#F1F5F9",
+  card:"#FFFFFF",
+  cb:"#E2E8F0",
+  acc:"#4F46E5",
+  green:"#059669",
+  red:"#DC2626",
+  blue:"#1D4ED8",
+  purple:"#7C3AED",
+  teal:"#0E7490",
+  orange:"#C2410C",
+  text:"#0F172A",
+  muted:"#64748B",
+  dim:"#94A3B8",
+  cardBg:"#F8FAFC",
+  nav:"#0F172A",
+  navHover:"#1E293B",
+  sh:"0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04)",
+  sh2:"0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.05)",
 };
 const RC={
   Owner:{bg:"#EEF2FF",text:"#4338CA",border:"#C7D2FE"},
@@ -28,8 +31,8 @@ const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov",
 const CM=new Date().getMonth();
 const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Asif Bhai","Noor Bhai","Tayyab Bhai","Prakash Bhai","Kaif Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Javed Bhai","Sabajit Bhai","Ashfaq Bhai"];
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
-const INP={background:"#F9FAFB",border:`1px solid ${C.cb}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,width:"100%",outline:"none",boxSizing:"border-box"};
-const LBL={color:C.muted,fontSize:11,fontWeight:700,letterSpacing:.8,textTransform:"uppercase",marginBottom:5,display:"block"};
+const INP={background:"#FFFFFF",border:`1.5px solid ${C.cb}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,width:"100%",outline:"none",boxSizing:"border-box",transition:"border-color .15s"};
+const LBL={color:C.muted,fontSize:11,fontWeight:600,letterSpacing:.5,textTransform:"uppercase",marginBottom:5,display:"block"};
 
 // ── UI primitives ──
 function Av({name,size=30,online}){
@@ -40,7 +43,7 @@ function Av({name,size=30,online}){
 }
 function Bdg({label,color,bg,border}){
   return (
-    <span style={{background:bg||"#F3F4F6",color:color||C.muted,border:`1px solid ${border||C.cb}`,borderRadius:6,padding:"2px 8px",fontSize:10,fontWeight:700,whiteSpace:"nowrap"}}>{label}</span>
+    <span style={{background:bg||C.bg,color:color||C.muted,border:`1px solid ${border||C.cb}`,borderRadius:5,padding:"2px 9px",fontSize:10,fontWeight:600,whiteSpace:"nowrap",letterSpacing:.2}}>{label}</span>
   );
 }
 function Pill({label,value,color}){
@@ -53,24 +56,25 @@ function Pill({label,value,color}){
 }
 function Card({children,a,style={}}){
   return (
-    <div style={{background:C.card,border:`1px solid ${a?a+"44":C.cb}`,borderRadius:12,padding:14,...style}}>{children}</div>
+    <div style={{background:C.card,border:`1px solid ${a?a+"33":C.cb}`,borderRadius:14,padding:16,boxShadow:C.sh,...style}}>{children}</div>
   );
 }
-function SL({text,color=C.dim}){
+function SL({text,color=C.muted}){
   return (
-    <div style={{color,fontSize:10,fontWeight:800,textTransform:"uppercase",letterSpacing:1.2,marginBottom:8,display:"flex",alignItems:"center",gap:5}}>
-      <span style={{width:5,height:5,borderRadius:"50%",background:color,display:"inline-block"}}/>
+    <div style={{color,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:10,paddingBottom:8,borderBottom:`1px solid ${C.cb}`,display:"flex",alignItems:"center",gap:6}}>
+      <span style={{width:3,height:12,borderRadius:2,background:C.acc,display:"inline-block"}}/>
       {text}
     </div>
   );
 }
 function Mod({onClose,title,sub,children}){
-  return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center"}} onClick={onClose}>
-    <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:520,maxHeight:"90vh",overflowY:"auto",padding:20,border:`1px solid ${C.cb}`,animation:"sU .25s ease"}}>
+  return (<div style={{position:"fixed",inset:0,background:"rgba(15,23,42,0.5)",zIndex:500,display:"flex",alignItems:"flex-end",justifyContent:"center",backdropFilter:"blur(2px)"}} onClick={onClose}>
+    <div onClick={e=>e.stopPropagation()} style={{background:C.card,borderRadius:"20px 20px 0 0",width:"100%",maxWidth:520,maxHeight:"92vh",overflowY:"auto",padding:22,boxShadow:C.sh2,animation:"sU .22s ease"}}>
       <style>{`@keyframes sU{from{transform:translateY(100%)}to{transform:translateY(0)}}`}</style>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:16}}>
-        <div><div style={{color:C.text,fontWeight:800,fontSize:17}}>{title}</div>{sub&&<div style={{color:C.muted,fontSize:12,marginTop:2}}>{sub}</div>}</div>
-        <button onClick={onClose} style={{background:C.cb,border:"none",color:C.muted,borderRadius:8,width:30,height:30,cursor:"pointer",fontSize:16}}>✕</button>
+      <div style={{width:36,height:4,borderRadius:2,background:C.cb,margin:"0 auto 18px"}}/>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:18}}>
+        <div><div style={{color:C.text,fontWeight:700,fontSize:17}}>{title}</div>{sub&&<div style={{color:C.muted,fontSize:12,marginTop:3}}>{sub}</div>}</div>
+        <button onClick={onClose} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,width:32,height:32,cursor:"pointer",fontSize:15,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button>
       </div>
       {children}
     </div>
@@ -115,25 +119,25 @@ function Dashboard({role,currentUser,onNav,notifs}){
   const activity=[{i:"💰",t:"Naresh Steel Centre paid ₹86,499",time:"10m",c:C.green},{i:"✅",t:"Hotel Leela follow-up due — Kaif Bhai",time:"30m",c:C.blue},{i:"🚚",t:"Metro Hospitality — 10 CTN dispatched",time:"1h",c:C.teal},{i:"⚠️",t:"Whisky Glass 300ml — Low stock",time:"2h",c:C.orange},{i:"💬",t:"Saud Bhai mentioned you in Payments",time:"3h",c:C.purple},{i:"🎫",t:"New ticket — Radisson Blu damaged boxes",time:"4h",c:C.red}];
   const ACCESS={Owner:["payment","dispatch","tasks","stocks","sales","ops"],Manager:["payment","dispatch","tasks","stocks","sales","ops"],Sales:["tasks","sales","ops"],Warehouse:["dispatch","tasks","stocks","ops"]};
   return (<div>
-    <div style={{background:`linear-gradient(135deg,#EEF2FF,#F0F9FF)`,border:`1px solid ${C.acc}33`,borderRadius:14,padding:"16px 18px",marginBottom:18}}>
-      <div style={{color:C.text,fontWeight:800,fontSize:20,marginBottom:3}}>Good morning, {currentUser.split(" ")[0]}! 👋</div>
-      <div style={{color:C.muted,fontSize:12}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
-      <div style={{display:"flex",gap:8,marginTop:10,flexWrap:"wrap"}}>
-        <span style={{background:C.acc+"33",borderRadius:7,padding:"4px 10px",color:C.acc,fontSize:11,fontWeight:700}}>TANSHA HOSPITALITY</span>
-        <span style={{background:C.green+"22",borderRadius:7,padding:"4px 10px",color:C.green,fontSize:11,fontWeight:700}}>17 Members</span>
-        <span style={{background:RC[role].bg,borderRadius:7,padding:"4px 10px",color:RC[role].text,fontSize:11,fontWeight:700}}>{role}</span>
+    <div style={{background:`linear-gradient(135deg,${C.nav} 0%,#1E293B 100%)`,borderRadius:16,padding:"20px 20px",marginBottom:18,boxShadow:C.sh2}}>
+      <div style={{color:"#F1F5F9",fontWeight:700,fontSize:20,marginBottom:3}}>Good morning, {currentUser.split(" ")[0]}! 👋</div>
+      <div style={{color:"#94A3B8",fontSize:12,marginBottom:12}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+        <span style={{background:"rgba(99,102,241,0.25)",border:"1px solid rgba(99,102,241,0.3)",borderRadius:6,padding:"3px 10px",color:"#A5B4FC",fontSize:11,fontWeight:600}}>TANSHA HOSPITALITY</span>
+        <span style={{background:"rgba(16,185,129,0.2)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:6,padding:"3px 10px",color:"#6EE7B7",fontSize:11,fontWeight:600}}>17 Members</span>
+        <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:6,padding:"3px 10px",color:"#E2E8F0",fontSize:11,fontWeight:600}}>{role}</span>
       </div>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9,marginBottom:18}}>
-      {stats.filter(s=>ACCESS[role]?.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${s.c}33`,borderRadius:12,padding:"14px",cursor:"pointer",position:"relative",overflow:"hidden"}} onMouseEnter={e=>e.currentTarget.style.background=s.c+"11"} onMouseLeave={e=>e.currentTarget.style.background=C.card}>
-        <div style={{position:"absolute",top:-8,right:-8,fontSize:44,opacity:.07}}>{s.i}</div>
-        <div style={{fontSize:22,marginBottom:5}}>{s.i}</div>
-        <div style={{color:s.c,fontWeight:800,fontSize:20}}>{s.v}</div>
-        <div style={{color:C.muted,fontSize:11,fontWeight:600,marginTop:2}}>{s.l}</div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
+      {stats.filter(s=>ACCESS[role]?.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:14,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.borderColor=s.c+"55";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.borderColor=C.cb;}}>
+        <div style={{position:"absolute",top:-10,right:-10,fontSize:48,opacity:.05}}>{s.i}</div>
+        <div style={{width:36,height:36,borderRadius:10,background:s.c+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:10}}>{s.i}</div>
+        <div style={{color:s.c,fontWeight:800,fontSize:22,lineHeight:1}}>{s.v}</div>
+        <div style={{color:C.muted,fontSize:11,fontWeight:500,marginTop:4}}>{s.l}</div>
       </div>)}
     </div>
     <Card><SL text="Recent Activity"/>
-      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:9,marginBottom:10}}><div style={{width:32,height:32,borderRadius:8,background:a.c+"22",display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,flexShrink:0}}>{a.i}</div><div><div style={{color:C.text,fontSize:12}}>{a.t}</div><div style={{color:C.dim,fontSize:10,marginTop:1}}>{a.time} ago</div></div></div>)}
+      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"8px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:a.c+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time} ago</div></div></div>)}
     </Card>
   </div>);
 }
@@ -588,44 +592,64 @@ const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Qu
 
 export default function App(){
   const [role,setRole]=useState("Owner");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
+  const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
+  useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
-  return (<div style={{fontFamily:"'DM Sans','Segoe UI',sans-serif",background:"#F7F8FA",minHeight:"100vh",color:C.text,maxWidth:480,margin:"0 auto",position:"relative",fontFamily:"'Inter','DM Sans','Segoe UI',sans-serif"}}>
+  const SW=220;
+  return (<div style={{fontFamily:"'Inter','DM Sans','Segoe UI',sans-serif",background:"#F7F8FA",minHeight:"100vh",color:C.text,position:"relative"}}>
     <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
     {showN&&<NotifPanel notifs={notifs} setNotifs={setNotifs} onClose={()=>setShowN(false)}/>}
-    {showNav&&<div style={{position:"fixed",inset:0,background:"#000B",zIndex:400}} onClick={()=>setShowNav(false)}>
-      <div onClick={e=>e.stopPropagation()} style={{position:"absolute",left:0,top:0,bottom:0,width:230,background:C.card,borderRight:`1px solid ${C.cb}`,overflowY:"auto",animation:"sL .25s ease"}}>
+    {showNav&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,backdropFilter:"blur(2px)"}} onClick={()=>setShowNav(false)}>
+      <div onClick={e=>e.stopPropagation()} style={{position:"absolute",left:0,top:0,bottom:0,width:240,background:C.nav,overflowY:"auto",animation:"sL .22s ease"}}>
         <style>{`@keyframes sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
-        <div style={{padding:"18px 15px 13px",borderBottom:`1px solid ${C.cb}`}}>
-          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:11}}><Av name={cu} size={38}/><div><div style={{color:C.text,fontWeight:700,fontSize:13}}>{cu}</div><span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:5,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
-          <div style={{color:C.dim,fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5}}>Switch Role</div>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");setShowNav(false);}} style={{background:role===r?RC[r].bg:C.cb,color:role===r?RC[r].text:C.muted,border:`1px solid ${role===r?RC[r].border:"transparent"}`,borderRadius:5,padding:"3px 7px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
+        <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+          <div style={{color:"#fff",fontWeight:800,fontSize:17,letterSpacing:-.3,marginBottom:14}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
+          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
+          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch Role</div>
+          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");setShowNav(false);}} style={{background:role===r?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.06)",color:role===r?"#A5B4FC":"#64748B",border:`1px solid ${role===r?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:5,padding:"3px 8px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
         </div>
-        <div style={{padding:"9px 9px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:9,alignItems:"center",background:active===n.id?C.acc+"22":"transparent",border:`1px solid ${active===n.id?C.acc+"44":"transparent"}`,borderRadius:7,padding:"9px 9px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?C.acc:C.text,fontWeight:active===n.id?700:500,fontSize:12}}>{TITLES[n.id]}</span></button>)}
+        <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
       </div>
     </div>}
 
-    {/* Topbar */}
-    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:"0 15px",height:52,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 3px rgba(0,0,0,0.06)"}}>
-      <div style={{display:"flex",alignItems:"center",gap:9}}>
-        <button onClick={()=>setShowNav(true)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:19,padding:0}}>☰</button>
-        <div><span style={{color:C.acc,fontWeight:900,fontSize:15,letterSpacing:-.5}}>TANSHA</span><span style={{color:C.dim,fontSize:10,marginLeft:5}}>· {TITLES[active]}</span></div>
+    {/* Desktop sidebar */}
+    {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.nav,overflowY:"auto",zIndex:200}}>
+      <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
+        <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
+        <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch Role</div>
+        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");}} style={{background:role===r?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.06)",color:role===r?"#A5B4FC":"#64748B",border:`1px solid ${role===r?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:5,padding:"3px 8px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:9}}>
-        <button onClick={()=>setShowN(true)} style={{background:"none",border:"none",cursor:"pointer",position:"relative",padding:3}}>
-          <span style={{fontSize:19}}>🔔</span>
-          {unread>0&&<div style={{position:"absolute",top:0,right:0,width:15,height:15,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:9,fontWeight:800}}>{unread}</div>}
+      <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
+    </div>}
+
+    {/* Topbar */}
+    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:"0 18px",height:56,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 0 #E2E8F0",marginLeft:isDesktop?SW:0}}>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        {!isDesktop&&<button onClick={()=>setShowNav(true)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:18,padding:"0 4px 0 0",lineHeight:1}}>☰</button>}
+        <div>
+          {!isDesktop&&<span style={{color:C.acc,fontWeight:800,fontSize:15,letterSpacing:-.3}}>TANSHA </span>}
+          <span style={{color:C.muted,fontSize:13,fontWeight:500}}>{isDesktop?"":""}{TITLES[active]}</span>
+        </div>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <button onClick={()=>setShowN(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,cursor:"pointer",position:"relative",padding:"6px 8px",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:16}}>🔔</span>
+          {unread>0&&<div style={{position:"absolute",top:3,right:3,width:14,height:14,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:800}}>{unread}</div>}
         </button>
-        <Av name={cu} size={28}/>
+        <Av name={cu} size={30}/>
       </div>
     </div>
 
     {/* Content */}
-    <div style={{padding:active==="chat"?0:15,paddingBottom:active==="chat"?0:75,minHeight:"calc(100vh - 52px - 56px)"}}>
-      {active!=="chat"&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16}}>
-        <h2 style={{margin:0,fontSize:17,fontWeight:800}}>{NAV.find(n=>n.id===active)?.i} {TITLES[active]}</h2>
-        <span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:5,padding:"2px 9px",fontSize:9,fontWeight:700}}>{role}</span>
+    <div style={{padding:active==="chat"?0:15,paddingBottom:active==="chat"?0:isDesktop?15:75,minHeight:"calc(100vh - 52px - 56px)",marginLeft:isDesktop?SW:0,maxWidth:isDesktop?"none":480,margin:isDesktop?`0 0 0 ${SW}px`:"0 auto"}}>
+      {active!=="chat"&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
+        <div>
+          <h2 style={{margin:0,fontSize:18,fontWeight:700,color:C.text}}>{TITLES[active]}</h2>
+        </div>
+        <span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:600}}>{role}</span>
       </div>}
       {active==="home"&&<Dashboard role={role} currentUser={cu} onNav={nav} notifs={notifs}/>}
       {active==="tasks"&&<Tasks role={role} currentUser={cu} setNotifs={setNotifs}/>}
@@ -640,14 +664,14 @@ export default function App(){
     </div>
 
     {/* Bottom nav */}
-    <div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:C.card,borderTop:`1px solid ${C.cb}`,boxShadow:'0 -1px 0 #E5E7EB',display:"flex",zIndex:100}}>
-      {bnav.map(n=>{const isA=active===n.id;return<button key={n.id} onClick={()=>nav(n.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"7px 3px",background:"transparent",border:"none",cursor:"pointer",position:"relative"}}>
-        {isA&&<div style={{position:"absolute",top:0,left:"20%",right:"20%",height:2,background:C.acc,borderRadius:"0 0 2px 2px"}}/>}
-        <span style={{fontSize:16}}>{n.i}</span>
-        <span style={{fontSize:8,fontWeight:isA?700:400,color:isA?C.acc:C.muted}}>{n.l}</span>
-        {n.id==="tasks"&&unread>0&&<div style={{position:"absolute",top:4,right:"16%",width:13,height:13,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:800}}>{unread}</div>}
+    {!isDesktop&&<div style={{position:"fixed",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,background:"rgba(255,255,255,0.97)",borderTop:`1px solid ${C.cb}`,boxShadow:"0 -4px 16px rgba(0,0,0,0.06)",display:"flex",zIndex:100,backdropFilter:"blur(8px)"}}>
+      {bnav.map(n=>{const isA=active===n.id;return<button key={n.id} onClick={()=>nav(n.id)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"9px 3px 7px",background:"transparent",border:"none",cursor:"pointer",position:"relative"}}>
+        {isA&&<div style={{position:"absolute",top:0,left:"25%",right:"25%",height:2,background:C.acc,borderRadius:"0 0 3px 3px"}}/>}
+        <span style={{fontSize:17}}>{n.i}</span>
+        <span style={{fontSize:9,fontWeight:isA?700:400,color:isA?C.acc:C.dim}}>{n.l}</span>
+        {n.id==="tasks"&&unread>0&&<div style={{position:"absolute",top:5,right:"18%",width:14,height:14,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:800}}>{unread}</div>}
       </button>;})}
-      <button onClick={()=>setShowNav(true)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:1,padding:"7px 3px",background:"transparent",border:"none",cursor:"pointer"}}><span style={{fontSize:16}}>⋯</span><span style={{fontSize:8,color:C.muted}}>More</span></button>
-    </div>
+      <button onClick={()=>setShowNav(true)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:2,padding:"9px 3px 7px",background:"transparent",border:"none",cursor:"pointer"}}><span style={{fontSize:17}}>⋯</span><span style={{fontSize:9,color:C.dim}}>More</span></button>
+    </div>}
   </div>);
 }
