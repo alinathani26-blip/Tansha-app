@@ -371,10 +371,8 @@ const UP=[{n:"UKIYO SAKE SET",a:"UK-SS-01",p:850,g:18},{n:"STONE BOWL 8001",a:"B
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
   const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");
-  const [saved,setSaved]=useState([
-    {id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},
-    {id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}
-  ]);
+  const [saved,setSaved]=useState(()=>{try{const s=localStorage.getItem("tansha_quotes");return s?JSON.parse(s):[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}];}catch{return [];}});
+  useEffect(()=>{try{localStorage.setItem("tansha_quotes",JSON.stringify(saved));}catch{}},[saved]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
   const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
