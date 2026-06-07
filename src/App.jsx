@@ -394,17 +394,11 @@ function Quotation(){
     const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     const rows=items.map(it=>`<tr><td>${it.n}</td><td style="color:#64748B">${it.a}</td><td style="text-align:center">${it.qty}</td><td style="text-align:right">₹${fmtN(it.p)}</td><td style="text-align:right;font-weight:600">₹${fmtN(it.qty*it.p)}</td></tr>`).join("");
     const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${qNo}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;padding:32px;color:#0F172A;font-size:13px}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #4F46E5}.co{font-size:22px;font-weight:800;color:#4F46E5;letter-spacing:-.5px}.cosub{color:#64748B;font-size:11px;margin-top:4px}.qno{font-size:20px;font-weight:700;text-align:right}.qdate{color:#64748B;font-size:11px;margin-top:4px;text-align:right}.to{margin-bottom:20px;padding:14px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid #4F46E5}.tolbl{color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}.toname{font-size:16px;font-weight:700}table{width:100%;border-collapse:collapse;margin-bottom:20px}th{background:#0F172A;color:#fff;padding:9px 10px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.3px}td{padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:12px}tr:hover td{background:#F8FAFC}.totals{margin-left:auto;width:260px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden}.totals td{padding:8px 14px;border-bottom:1px solid #F1F5F9}.grand td{background:#0F172A;color:#fff;font-weight:800;font-size:15px;border-bottom:none}.footer{margin-top:28px;text-align:center;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;padding-top:14px}@media print{body{padding:16px}}</style></head><body><div class="hdr"><div><div class="co">TANSHA HOSPITALITY</div><div class="cosub">Mumbai &nbsp;|&nbsp; Ocean Division</div></div><div><div class="qno">${qNo}</div><div class="qdate">Date: ${date}</div></div></div><div class="to"><div class="tolbl">Quotation For</div><div class="toname">${client}</div></div><table><thead><tr><th>Product</th><th>Code</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><table class="totals"><tbody><tr><td>Subtotal</td><td style="text-align:right">₹${fmtN(sub)}</td></tr>${disc>0?`<tr><td>Discount (${disc}%)</td><td style="text-align:right;color:#DC2626">−₹${fmtN(sub*disc/100)}</td></tr>`:""}<tr><td>GST @18%</td><td style="text-align:right">₹${fmtN(gst)}</td></tr></tbody><tfoot><tr class="grand"><td>Grand Total</td><td style="text-align:right">₹${fmtN(grand)}</td></tr></tfoot></table><div class="footer">Thank you for your business &nbsp;·&nbsp; Tansha Hospitality &nbsp;·&nbsp; Mumbai</div><script>window.onload=()=>window.print();<\/script></body></html>`;
-    const w=window.open("","_blank","width=900,height=700");w.document.write(html);w.document.close();
-  }
-  function shareWhatsApp(){
-    if(!client||!items.length)return;
-    const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short",year:"numeric"});
-    let t=`🏢 *TANSHA HOSPITALITY*\n📋 Quotation *${qNo}*\n📅 ${date}\n👤 *${client}*\n\n*Items:*\n`;
-    items.forEach(it=>{t+=`• ${it.n} (${it.a}) × ${it.qty} = ₹${fmtN(it.qty*it.p)}\n`;});
-    t+=`\nSubtotal: ₹${fmtN(sub)}`;
-    if(disc>0)t+=`\nDiscount (${disc}%): −₹${fmtN(sub*disc/100)}`;
-    t+=`\nGST: ₹${fmtN(gst)}\n*Grand Total: ₹${fmtN(grand)}*\n\n_Thank you — Tansha Hospitality_`;
-    window.open(`https://wa.me/?text=${encodeURIComponent(t)}`,"_blank");
+    const blob=new Blob([html],{type:"text/html;charset=utf-8"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),15000);
   }
   return (<div>
     {editingId&&<div style={{background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.orange,fontWeight:700,fontSize:13}}>✏️ Editing {qNo}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>Make changes then save to update</div></div><button onClick={cancelEdit} style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,color:C.orange,borderRadius:7,padding:"4px 11px",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button></div>}
@@ -429,7 +423,7 @@ function Quotation(){
       <div style={{display:"flex",justifyContent:"space-between",marginBottom:9}}><span style={{color:C.muted}}>GST</span><span style={{color:C.text,fontWeight:600}}>{fmt(gst)}</span></div>
       <div style={{display:"flex",justifyContent:"space-between",borderTop:`1px solid ${C.cb}`,paddingTop:9}}><span style={{color:C.text,fontWeight:800,fontSize:15}}>Grand Total</span><span style={{color:C.green,fontWeight:800,fontSize:19}}>{fmt(grand)}</span></div>
     </Card>
-    <div style={{display:"flex",gap:7,marginBottom:11}}><button onClick={shareWhatsApp} style={{flex:1,background:"#25D36615",border:`1px solid #25D36640`,color:"#16a34a",borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📱 WhatsApp</button><button onClick={generatePDF} style={{flex:1,background:C.blue+"15",border:`1px solid ${C.blue}40`,color:C.blue,borderRadius:9,padding:11,fontWeight:700,cursor:"pointer",fontSize:13}}>📄 Export PDF</button></div>
+    <button onClick={generatePDF} style={{background:C.blue,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:11,fontSize:14}}>📄 Export PDF</button>
     <button onClick={saveQuotation} style={{background:editingId?C.orange:C.green,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%",marginBottom:14}}>{editingId?"Update Quotation ✓":"Save Quotation ✓"}</button></>}
     {saved.length>0&&<>
       <SL text={`Saved Quotations (${saved.length})`}/>
