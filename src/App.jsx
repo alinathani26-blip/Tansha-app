@@ -293,20 +293,26 @@ function Tasks({role,currentUser,setNotifs}){
 
 // ── Dispatch ──
 const LC={"Bhiwandi":C.purple,"Local Tansha":C.blue,"Local Kaizen":C.acc};
-const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"Rajesh",lr:true,status:"Dispatched",date:TODAY},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"Gujarat",lr:false,status:"Pending",date:TODAY},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"Hand Delivery",lr:true,status:"Dispatched",date:TODAY},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"Porter",lr:false,status:"Pending",date:TODAY}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"Munshi",lr:false,status:"Pending",date:TODAY}]};
-function DCard({d,lc,onToggle,onLR,onEdit}){
-  const isO=["Porter","Hand Delivery"].includes(d.transport);const qP=d.qty===null;
-  return (<div style={{background:d.status==="Dispatched"?C.green+"0D":C.card,border:`1px solid ${d.status==="Dispatched"?C.green+"44":C.cb}`,borderRadius:11,padding:"11px 13px"}}>
-    <div style={{display:"flex",justifyContent:"space-between",gap:7}}>
-      <div style={{flex:1}}><div style={{color:d.status==="Dispatched"?C.muted:C.text,fontWeight:700,fontSize:13,textDecoration:d.status==="Dispatched"?"line-through":"none",marginBottom:5}}>{d.client}</div>
-        <div style={{display:"flex",gap:7,flexWrap:"wrap",alignItems:"center"}}>
-          <button onClick={()=>onEdit(d)} style={{background:qP?C.acc+"22":lc+"22",border:`1px solid ${qP?C.acc+"44":lc+"33"}`,borderRadius:5,padding:"2px 7px",cursor:"pointer",color:qP?C.acc:lc,fontSize:10,fontWeight:700}}>{qP?"+ Qty":`${d.qty} ${d.unit}`}</button>
+const DSC={Pending:C.acc,Ready:C.orange,"On Hold":C.red,Dispatched:C.green};
+const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"Rajesh",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:""},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"Gujarat",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"Hand Delivery",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:""},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"Porter",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"Munshi",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}]};
+function DCard({d,lc,onOpen}){
+  const isO=["Porter","Hand Delivery"].includes(d.transport);const sc=DSC[d.status]||C.acc;
+  return (<div onClick={()=>onOpen(d)} style={{background:d.status==="Dispatched"?C.green+"0D":d.status==="On Hold"?C.red+"08":d.status==="Ready"?C.orange+"08":C.card,border:`1px solid ${d.status==="Dispatched"?C.green+"33":d.status==="On Hold"?C.red+"33":d.status==="Ready"?C.orange+"33":C.cb}`,borderLeft:`3px solid ${sc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+    <div style={{display:"flex",justifyContent:"space-between",gap:7,alignItems:"center"}}>
+      <div style={{flex:1,minWidth:0}}>
+        <div style={{color:d.status==="Dispatched"?C.muted:C.text,fontWeight:700,fontSize:13,textDecoration:d.status==="Dispatched"?"line-through":"none",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.client}</div>
+        <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
+          {d.qty?<span style={{background:lc+"22",color:lc,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${lc}33`}}>{d.qty} {d.unit}</span>:<span style={{background:C.red+"18",color:C.red,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${C.red}33`}}>No Qty</span>}
           <span style={{color:isO?C.blue:C.muted,fontSize:11}}>{isO?"🚶":"🚛"} {d.transport}</span>
+          {d.photo&&<span style={{fontSize:11}}>📎</span>}
+          {d.audio&&<span style={{fontSize:11}}>🎤</span>}
+          {d.lr&&<span style={{background:C.green+"22",color:C.green,border:`1px solid ${C.green}44`,borderRadius:4,padding:"1px 6px",fontSize:9,fontWeight:700}}>LR ✓</span>}
         </div>
+        {d.status==="On Hold"&&d.holdNote&&<div style={{color:C.red,fontSize:10,marginTop:3,fontStyle:"italic"}}>🔒 {d.holdNote}</div>}
       </div>
-      <div style={{display:"flex",flexDirection:"column",gap:5,alignItems:"flex-end"}}>
-        <button onClick={()=>onToggle(d.id)} style={{background:d.status==="Dispatched"?C.green:C.acc,border:"none",color:"#fff",borderRadius:18,padding:"4px 11px",fontWeight:800,fontSize:10,cursor:"pointer"}}>{d.status==="Dispatched"?"✅ Done":"⏳ Pending"}</button>
-        <button onClick={()=>onLR(d.id)} style={{background:d.lr?C.green+"22":C.cb,border:`1px solid ${d.lr?C.green+"55":C.dim}`,borderRadius:5,padding:"2px 7px",cursor:"pointer",display:"flex",alignItems:"center",gap:3}}><div style={{width:10,height:10,borderRadius:2,background:d.lr?C.green:"transparent",border:`2px solid ${d.lr?C.green:C.dim}`,display:"flex",alignItems:"center",justifyContent:"center"}}>{d.lr&&<span style={{color:"#fff",fontSize:7,fontWeight:900}}>✓</span>}</div><span style={{color:d.lr?C.green:C.muted,fontSize:10,fontWeight:600}}>LR</span></button>
+      <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:4,flexShrink:0}}>
+        <Bdg label={d.status} color={sc} bg={sc+"22"} border={sc+"44"}/>
+        <span style={{color:C.dim,fontSize:12}}>›</span>
       </div>
     </div>
   </div>);
@@ -314,39 +320,100 @@ function DCard({d,lc,onToggle,onLR,onEdit}){
 function Dispatch({role}){
   const [loc,setLoc]=useState("Bhiwandi");
   const [disps,setDisps]=useState(DISP0);
-  const [editE,setEditE]=useState(null);
+  const [sel,setSel]=useState(null);
+  const [editForm,setEditForm]=useState(null);
   const [showNew,setShowNew]=useState(false);
+  const [showDel,setShowDel]=useState(false);
+  const [showHold,setShowHold]=useState(false);
+  const [holdInput,setHoldInput]=useState("");
+  const [qtyInp,setQtyInp]=useState("");
+  const [qtyUnit,setQtyUnit]=useState("Ctn");
   const [form,setForm]=useState({client:"",transport:"Rajesh",date:TODAY});
   const lc=LC[loc];
   const all=disps[loc]||[];
+  const ready=all.filter(d=>d.status==="Ready");
+  const held=all.filter(d=>d.status==="On Hold");
   const pend=all.filter(d=>d.status==="Pending");
   const disp=all.filter(d=>d.status==="Dispatched");
   const TR=["Rajesh","Munshi","Tukaram","Gujarat","VRL","Thane Motor","New Super","Porter","Hand Delivery"];
-  function tog(id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,status:d.status==="Pending"?"Dispatched":"Pending"}:d)}));}
-  function togLR(id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,lr:!d.lr}:d)}));}
-  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending"}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
-  function saveQty(id,qty,unit){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,qty,unit}:d)}));setEditE(null);}
+  function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
+  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:""}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
+  function openD(d){setSel(d);setShowDel(false);setShowHold(false);setHoldInput("");setQtyInp(d.qty?String(d.qty):"");setQtyUnit(d.unit||"Ctn");}
+  function saveQty(){const q=parseInt(qtyInp);if(!q)return;upd(sel.id,{qty:q,unit:qtyUnit,status:"Ready"});}
+  function deleteD(){setDisps(p=>({...p,[loc]:p[loc].filter(d=>d.id!==sel.id)}));setSel(null);setShowDel(false);}
+  function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
+  function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
+  function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
   return (<div>
-    {editE&&<Mod onClose={()=>setEditE(null)} title={editE.client} sub="Add quantity">
-      <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:10,marginBottom:12}}>
-        <div><label style={LBL}>Qty</label><input type="number" id="qv" style={INP} defaultValue={editE.qty||""}/></div>
-        <div><label style={LBL}>Unit</label><select id="qu" style={{...INP,appearance:"none"}} defaultValue={editE.unit}><option>Ctn</option><option>Jota</option><option>Bag</option></select></div>
+    {/* Detail Modal */}
+    {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);setShowHold(false);}} title={sel.client} sub={`${sel.transport} · ${sel.date}`}>
+      <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <Bdg label={sel.status} color={DSC[sel.status]} bg={DSC[sel.status]+"22"} border={DSC[sel.status]+"44"}/>
+        {sel.lr&&<Bdg label="LR ✓" color={C.green} bg={C.green+"22"} border={C.green+"44"}/>}
+        <div style={{marginLeft:"auto",display:"flex",gap:5}}>
+          <button onClick={()=>{setEditForm({...sel});}} style={{background:"#EEF2FF",border:"1px solid #C7D2FE",color:C.acc,borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏ Edit</button>
+          <button onClick={()=>setShowDel(true)} style={{background:"#FEE2E2",border:"1px solid #FECACA",color:C.red,borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑</button>
+        </div>
       </div>
-      <button onClick={()=>saveQty(editE.id,parseInt(document.getElementById("qv").value)||0,document.getElementById("qu").value)} style={{background:lc,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
+      {showDel&&<div style={{background:"#FFF7F7",border:"1.5px solid #FECACA",borderRadius:10,padding:12,marginBottom:12}}><div style={{color:C.red,fontWeight:700,fontSize:13,marginBottom:5}}>Delete this entry?</div><div style={{color:C.muted,fontSize:12,marginBottom:9}}>This cannot be undone.</div><div style={{display:"flex",gap:8}}><button onClick={()=>setShowDel(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"8px 0",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button><button onClick={deleteD} style={{flex:1,background:C.red,border:"none",color:"#fff",borderRadius:8,padding:"8px 0",fontWeight:800,cursor:"pointer",fontSize:12}}>Yes, Delete</button></div></div>}
+      {/* Qty */}
+      <div style={{marginBottom:12}}>
+        <label style={LBL}>Quantity {sel.status==="Ready"&&<span style={{color:C.orange,fontWeight:700}}>— Ready ✓</span>}</label>
+        {sel.status==="Dispatched"?<div style={{background:C.bg,borderRadius:8,padding:"8px 12px",color:C.text,fontWeight:700}}>{sel.qty} {sel.unit}</div>:<div style={{display:"grid",gridTemplateColumns:"2fr 1fr auto",gap:8}}><input type="number" style={INP} placeholder="Enter qty…" value={qtyInp} onChange={e=>setQtyInp(e.target.value)}/><select style={{...INP,appearance:"none"}} value={qtyUnit} onChange={e=>setQtyUnit(e.target.value)}><option>Ctn</option><option>Jota</option><option>Bag</option></select><button onClick={saveQty} style={{background:C.green,border:"none",color:"#fff",borderRadius:8,padding:"0 14px",fontWeight:800,cursor:"pointer",fontSize:14}}>✓</button></div>}
+      </div>
+      {/* LR Toggle */}
+      <button onClick={()=>upd(sel.id,{lr:!sel.lr})} style={{width:"100%",background:sel.lr?C.green+"22":C.bg,border:`1.5px solid ${sel.lr?C.green+"55":C.cb}`,color:sel.lr?C.green:C.muted,borderRadius:9,padding:"9px 12px",fontWeight:700,fontSize:12,cursor:"pointer",marginBottom:12,textAlign:"left"}}>{sel.lr?"✅ LR Received — tap to undo":"☐ LR Pending — tap to confirm receipt"}</button>
+      {/* Quotation Photo */}
+      <div style={{marginBottom:12}}>
+        <label style={LBL}>Quotation Photo</label>
+        {sel.photo?<div style={{position:"relative"}}><img src={sel.photo} alt="quotation" style={{width:"100%",borderRadius:9,maxHeight:200,objectFit:"cover",display:"block"}}/><button onClick={()=>upd(sel.id,{photo:null})} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.55)",border:"none",color:"#fff",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>:<label style={{display:"flex",alignItems:"center",gap:9,background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",cursor:"pointer",color:C.acc,fontWeight:700,fontSize:12}}>📎 Upload Quotation Photo<input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onloadend=()=>upd(sel.id,{photo:r.result});r.readAsDataURL(f);e.target.value="";}}/></label>}
+      </div>
+      {/* Voice Memo */}
+      <div style={{marginBottom:12}}>
+        <label style={LBL}>Voice Memo</label>
+        {sel.audio?<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><span>🎤</span><audio src={sel.audio} controls style={{flex:1,height:28}}/><button onClick={()=>upd(sel.id,{audio:null})} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,padding:2}}>✕</button></div>:<VoiceRecorder onSave={a=>upd(sel.id,{audio:a})}/>}
+      </div>
+      {/* Hold reason input */}
+      {showHold&&<div style={{background:"#FFF7F7",border:"1.5px solid #FECACA",borderRadius:10,padding:12,marginBottom:10}}>
+        <div style={{color:C.red,fontWeight:700,fontSize:12,marginBottom:7}}>Reason for Hold</div>
+        <textarea style={{...INP,minHeight:50,resize:"none",fontSize:12,marginBottom:8}} placeholder="e.g. Payment pending, Address issue…" value={holdInput} onChange={e=>setHoldInput(e.target.value)}/>
+        <button onClick={setHold} style={{background:C.red,border:"none",color:"#fff",borderRadius:8,padding:"9px 0",fontWeight:700,fontSize:12,cursor:"pointer",width:"100%"}}>Confirm Hold 🔒</button>
+      </div>}
+      {/* Action buttons */}
+      <div style={{display:"flex",gap:8,marginTop:4}}>
+        {sel.status==="On Hold"?<button onClick={unhold} style={{flex:1,background:C.green+"22",border:`1.5px solid ${C.green}55`,color:C.green,borderRadius:10,padding:11,fontWeight:700,fontSize:12,cursor:"pointer"}}>🔓 Release Hold</button>:<button onClick={()=>{setShowHold(p=>!p);if(showHold)setHoldInput("");}} style={{flex:1,background:showHold?"#FEE2E2":"#FFF7F7",border:`1.5px solid ${showHold?"#FECACA":"#FED7AA"}`,color:showHold?C.red:C.orange,borderRadius:10,padding:11,fontWeight:700,fontSize:12,cursor:"pointer"}}>{showHold?"✕ Cancel":"🔒 Hold"}</button>}
+        {sel.status==="Ready"&&<button onClick={()=>upd(sel.id,{status:"Dispatched"})} style={{flex:2,background:C.green,border:"none",color:"#fff",borderRadius:10,padding:11,fontWeight:800,cursor:"pointer",fontSize:12}}>🚚 Mark Dispatched</button>}
+        {sel.status==="Dispatched"&&<div style={{flex:2,textAlign:"center",padding:11,background:C.green+"22",borderRadius:9,color:C.green,fontWeight:700,fontSize:12}}>✅ Dispatched</div>}
+        {(sel.status==="Pending")&&<div style={{flex:2,textAlign:"center",padding:11,background:C.bg,borderRadius:9,color:C.muted,fontSize:11}}>Add qty above → auto Ready</div>}
+      </div>
     </Mod>}
+    {/* Edit Modal */}
+    {editForm&&<Mod onClose={()=>setEditForm(null)} title="Edit Dispatch" sub={editForm.client}>
+      <div style={{display:"flex",flexDirection:"column",gap:11}}>
+        <div><label style={LBL}>Client</label><input style={INP} value={editForm.client} onChange={e=>setEditForm(f=>({...f,client:e.target.value}))}/></div>
+        <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setEditForm(f=>({...f,transport:t}))} style={{background:editForm.transport===t?C.green+"33":C.cb,color:editForm.transport===t?C.green:C.muted,border:`1px solid ${editForm.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
+        <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:10}}><div><label style={LBL}>Qty</label><input type="number" style={INP} value={editForm.qty||""} onChange={e=>setEditForm(f=>({...f,qty:parseInt(e.target.value)||null}))}/></div><div><label style={LBL}>Unit</label><select style={{...INP,appearance:"none"}} value={editForm.unit} onChange={e=>setEditForm(f=>({...f,unit:e.target.value}))}><option>Ctn</option><option>Jota</option><option>Bag</option></select></div></div>
+        <div><label style={LBL}>Date</label><input type="date" style={INP} value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))}/></div>
+        <div><label style={LBL}>Status</label><select style={{...INP,appearance:"none"}} value={editForm.status} onChange={e=>setEditForm(f=>({...f,status:e.target.value}))}>{["Pending","Ready","On Hold","Dispatched"].map(s=><option key={s}>{s}</option>)}</select></div>
+        <div style={{display:"flex",gap:8}}><button onClick={()=>setEditForm(null)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:10,padding:12,fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={saveEdit} style={{flex:2,background:lc,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Save Changes ✓</button></div>
+      </div>
+    </Mod>}
+    {/* New Dispatch Modal */}
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Dispatch" sub={loc}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
         <div><label style={LBL}>Client *</label><input style={INP} placeholder="e.g. Taj Hotels" value={form.client} onChange={e=>setForm({...form,client:e.target.value})}/></div>
-        <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} onClick={()=>setForm({...form,transport:t})} style={{background:form.transport===t?C.green+"33":C.cb,color:form.transport===t?C.green:C.muted,border:`1px solid ${form.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
+        <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setForm({...form,transport:t})} style={{background:form.transport===t?C.green+"33":C.cb,color:form.transport===t?C.green:C.muted,border:`1px solid ${form.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
         <div><label style={LBL}>Date</label><input type="date" style={INP} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         <button onClick={add} style={{background:lc,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Save — Add Qty Later ›</button>
       </div>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
-    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{all.filter(d=>!d.qty).length>0&&<Pill label="Qty Pending" value={all.filter(d=>!d.qty).length} color={C.red}/>}{["Owner","Manager","Warehouse"].includes(role)&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
-    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onToggle={tog} onLR={togLR} onEdit={setEditE}/>)}</div></>}
-    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onToggle={tog} onLR={togLR} onEdit={setEditE}/>)}</div></>}
+    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button></div>
+    {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
+    {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
+    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
+    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
   </div>);
 }
 
