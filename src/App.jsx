@@ -159,7 +159,7 @@ function VoiceRecorder({onSave,compact=false}){
       const mRec=new MediaRecorder(stream);mr.current=mRec;ch.current=[];
       mRec.ondataavailable=e=>{if(e.data.size>0)ch.current.push(e.data);};
       mRec.onstop=()=>{
-        const blob=new Blob(ch.current,{type:"audio/webm"});
+        const blob=new Blob(ch.current,{type:mRec.mimeType||"audio/webm"});
         const reader=new FileReader();
         reader.onloadend=()=>{setUrl(reader.result);onSave(reader.result);};
         reader.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop());
@@ -212,15 +212,23 @@ function Tasks({role,currentUser,setNotifs}){
   const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
   const cnt={Pending:vis.filter(t=>t.status==="Pending").length,"In Progress":vis.filter(t=>t.status==="In Progress").length,Done:vis.filter(t=>t.status==="Done").length};
   const disp=filter==="All"?vis:vis.filter(t=>t.status===filter);
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});}
-  function advance(id){setTasks(p=>p.map(t=>{if(t.id!==id)return t;const n=t.status==="Pending"?"In Progress":"Done";if(n==="Done")setNotifs(prev=>[{id:Date.now(),icon:"✅",title:"Task Done ✅",body:`${t.title}`,time:"Just now",read:false,color:C.green},...prev]);return{...t,status:n};}));if(sel?.id===id)setSel(p=>({...p,status:p.status==="Pending"?"In Progress":"Done"}));}
-  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));setReplyText("");setReplyAudio(null);setShowReply(false);}
+  const [toast,setToast]=useState(null);const toastTmr=useRef(null);
+  function pushNotif(icon,title,body,color){
+    setNotifs(p=>[{id:Date.now(),icon,title,body,time:"Just now",read:false,color},...p]);
+    if(toastTmr.current)clearTimeout(toastTmr.current);
+    setToast({icon,text:title+(body?` — ${body}`:""),color});
+    toastTmr.current=setTimeout(()=>setToast(null),3500);
+  }
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});}
+  function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);if(sel?.id===id)setSel(p=>({...p,status:n}));}
+  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);setReplyText("");setReplyAudio(null);setShowReply(false);}
   function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);setShowDel(false);}
   function delTask(id){setTasks(p=>p.filter(t=>t.id!==id));setSel(null);setShowDel(false);}
   function startEdit(){setEditForm({...sel});setEditLoopOpen(false);}
-  function saveEdit(){if(!editForm.title||!editForm.to)return;setTasks(p=>p.map(t=>t.id===editForm.id?{...editForm}:t));setSel({...editForm});setEditForm(null);}
+  function saveEdit(){if(!editForm.title||!editForm.to)return;setTasks(p=>p.map(t=>t.id===editForm.id?{...editForm}:t));setSel({...editForm});pushNotif("✏️","Task Updated",editForm.title,C.acc);setEditForm(null);}
   function togLoop(name,isEd){if(isEd){setEditForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}else{setForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}}
   return (<div>
+    {toast&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:toast.color,color:"#fff",padding:"14px 18px",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"tDn .28s ease"}}><style>{`@keyframes tDn{from{transform:translateY(-100%)}to{transform:translateY(0)}}`}</style><span style={{fontSize:18,flexShrink:0}}>{toast.icon}</span><span style={{flex:1,lineHeight:1.3,fontSize:13}}>{toast.text}</span><button onClick={()=>setToast(null)} style={{background:"rgba(255,255,255,0.22)",border:"none",color:"#fff",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:14,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>}
     {showNew&&<Mod onClose={()=>{setShowNew(false);setLoopOpen(false);}} title="+ New Task" sub={`Assigning as ${currentUser}`}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
         <div><label style={LBL}>Title *</label><input style={INP} placeholder="Task description" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div>
