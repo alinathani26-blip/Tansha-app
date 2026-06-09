@@ -144,25 +144,52 @@ function Dashboard({role,currentUser,onNav,notifs}){
 
 // ── Tasks ──
 const TASKS0=[
-  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing"},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:""},
-  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:""},
-  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding"},
-  {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:""},
+  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[]},
+  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[]},
+  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[]},
+  {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[]},
 ];
+function VoiceRecorder({onSave,compact=false}){
+  const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);
+  const mr=useRef(null);const ch=useRef([]);const tmr=useRef(null);
+  async function start(){
+    try{
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      const mRec=new MediaRecorder(stream);mr.current=mRec;ch.current=[];
+      mRec.ondataavailable=e=>{if(e.data.size>0)ch.current.push(e.data);};
+      mRec.onstop=()=>{
+        const blob=new Blob(ch.current,{type:"audio/webm"});
+        const reader=new FileReader();
+        reader.onloadend=()=>{setUrl(reader.result);onSave(reader.result);};
+        reader.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop());
+      };
+      mRec.start();setRec(true);setSecs(0);
+      tmr.current=setInterval(()=>setSecs(s=>s+1),1000);
+    }catch(e){alert("Microphone access denied. Please allow mic in browser settings.");}
+  }
+  function stop(){if(mr.current)mr.current.stop();setRec(false);clearInterval(tmr.current);}
+  function clear(){setUrl(null);setSecs(0);onSave(null);}
+  const fmtS=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  if(url)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><span>🎤</span><audio src={url} controls style={{flex:1,height:28}}/><button onClick={clear} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,padding:2,lineHeight:1}}>✕</button></div>);
+  return(<button onClick={rec?stop:start} style={{background:rec?"#FEE2E2":"#EEF2FF",border:`1.5px solid ${rec?"#FECACA":"#C7D2FE"}`,color:rec?C.red:C.acc,borderRadius:9,padding:compact?"6px 14px":"10px 14px",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:7,width:compact?"auto":"100%",justifyContent:"center"}}><span style={{width:8,height:8,borderRadius:"50%",background:rec?C.red:C.acc,display:"inline-block"}}/>{rec?`⏹ Stop · ${fmtS(secs)}`:"🎤 Record Voice Note"}</button>);
+}
 function Tasks({role,currentUser,setNotifs}){
   const [tasks,setTasks]=useState(TASKS0);
   const [filter,setFilter]=useState("All");
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
-  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:""});
+  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null});
+  const [replyText,setReplyText]=useState("");const [replyAudio,setReplyAudio]=useState(null);const [showReply,setShowReply]=useState(false);
   const can=["Owner","Manager"].includes(role);
   const PC={High:C.red,Medium:C.acc,Low:C.green};
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
   const cnt={Pending:tasks.filter(t=>t.status==="Pending").length,"In Progress":tasks.filter(t=>t.status==="In Progress").length,Done:tasks.filter(t=>t.status==="Done").length};
   const disp=filter==="All"?tasks:tasks.filter(t=>t.status===filter);
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"})};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:""});}
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null});}
   function advance(id){setTasks(p=>p.map(t=>{if(t.id!==id)return t;const n=t.status==="Pending"?"In Progress":"Done";if(n==="Done")setNotifs(prev=>[{id:Date.now(),icon:"✅",title:"Task Done ✅",body:`${t.title}`,time:"Just now",read:false,color:C.green},...prev]);return{...t,status:n};}));if(sel?.id===id)setSel(p=>({...p,status:p.status==="Pending"?"In Progress":"Done"}));}
+  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));setReplyText("");setReplyAudio(null);setShowReply(false);}
+  function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);}
   return (<div>
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Task" sub={`Assigning as ${currentUser}`}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
@@ -170,6 +197,7 @@ function Tasks({role,currentUser,setNotifs}){
         <div><label style={LBL}>Assign To *</label><select style={{...INP,appearance:"none"}} value={form.to} onChange={e=>setForm({...form,to:e.target.value})}><option value="">Select...</option>{TEAM.map(m=><option key={m}>{m}</option>)}</select></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Deadline</label><input type="date" style={INP} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={form.pri} onChange={e=>setForm({...form,pri:e.target.value})}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div></div>
         <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:50,resize:"vertical"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></div>
+        <div><label style={LBL}>Voice Note <span style={{color:C.dim,fontWeight:400}}>(optional)</span></label><VoiceRecorder onSave={a=>setForm(f=>({...f,audio:a}))}/></div>
         <button onClick={add} style={{background:C.blue,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Assign Task ✓</button>
       </div>
     </Mod>}
@@ -177,13 +205,24 @@ function Tasks({role,currentUser,setNotifs}){
       <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Bdg label={sel.pri} color={PC[sel.pri]} bg={PC[sel.pri]+"22"} border={PC[sel.pri]+"44"}/><Bdg label={sel.status} color={SC[sel.status]} bg={SC[sel.status]+"22"} border={SC[sel.status]+"44"}/></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:12}}>{[["By",sel.by],["To",sel.to],["Due",sel.due],["Type",sel.type]].map(([l,v])=><div key={l} style={{background:C.bg,borderRadius:8,padding:"8px 10px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>{l}</div><div style={{color:C.text,fontSize:13,fontWeight:600,marginTop:2}}>{v}</div></div>)}</div>
       {sel.notes&&<div style={{background:C.bg,borderRadius:8,padding:"10px",marginBottom:12}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Notes</div><div style={{color:C.text,fontSize:13}}>{sel.notes}</div></div>}
+      {sel.audio&&<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"10px 12px",marginBottom:12}}><div style={{color:"#4338CA",fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>🎤 Voice Note · {sel.by.split(" ")[0]}</div><audio src={sel.audio} controls style={{width:"100%",height:32}}/></div>}
       <div style={{display:"flex",gap:5,marginBottom:14}}>{["Pending","In Progress","Done"].map((s,i)=>{const idx=["Pending","In Progress","Done"].indexOf(sel.status);const act=i<=idx;return<div key={s} style={{flex:1}}><div style={{height:3,borderRadius:2,background:act?(s==="Done"?C.green:C.blue):C.cb,marginBottom:3}}/><span style={{fontSize:9,color:act?(s==="Done"?C.green:C.blue):C.dim,fontWeight:600}}>{s}</span></div>;})}
       </div>
-      {sel.status!=="Done"?<button onClick={()=>advance(sel.id)} style={{background:sel.status==="Pending"?C.blue:C.green,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",width:"100%"}}>{sel.status==="Pending"?"▶ In Progress":"✅ Mark Done"}</button>:<div style={{textAlign:"center",padding:12,background:C.green+"22",borderRadius:9,color:C.green,fontWeight:700}}>✅ Completed</div>}
+      {(sel.replies||[]).length>0&&<div style={{marginBottom:12}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:7}}>Updates ({(sel.replies||[]).length})</div>{(sel.replies||[]).map(r=><div key={r.id} style={{background:"#F8FAFF",border:"1px solid #E0E7FF",borderRadius:9,padding:"9px 11px",marginBottom:6}}><div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}><span style={{color:C.acc,fontSize:11,fontWeight:700}}>↩ {r.by.split(" ")[0]}</span><span style={{color:C.dim,fontSize:10}}>{r.time}</span></div>{r.text&&<div style={{color:C.text,fontSize:12,marginBottom:r.audio?5:0}}>{r.text}</div>}{r.audio&&<audio src={r.audio} controls style={{width:"100%",height:28}}/>}</div>)}</div>}
+      {showReply&&<div style={{background:"#EEF2FF",border:"1.5px solid #C7D2FE",borderRadius:10,padding:12,marginBottom:10}}>
+        <div style={{color:"#4338CA",fontSize:11,fontWeight:700,marginBottom:8}}>Add Update</div>
+        <textarea style={{...INP,minHeight:40,resize:"none",fontSize:12,marginBottom:8}} placeholder="Type a message (optional)..." value={replyText} onChange={e=>setReplyText(e.target.value)}/>
+        <VoiceRecorder onSave={setReplyAudio}/>
+        {(replyText.trim()||replyAudio)&&<button onClick={addReply} style={{background:C.blue,border:"none",color:"#fff",borderRadius:8,padding:"10px 0",fontWeight:700,fontSize:12,cursor:"pointer",width:"100%",marginTop:8}}>Send Update ↑</button>}
+      </div>}
+      <div style={{display:"flex",gap:8,marginTop:2}}>
+        <button onClick={()=>{setShowReply(p=>!p);if(showReply){setReplyText("");setReplyAudio(null);}}} style={{flex:showReply?0:1,background:showReply?"#FEE2E2":"#EEF2FF",border:`1.5px solid ${showReply?"#FECACA":"#C7D2FE"}`,color:showReply?C.red:C.acc,borderRadius:10,padding:"11px 14px",fontWeight:700,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>{showReply?"✕ Cancel":"🎤 Reply"}</button>
+        {sel.status!=="Done"?<button onClick={()=>advance(sel.id)} style={{flex:2,background:sel.status==="Pending"?C.blue:C.green,border:"none",color:"#fff",borderRadius:10,padding:11,fontWeight:800,cursor:"pointer",fontSize:12}}>{sel.status==="Pending"?"▶ In Progress":"✅ Mark Done"}</button>:<div style={{flex:2,textAlign:"center",padding:11,background:C.green+"22",borderRadius:9,color:C.green,fontWeight:700,fontSize:12}}>✅ Completed</div>}
+      </div>
     </Mod>}
     <div style={{display:"flex",gap:7,marginBottom:13,flexWrap:"wrap"}}><Pill label="Pending" value={cnt.Pending} color={C.acc}/><Pill label="In Progress" value={cnt["In Progress"]} color={C.blue}/><Pill label="Done" value={cnt.Done} color={C.green}/>{can&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:C.blue,border:"none",color:"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
     <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?tasks.length:cnt[s]||0})</button>)}</div>
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>setSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#fff06"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {t.due} · {t.to.split(" ")[0]}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {t.due} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
   </div>);
 }
 
