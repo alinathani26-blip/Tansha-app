@@ -144,11 +144,11 @@ function Dashboard({role,currentUser,onNav,notifs}){
 
 // ── Tasks ──
 const TASKS0=[
-  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[]},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[]},
-  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[]},
-  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[]},
-  {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[]},
+  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
+  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
+  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
+  {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
 function VoiceRecorder({onSave,compact=false}){
   const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);
@@ -174,36 +174,93 @@ function VoiceRecorder({onSave,compact=false}){
   if(url)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><span>🎤</span><audio src={url} controls style={{flex:1,height:28}}/><button onClick={clear} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,padding:2,lineHeight:1}}>✕</button></div>);
   return(<button onClick={rec?stop:start} style={{background:rec?"#FEE2E2":"#EEF2FF",border:`1.5px solid ${rec?"#FECACA":"#C7D2FE"}`,color:rec?C.red:C.acc,borderRadius:9,padding:compact?"6px 14px":"10px 14px",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:7,width:compact?"auto":"100%",justifyContent:"center"}}><span style={{width:8,height:8,borderRadius:"50%",background:rec?C.red:C.acc,display:"inline-block"}}/>{rec?`⏹ Stop · ${fmtS(secs)}`:"🎤 Record Voice Note"}</button>);
 }
+function LoopPicker({loop,onToggle,exclude,open,setOpen}){
+  const avail=TEAM.filter(m=>m!==exclude);
+  return(<div style={{position:"relative"}}>
+    <button type="button" onClick={()=>setOpen(o=>!o)} style={{...INP,display:"flex",alignItems:"center",justifyContent:"space-between",cursor:"pointer",background:(loop||[]).length>0?"#EEF2FF":C.card,borderColor:(loop||[]).length>0?"#C7D2FE":C.cb,color:(loop||[]).length>0?C.acc:C.muted}}>
+      <span style={{fontSize:12}}>{(loop||[]).length>0?`${(loop||[]).length} in loop — ${(loop||[]).map(n=>n.split(" ")[0]).join(", ")}`:"Add people to loop…"}</span>
+      <span style={{fontSize:10,flexShrink:0,marginLeft:6}}>{open?"▲":"▼"}</span>
+    </button>
+    {open&&<div style={{position:"absolute",top:"calc(100% + 3px)",left:0,right:0,zIndex:9999,background:C.card,border:`1.5px solid ${C.acc}55`,borderRadius:9,boxShadow:C.sh2,maxHeight:190,overflowY:"auto"}}>
+      {avail.map(m=>{const on=(loop||[]).includes(m);return(
+        <div key={m} onClick={()=>onToggle(m)} style={{padding:"7px 11px",display:"flex",alignItems:"center",gap:9,cursor:"pointer",background:on?"#EEF2FF":"transparent"}}
+          onMouseEnter={e=>e.currentTarget.style.background=on?"#E0E7FF":"#F8F9FF"}
+          onMouseLeave={e=>e.currentTarget.style.background=on?"#EEF2FF":"transparent"}>
+          <div style={{width:15,height:15,borderRadius:4,border:`2px solid ${on?C.acc:C.dim}`,background:on?C.acc:"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+            {on&&<span style={{color:"#fff",fontSize:8,fontWeight:900,lineHeight:1}}>✓</span>}
+          </div>
+          <Av name={m} size={22}/>
+          <span style={{color:on?C.acc:C.text,fontSize:12,fontWeight:on?700:400}}>{m}</span>
+        </div>
+      );})}
+    </div>}
+  </div>);
+}
 function Tasks({role,currentUser,setNotifs}){
   const [tasks,setTasks]=useState(TASKS0);
   const [filter,setFilter]=useState("All");
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
-  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null});
+  const [editForm,setEditForm]=useState(null);
+  const [showDel,setShowDel]=useState(false);
+  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});
   const [replyText,setReplyText]=useState("");const [replyAudio,setReplyAudio]=useState(null);const [showReply,setShowReply]=useState(false);
+  const [loopOpen,setLoopOpen]=useState(false);const [editLoopOpen,setEditLoopOpen]=useState(false);
   const can=["Owner","Manager"].includes(role);
   const PC={High:C.red,Medium:C.acc,Low:C.green};
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
-  const cnt={Pending:tasks.filter(t=>t.status==="Pending").length,"In Progress":tasks.filter(t=>t.status==="In Progress").length,Done:tasks.filter(t=>t.status==="Done").length};
-  const disp=filter==="All"?tasks:tasks.filter(t=>t.status===filter);
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null});}
+  const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
+  const cnt={Pending:vis.filter(t=>t.status==="Pending").length,"In Progress":vis.filter(t=>t.status==="In Progress").length,Done:vis.filter(t=>t.status==="Done").length};
+  const disp=filter==="All"?vis:vis.filter(t=>t.status===filter);
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);setNotifs(p=>[{id:Date.now(),icon:"✅",title:"Task Assigned",body:`${form.title} → ${form.to}`,time:"Just now",read:false,color:C.blue},...p]);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});}
   function advance(id){setTasks(p=>p.map(t=>{if(t.id!==id)return t;const n=t.status==="Pending"?"In Progress":"Done";if(n==="Done")setNotifs(prev=>[{id:Date.now(),icon:"✅",title:"Task Done ✅",body:`${t.title}`,time:"Just now",read:false,color:C.green},...prev]);return{...t,status:n};}));if(sel?.id===id)setSel(p=>({...p,status:p.status==="Pending"?"In Progress":"Done"}));}
   function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));setReplyText("");setReplyAudio(null);setShowReply(false);}
-  function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);}
+  function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);setShowDel(false);}
+  function delTask(id){setTasks(p=>p.filter(t=>t.id!==id));setSel(null);setShowDel(false);}
+  function startEdit(){setEditForm({...sel});setEditLoopOpen(false);}
+  function saveEdit(){if(!editForm.title||!editForm.to)return;setTasks(p=>p.map(t=>t.id===editForm.id?{...editForm}:t));setSel({...editForm});setEditForm(null);}
+  function togLoop(name,isEd){if(isEd){setEditForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}else{setForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}}
   return (<div>
-    {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Task" sub={`Assigning as ${currentUser}`}>
+    {showNew&&<Mod onClose={()=>{setShowNew(false);setLoopOpen(false);}} title="+ New Task" sub={`Assigning as ${currentUser}`}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
         <div><label style={LBL}>Title *</label><input style={INP} placeholder="Task description" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div>
         <div><label style={LBL}>Assign To *</label><select style={{...INP,appearance:"none"}} value={form.to} onChange={e=>setForm({...form,to:e.target.value})}><option value="">Select...</option>{TEAM.map(m=><option key={m}>{m}</option>)}</select></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Deadline</label><input type="date" style={INP} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={form.pri} onChange={e=>setForm({...form,pri:e.target.value})}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div></div>
         <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:50,resize:"vertical"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></div>
+        <div><label style={LBL}>Keep in Loop <span style={{color:C.dim,fontWeight:400}}>(they see all updates)</span></label><LoopPicker loop={form.loop||[]} onToggle={n=>togLoop(n,false)} exclude={form.to} open={loopOpen} setOpen={setLoopOpen}/></div>
         <div><label style={LBL}>Voice Note <span style={{color:C.dim,fontWeight:400}}>(optional)</span></label><VoiceRecorder onSave={a=>setForm(f=>({...f,audio:a}))}/></div>
         <button onClick={add} style={{background:C.blue,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Assign Task ✓</button>
       </div>
     </Mod>}
-    {sel&&<Mod onClose={()=>setSel(null)} title={sel.title} sub={`${sel.type} · Due ${sel.due}`}>
-      <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Bdg label={sel.pri} color={PC[sel.pri]} bg={PC[sel.pri]+"22"} border={PC[sel.pri]+"44"}/><Bdg label={sel.status} color={SC[sel.status]} bg={SC[sel.status]+"22"} border={SC[sel.status]+"44"}/></div>
+    {editForm&&<Mod onClose={()=>setEditForm(null)} title="Edit Task" sub={editForm.title}>
+      <div style={{display:"flex",flexDirection:"column",gap:11}}>
+        <div><label style={LBL}>Title *</label><input style={INP} value={editForm.title} onChange={e=>setEditForm(f=>({...f,title:e.target.value}))}/></div>
+        <div><label style={LBL}>Assign To *</label><select style={{...INP,appearance:"none"}} value={editForm.to} onChange={e=>setEditForm(f=>({...f,to:e.target.value}))}><option value="">Select...</option>{TEAM.map(m=><option key={m}>{m}</option>)}</select></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={editForm.pri} onChange={e=>setEditForm(f=>({...f,pri:e.target.value}))}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div><div><label style={LBL}>Status</label><select style={{...INP,appearance:"none"}} value={editForm.status} onChange={e=>setEditForm(f=>({...f,status:e.target.value}))}>{["Pending","In Progress","Done"].map(s=><option key={s}>{s}</option>)}</select></div></div>
+        <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:50,resize:"vertical"}} value={editForm.notes} onChange={e=>setEditForm(f=>({...f,notes:e.target.value}))}/></div>
+        <div><label style={LBL}>Keep in Loop</label><LoopPicker loop={editForm.loop||[]} onToggle={n=>togLoop(n,true)} exclude={editForm.to} open={editLoopOpen} setOpen={setEditLoopOpen}/></div>
+        <div style={{display:"flex",gap:8}}><button onClick={()=>setEditForm(null)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:10,padding:12,fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={saveEdit} style={{flex:2,background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Save Changes ✓</button></div>
+      </div>
+    </Mod>}
+    {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);}} title={sel.title} sub={`${sel.type} · Due ${sel.due}`}>
+      <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+        <Bdg label={sel.pri} color={PC[sel.pri]} bg={PC[sel.pri]+"22"} border={PC[sel.pri]+"44"}/>
+        <Bdg label={sel.status} color={SC[sel.status]} bg={SC[sel.status]+"22"} border={SC[sel.status]+"44"}/>
+        {(can||sel.by===currentUser)&&<div style={{marginLeft:"auto",display:"flex",gap:5}}>
+          <button onClick={startEdit} style={{background:"#EEF2FF",border:"1px solid #C7D2FE",color:C.acc,borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏ Edit</button>
+          <button onClick={()=>setShowDel(true)} style={{background:"#FEE2E2",border:"1px solid #FECACA",color:C.red,borderRadius:6,padding:"4px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑</button>
+        </div>}
+      </div>
+      {showDel&&<div style={{background:"#FFF7F7",border:"1.5px solid #FECACA",borderRadius:10,padding:12,marginBottom:12}}>
+        <div style={{color:C.red,fontWeight:700,fontSize:13,marginBottom:5}}>Delete this task?</div>
+        <div style={{color:C.muted,fontSize:12,marginBottom:9}}>This cannot be undone.</div>
+        <div style={{display:"flex",gap:8}}><button onClick={()=>setShowDel(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"8px 0",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button><button onClick={()=>delTask(sel.id)} style={{flex:1,background:C.red,border:"none",color:"#fff",borderRadius:8,padding:"8px 0",fontWeight:800,cursor:"pointer",fontSize:12}}>Yes, Delete</button></div>
+      </div>}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:12}}>{[["By",sel.by],["To",sel.to],["Due",sel.due],["Type",sel.type]].map(([l,v])=><div key={l} style={{background:C.bg,borderRadius:8,padding:"8px 10px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>{l}</div><div style={{color:C.text,fontSize:13,fontWeight:600,marginTop:2}}>{v}</div></div>)}</div>
+      {(sel.loop||[]).length>0&&<div style={{background:"#F5F3FF",border:"1px solid #DDD6FE",borderRadius:8,padding:"9px 11px",marginBottom:12}}>
+        <div style={{color:"#6D28D9",fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:7}}>🔄 In Loop ({(sel.loop||[]).length})</div>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{(sel.loop||[]).map(n=><div key={n} style={{display:"flex",alignItems:"center",gap:5,background:"#EDE9FE",borderRadius:20,padding:"3px 9px 3px 5px"}}><Av name={n} size={20}/><span style={{color:"#5B21B6",fontSize:11,fontWeight:600}}>{n.split(" ")[0]}</span></div>)}</div>
+      </div>}
       {sel.notes&&<div style={{background:C.bg,borderRadius:8,padding:"10px",marginBottom:12}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:4}}>Notes</div><div style={{color:C.text,fontSize:13}}>{sel.notes}</div></div>}
       {sel.audio&&<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"10px 12px",marginBottom:12}}><div style={{color:"#4338CA",fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:6}}>🎤 Voice Note · {sel.by.split(" ")[0]}</div><audio src={sel.audio} controls style={{width:"100%",height:32}}/></div>}
       <div style={{display:"flex",gap:5,marginBottom:14}}>{["Pending","In Progress","Done"].map((s,i)=>{const idx=["Pending","In Progress","Done"].indexOf(sel.status);const act=i<=idx;return<div key={s} style={{flex:1}}><div style={{height:3,borderRadius:2,background:act?(s==="Done"?C.green:C.blue):C.cb,marginBottom:3}}/><span style={{fontSize:9,color:act?(s==="Done"?C.green:C.blue):C.dim,fontWeight:600}}>{s}</span></div>;})}
@@ -221,8 +278,8 @@ function Tasks({role,currentUser,setNotifs}){
       </div>
     </Mod>}
     <div style={{display:"flex",gap:7,marginBottom:13,flexWrap:"wrap"}}><Pill label="Pending" value={cnt.Pending} color={C.acc}/><Pill label="In Progress" value={cnt["In Progress"]} color={C.blue}/><Pill label="Done" value={cnt.Done} color={C.green}/>{can&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:C.blue,border:"none",color:"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
-    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?tasks.length:cnt[s]||0})</button>)}</div>
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {t.due} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?vis.length:cnt[s]||0})</button>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {t.due} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
   </div>);
 }
 
