@@ -21,11 +21,11 @@ const C={
   sh2:"0 4px 12px rgba(0,0,0,0.08),0 2px 4px rgba(0,0,0,0.05)",
 };
 const RC={
-  Owner:{bg:"#EEF2FF",text:"#4338CA",border:"#C7D2FE"},
-  Manager:{bg:"#EFF6FF",text:"#1D4ED8",border:"#BFDBFE"},
-  Sales:{bg:"#F0FDF4",text:"#15803D",border:"#BBF7D0"},
-  Warehouse:{bg:"#F5F3FF",text:"#6D28D9",border:"#DDD6FE"},
+  "Ali Bhai (Owner)":{label:"Owner",bg:"#EEF2FF",text:"#4338CA",border:"#C7D2FE"},
+  "Saud Bhai":{label:"Manager",bg:"#EFF6FF",text:"#1D4ED8",border:"#BFDBFE"},
 };
+const RC_DEF={label:"Staff",bg:"#F0FDF4",text:"#15803D",border:"#BBF7D0"};
+const MANAGERS=["Ali Bhai (Owner)","Saud Bhai"];
 const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
@@ -117,7 +117,7 @@ function Dashboard({role,currentUser,onNav,notifs}){
   const unreadT=notifs.filter(n=>n.type==="task"&&!n.read).length;
   const stats=[{l:"Outstanding",v:"₹1.2 Cr",c:C.red,i:"💰",m:"payment"},{l:"Dispatches Today",v:"7",c:C.green,i:"🚚",m:"dispatch"},{l:"Pending Tasks",v:"12",c:C.blue,i:"✅",m:"tasks"},{l:"Low Stock",v:"3",c:C.purple,i:"📦",m:"stocks"},{l:"Apr Sales",v:"₹48L",c:C.teal,i:"📈",m:"sales"},{l:"Support Tickets",v:"3",c:C.orange,i:"🎫",m:"ops"}];
   const activity=[{i:"💰",t:"Naresh Steel Centre paid ₹86,499",time:"10m",c:C.green},{i:"✅",t:"Hotel Leela follow-up due — Kaif Bhai",time:"30m",c:C.blue},{i:"🚚",t:"Metro Hospitality — 10 CTN dispatched",time:"1h",c:C.teal},{i:"⚠️",t:"Whisky Glass 300ml — Low stock",time:"2h",c:C.orange},{i:"💬",t:"Saud Bhai mentioned you in Payments",time:"3h",c:C.purple},{i:"🎫",t:"New ticket — Radisson Blu damaged boxes",time:"4h",c:C.red}];
-  const ACCESS={Owner:["payment","dispatch","tasks","stocks","sales","ops"],Manager:["payment","dispatch","tasks","stocks","sales","ops"],Sales:["tasks","sales","ops"],Warehouse:["dispatch","tasks","stocks","ops"]};
+  const ACCESS_ALL=["payment","dispatch","tasks","stocks","sales","ops"];
   return (<div>
     <div style={{background:`linear-gradient(135deg,${C.nav} 0%,#1E293B 100%)`,borderRadius:16,padding:"20px 20px",marginBottom:18,boxShadow:C.sh2}}>
       <div style={{color:"#F1F5F9",fontWeight:700,fontSize:20,marginBottom:3}}>Good morning, {currentUser.split(" ")[0]}! 👋</div>
@@ -129,7 +129,7 @@ function Dashboard({role,currentUser,onNav,notifs}){
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
-      {stats.filter(s=>ACCESS[role]?.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:14,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.borderColor=s.c+"55";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.borderColor=C.cb;}}>
+      {stats.filter(s=>ACCESS_ALL.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:14,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.borderColor=s.c+"55";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.borderColor=C.cb;}}>
         <div style={{position:"absolute",top:-10,right:-10,fontSize:48,opacity:.05}}>{s.i}</div>
         <div style={{width:36,height:36,borderRadius:10,background:s.c+"18",display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:10}}>{s.i}</div>
         <div style={{color:s.c,fontWeight:800,fontSize:22,lineHeight:1}}>{s.v}</div>
@@ -206,7 +206,7 @@ function Tasks({role,currentUser,setNotifs}){
   const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});
   const [replyText,setReplyText]=useState("");const [replyAudio,setReplyAudio]=useState(null);const [showReply,setShowReply]=useState(false);
   const [loopOpen,setLoopOpen]=useState(false);const [editLoopOpen,setEditLoopOpen]=useState(false);
-  const can=["Owner","Manager"].includes(role);
+  const can=MANAGERS.includes(currentUser);
   const PC={High:C.red,Medium:C.acc,Low:C.green};
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
   const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
@@ -1181,12 +1181,13 @@ function SaeedRoute(){
 
 // ── App Shell ──
 const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"routes",i:"🗺️",l:"Routes"},{id:"payment",i:"💰",l:"Payments"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
-const RA={Owner:NAV.map(n=>n.id),Manager:NAV.map(n=>n.id),Sales:["home","tasks","quote","sales","chat"],Warehouse:["home","tasks","dispatch","stocks","ops","chat"]};
-const UM={"Owner":"Ali Bhai (Owner)","Manager":"Saud Bhai","Sales":"Kaif Bhai","Warehouse":"Sufiyan Bhai"};
+const _ALL=NAV.map(n=>n.id);
+const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
+const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
 const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",routes:"Saeed Bhai — Routes",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
 
 export default function App(){
-  const [role,setRole]=useState("Owner");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
+  const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
   const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
@@ -1200,9 +1201,9 @@ export default function App(){
         <style>{`@keyframes sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
         <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{color:"#fff",fontWeight:800,fontSize:17,letterSpacing:-.3,marginBottom:14}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
-          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
-          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch Role</div>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");setShowNav(false);}} style={{background:role===r?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.06)",color:role===r?"#A5B4FC":"#64748B",border:`1px solid ${role===r?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:5,padding:"3px 8px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
+          <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
+          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
+          <div style={{maxHeight:160,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");setShowNav(false);}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
         </div>
         <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
@@ -1213,9 +1214,9 @@ export default function App(){
     {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.nav,overflowY:"auto",zIndex:200}}>
       <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
         <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
-        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{role}</span></div></div>
-        <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch Role</div>
-        <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{["Owner","Manager","Sales","Warehouse"].map(r=><button key={r} onClick={()=>{setRole(r);setActive("home");}} style={{background:role===r?"rgba(99,102,241,0.25)":"rgba(255,255,255,0.06)",color:role===r?"#A5B4FC":"#64748B",border:`1px solid ${role===r?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:5,padding:"3px 8px",fontSize:9,fontWeight:700,cursor:"pointer"}}>{r}</button>)}</div>
+        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
+        <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
+        <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
       </div>
       <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
     </div>}
@@ -1244,7 +1245,7 @@ export default function App(){
         <div>
           <h2 style={{margin:0,fontSize:18,fontWeight:700,color:C.text}}>{TITLES[active]}</h2>
         </div>
-        <span style={{background:RC[role].bg,color:RC[role].text,border:`1px solid ${RC[role].border}`,borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:600}}>{role}</span>
+        <span style={{background:(RC[role]||RC_DEF).bg,color:(RC[role]||RC_DEF).text,border:`1px solid ${(RC[role]||RC_DEF).border}`,borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:600}}>{(RC[role]||RC_DEF).label}</span>
       </div>}
       {active==="home"&&<Dashboard role={role} currentUser={cu} onNav={nav} notifs={notifs}/>}
       {active==="tasks"&&<Tasks role={role} currentUser={cu} setNotifs={setNotifs}/>}
