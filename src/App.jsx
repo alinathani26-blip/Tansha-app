@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { initMessaging, requestNotificationPermission } from "./firebase";
 
 const C={
   bg:"#F1F5F9",
@@ -1257,12 +1258,39 @@ export default function App(){
   const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
   const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+  const [pushPerm,setPushPerm]=useState(typeof window!=="undefined"&&"Notification"in window?Notification.permission:"unsupported");
+  useEffect(()=>{
+    initMessaging((payload)=>{
+      const {title,body}=payload.notification||{};
+      setNotifs(p=>[{id:Date.now(),icon:"🔔",title:title||"Notification",body:body||"",time:"Just now",read:false,color:C.acc},...p]);
+      if("Notification"in window&&Notification.permission==="granted"){
+        try{new Notification(title||"Tansha Hospitality",{body:body||"",icon:"/logo192.png"});}catch{}
+      }
+    });
+  },[]);
+  async function enablePush(){
+    const token=await requestNotificationPermission();
+    setPushPerm("Notification"in window?Notification.permission:"unsupported");
+    if(token){
+      try{localStorage.setItem("tansha_fcm_token",token);}catch{}
+      setNotifs(p=>[{id:Date.now(),icon:"🔔",title:"Notifications Enabled",body:`Device token: ${token}`,time:"Just now",read:false,color:C.green},...p]);
+    }
+  }
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
   const SW=220;
   return (<div style={{fontFamily:"'Inter','DM Sans','Segoe UI',sans-serif",background:"#F7F8FA",minHeight:"100vh",color:C.text,position:"relative"}}>
     <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
     {showN&&<NotifPanel notifs={notifs} setNotifs={setNotifs} onClose={()=>setShowN(false)}/>}
+    {pushPerm==="default"&&<div style={{position:"fixed",left:12,right:12,bottom:12,zIndex:500,background:"#fff",border:`1px solid ${C.cb}`,borderRadius:12,padding:"12px 14px",boxShadow:"0 8px 24px rgba(0,0,0,0.12)",display:"flex",alignItems:"center",gap:10,maxWidth:420,margin:"0 auto"}}>
+      <div style={{fontSize:22}}>🔔</div>
+      <div style={{flex:1}}>
+        <div style={{fontWeight:700,fontSize:13}}>Enable Notifications</div>
+        <div style={{fontSize:11,color:C.dim}}>Get alerts for tasks even when the app is closed.</div>
+      </div>
+      <button onClick={enablePush} style={{background:C.acc,color:"#fff",border:"none",borderRadius:8,padding:"8px 12px",fontWeight:700,fontSize:12,cursor:"pointer",whiteSpace:"nowrap"}}>Enable</button>
+      <button onClick={()=>setPushPerm("dismissed")} style={{background:"transparent",border:"none",color:C.dim,fontSize:18,cursor:"pointer",padding:"0 2px"}}>×</button>
+    </div>}
     {showNav&&<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.6)",zIndex:400,backdropFilter:"blur(2px)"}} onClick={()=>setShowNav(false)}>
       <div onClick={e=>e.stopPropagation()} style={{position:"absolute",left:0,top:0,bottom:0,width:240,background:C.nav,overflowY:"auto",animation:"sL .22s ease"}}>
         <style>{`@keyframes sL{from{transform:translateX(-100%)}to{transform:translateX(0)}}`}</style>
