@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDHcDsSEBY2jJELE-pOqM_aKD32ofxrIZE",
@@ -15,6 +16,23 @@ const VAPID_KEY =
   "BP_f6qX0kPcYxAXQhSOKlzS6qlEop1D6kGEyynKlbDedlxbLRIGri6dw3k8MqQ3OxALyJTzgJeZ-uS03Z2F1g2U";
 
 export const app = initializeApp(firebaseConfig);
+export const auth = getAuth(app);
+
+let authPromise = null;
+export function ensureAuth() {
+  if (!authPromise) {
+    authPromise = new Promise((resolve) => {
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          resolve(user);
+        } else {
+          signInAnonymously(auth).catch((err) => console.error("Anonymous sign-in failed:", err));
+        }
+      });
+    });
+  }
+  return authPromise;
+}
 
 export async function initMessaging(onForegroundMessage) {
   if (!(await isSupported())) return null;
