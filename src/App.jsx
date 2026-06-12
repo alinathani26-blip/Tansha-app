@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { initMessaging, requestNotificationPermission } from "./firebase";
+import { useFirestoreState } from "./useFirestoreState";
 
 const C={
   bg:"#F1F5F9",
@@ -198,7 +199,7 @@ function LoopPicker({loop,onToggle,exclude,open,setOpen}){
   </div>);
 }
 function Tasks({role,currentUser,setNotifs}){
-  const [tasks,setTasks]=useState(TASKS0);
+  const [tasks,setTasks]=useFirestoreState("tasks",TASKS0);
   const [filter,setFilter]=useState("All");
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -320,7 +321,7 @@ function DCard({d,lc,onOpen}){
 }
 function Dispatch({role}){
   const [loc,setLoc]=useState("Bhiwandi");
-  const [disps,setDisps]=useState(DISP0);
+  const [disps,setDisps]=useFirestoreState("dispatch",DISP0);
   const [sel,setSel]=useState(null);
   const [editForm,setEditForm]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -423,7 +424,7 @@ const ST0={Ocean:[{id:1,code:"B01709",name:"ALOHA 09 OZ",mrp:682,cmrp:7140,k2d:1
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
   const [search,setSearch]=useState("");
-  const [stocks,setStocks]=useState(ST0);
+  const [stocks,setStocks]=useFirestoreState("stocks",ST0);
   const [editIt,setEditIt]=useState(null);
   const items=stocks[tab].map(it=>{const tot=it.k2d+it.k1f+it.k2f;return{...it,tot,val:tot*it.cmrp,isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||i.code.toLowerCase().includes(search.toLowerCase())):items;
@@ -895,8 +896,7 @@ const UP=[
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
   const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");
-  const [saved,setSaved]=useState(()=>{try{const s=localStorage.getItem("tansha_quotes");return s?JSON.parse(s):[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}];}catch{return [];}});
-  useEffect(()=>{try{localStorage.setItem("tansha_quotes",JSON.stringify(saved));}catch{}},[saved]);
+  const [saved,setSaved]=useFirestoreState("quotes",[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
   const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
@@ -981,7 +981,7 @@ function Quotation(){
 // ── Sales ──
 const SD0={Ocean:[{id:1,date:"2026-04-01",client:"Adams & Company",city:"Mumbai",invNo:"201",amount:80646},{id:2,date:"2026-04-01",client:"Anand Entp",city:"Mumbai",invNo:"202",amount:61005},{id:3,date:"2026-04-02",client:"Barsolution LLP",city:"Mumbai",invNo:"210",amount:22862},{id:4,date:"2026-04-03",client:"Indigo Metalware",city:"Mumbai",invNo:"215",amount:253121},{id:5,date:"2026-03-01",client:"Adams & Company",city:"Mumbai",invNo:"145",amount:62000},{id:6,date:"2026-02-05",client:"Anand Entp",city:"Mumbai",invNo:"118",amount:32000}],Ukiyo:[{id:1,date:"2026-04-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"155",amount:890000},{id:2,date:"2026-04-01",client:"Jaydeep Entp",city:"Pune",invNo:"160",amount:412000},{id:3,date:"2026-03-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"110",amount:539157},{id:4,date:"2026-02-01",client:"Balaji Traders Goa",city:"Goa",invNo:"60",amount:139537}]};
 function Sales(){
-  const [team,setTeam]=useState("Ocean");const [sales,setSales]=useState(SD0);const [view,setView]=useState("daily");const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);
+  const [team,setTeam]=useState("Ocean");const [sales,setSales]=useFirestoreState("sales",SD0);const [view,setView]=useState("daily");const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);
   const [form,setForm]=useState({date:TODAY,client:"",city:"",invNo:"",amount:""});
   const cur=sales[team];const total=cur.reduce((s,e)=>s+e.amount,0);const ac=team==="Ocean"?C.blue:C.teal;
   const grouped=cur.reduce((g,s)=>{if(!g[s.date])g[s.date]=[];g[s.date].push(s);return g;},{});
@@ -1027,7 +1027,7 @@ function Sales(){
 const PAY0=[{id:1,client:"Ornate Glassware",month:"Apr",totalBal:1333659,currBal:859529,assignee:"Saud Bhai",followUpDate:"2026-04-28",notes:"Hard client",status:"Pending"},{id:2,client:"Jaydeep Enterprises",month:"Apr",totalBal:891778,currBal:891778,assignee:"Accountant",followUpDate:"2026-04-27",notes:"",status:"Pending"},{id:3,client:"Janta Steel",month:"Jan",totalBal:632761,currBal:64562,assignee:"Saud Bhai",followUpDate:"2026-04-27",notes:"3.2 WA",status:"Pending"},{id:4,client:"M.M.F. Enterprises",month:"Feb",totalBal:445802,currBal:220513,assignee:"Saud Bhai",followUpDate:"2026-04-27",notes:"27.4 C not rec WA",status:"Pending"},{id:5,client:"F S Glassware Crockery",month:"Apr",totalBal:604485,currBal:0,notes:"ALL CLR",status:"Paid"},{id:6,client:"Indigo Metalware LLP",month:"Apr",totalBal:253121,currBal:0,notes:"pdc rec",status:"Paid"}];
 const MC={Jan:C.blue,Feb:C.purple,Mar:C.teal,Apr:C.acc,May:C.green};
 function Payment(){
-  const [entries,setEntries]=useState(PAY0);const [am,setAm]=useState("All");const [sel,setSel]=useState(null);const [pa,setPa]=useState("");const [sp,setSp]=useState(false);const today=TODAY;
+  const [entries,setEntries]=useFirestoreState("payments",PAY0);const [am,setAm]=useState("All");const [sel,setSel]=useState(null);const [pa,setPa]=useState("");const [sp,setSp]=useState(false);const today=TODAY;
   const months=[...new Set(entries.map(e=>e.month))];const fil=am==="All"?entries:entries.filter(e=>e.month===am);
   const pend=fil.filter(e=>e.status==="Pending").sort((a,b)=>b.currBal-a.currBal);const paid=fil.filter(e=>e.status==="Paid");
   const tot=pend.reduce((s,e)=>s+e.currBal,0);const od=entries.filter(e=>e.status==="Pending"&&e.followUpDate&&e.followUpDate<=today).length;
@@ -1060,8 +1060,8 @@ const SC={Open:C.red,"Credit Note":C.orange,Replacement:C.blue,Resolved:C.green}
 const TC={General:C.teal,Dispatch:C.green,Sales:C.blue,Payment:C.red,Stocks:C.purple,Attendance:C.orange};
 function Operations({role,currentUser}){
   const [sub,setSub]=useState("att");
-  const [att,setAtt]=useState(TEAM.map((n,i)=>({name:n,status:i<14?"Present":i===14?"Half Day":"Absent",inTime:i<14?"09:00":"",outTime:i<12?"18:00":""})));
-  const [sup,setSup]=useState(SUP0);const [notes,setNotes]=useState(NOTES0);
+  const [att,setAtt]=useFirestoreState("attendance",TEAM.map((n,i)=>({name:n,status:i<14?"Present":i===14?"Half Day":"Absent",inTime:i<14?"09:00":"",outTime:i<12?"18:00":""})));
+  const [sup,setSup]=useFirestoreState("support",SUP0);const [notes,setNotes]=useFirestoreState("opsnotes",NOTES0);
   const [selTkt,setSelTkt]=useState(null);const [selNote,setSelNote]=useState(null);
   const [showNewT,setShowNewT]=useState(false);const [showNewN,setShowNewN]=useState(false);
   const [tf,setTf]=useState({date:TODAY,client:"",invNo:"",reason:"",status:"Open",assignedTo:currentUser,notes:""});
@@ -1175,7 +1175,7 @@ function CBubble({msg,isMe,onLong}){
   </div>);
 }
 function Chat({currentUser}){
-  const [ach,setAch]=useState("gen");const [msgs,setMsgs]=useState(MSGS0);const [inp,setInp]=useState("");const [ss,setSs]=useState(true);const [lp,setLp]=useState(null);const [ct,setCt]=useState(null);const [ctf,setCtf]=useState({title:"",to:"",due:""});const eRef=useRef();
+  const [ach,setAch]=useState("gen");const [msgs,setMsgs]=useFirestoreState("chat",MSGS0);const [inp,setInp]=useState("");const [ss,setSs]=useState(true);const [lp,setLp]=useState(null);const [ct,setCt]=useState(null);const [ctf,setCtf]=useState({title:"",to:"",due:""});const eRef=useRef();
   useEffect(()=>{eRef.current?.scrollIntoView({behavior:"smooth"});},[ach,msgs]);
   function send(){if(!inp.trim())return;const m={id:Date.now(),sender:currentUser,text:inp.trim(),time:tF(new Date()),type:"text",reads:[]};setMsgs(p=>({...p,[ach]:[...(p[ach]||[]),m]}));setInp("");}
   const an=[...CHS,...DMS].find(c=>c.id===ach)?.name||"";const cm=msgs[ach]||[];const tu=[...CHS,...DMS].reduce((s,c)=>s+c.unread,0);
