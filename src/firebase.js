@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
+import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDHcDsSEBY2jJELE-pOqM_aKD32ofxrIZE",
@@ -65,5 +66,30 @@ export async function requestNotificationPermission() {
   } catch (err) {
     console.error("Failed to get FCM token:", err);
     return null;
+  }
+}
+
+export async function registerDeviceToken(person, token) {
+  await ensureAuth();
+  const db = getFirestore(app);
+  const ref = doc(db, "tansha", "tokens");
+  const snap = await getDoc(ref);
+  const tokensMap = snap.exists() ? snap.data().value || {} : {};
+  const existing = Array.isArray(tokensMap[person]) ? tokensMap[person] : [];
+  if (!existing.includes(token)) {
+    tokensMap[person] = [...existing, token];
+    await setDoc(ref, { value: tokensMap });
+  }
+}
+
+export async function sendPush(persons, title, body) {
+  try {
+    await fetch("/api/send-push", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ persons, title, body }),
+    });
+  } catch (err) {
+    console.error("sendPush failed:", err);
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { initMessaging, requestNotificationPermission } from "./firebase";
+import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
 
 const C={
@@ -198,6 +198,15 @@ function LoopPicker({loop,onToggle,exclude,open,setOpen}){
     </div>}
   </div>);
 }
+const REMIND_OPTS=[["none","No reminder"],["15","15 minutes before"],["30","30 minutes before"],["60","1 hour before"],["180","3 hours before"],["1440","1 day before"]];
+function fmtDue(due){
+  if(!due)return"";
+  if(due.includes("T")){
+    const d=new Date(due);
+    if(!isNaN(d.getTime()))return d.toLocaleString("en-IN",{day:"numeric",month:"short",hour:"numeric",minute:"2-digit",hour12:true});
+  }
+  return due;
+}
 function Tasks({role,currentUser,setNotifs}){
   const [tasks,setTasks]=useFirestoreState("tasks",TASKS0);
   const [filter,setFilter]=useState("All");
@@ -205,7 +214,7 @@ function Tasks({role,currentUser,setNotifs}){
   const [showNew,setShowNew]=useState(false);
   const [editForm,setEditForm]=useState(null);
   const [showDel,setShowDel]=useState(false);
-  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});
+  const [form,setForm]=useState({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});
   const [replyText,setReplyText]=useState("");const [replyAudio,setReplyAudio]=useState(null);const [showReply,setShowReply]=useState(false);
   const [loopOpen,setLoopOpen]=useState(false);const [editLoopOpen,setEditLoopOpen]=useState(false);
   const can=MANAGERS.includes(currentUser);
@@ -221,21 +230,45 @@ function Tasks({role,currentUser,setNotifs}){
     setToast({icon,text:title+(body?` — ${body}`:""),color});
     toastTmr.current=setTimeout(()=>setToast(null),3500);
   }
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,due:new Date(form.due).toLocaleDateString("en-IN",{day:"numeric",month:"short"}),replies:[]};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[]});}
-  function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);if(sel?.id===id)setSel(p=>({...p,status:n}));}
-  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);setReplyText("");setReplyAudio(null);setShowReply(false);}
+  function notify(persons,title,body){
+    const targets=[...new Set(persons)].filter(p=>p&&p!==currentUser);
+    if(targets.length)sendPush(targets,title,body);
+  }
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,replies:[],reminded:false};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);notify([form.to,...(form.loop||[])],"New Task Assigned",`${form.title} — due ${fmtDue(t.due)}`);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});}
+  function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);notify([tsk.by,tsk.to,...(tsk.loop||[])],n==="Done"?"Task Completed":"Task In Progress",tsk.title);if(sel?.id===id)setSel(p=>({...p,status:n}));}
+  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);notify([sel.by,sel.to,...(sel.loop||[])],"Task Update",`${currentUser}: ${replyText.trim()||"sent a voice note"}`);setReplyText("");setReplyAudio(null);setShowReply(false);}
   function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);setShowDel(false);}
   function delTask(id){setTasks(p=>p.filter(t=>t.id!==id));setSel(null);setShowDel(false);}
   function startEdit(){setEditForm({...sel});setEditLoopOpen(false);}
-  function saveEdit(){if(!editForm.title||!editForm.to)return;setTasks(p=>p.map(t=>t.id===editForm.id?{...editForm}:t));setSel({...editForm});pushNotif("✏️","Task Updated",editForm.title,C.acc);setEditForm(null);}
+  function saveEdit(){if(!editForm.title||!editForm.to)return;const updated={...editForm,reminded:false};setTasks(p=>p.map(t=>t.id===editForm.id?updated:t));setSel(updated);pushNotif("✏️","Task Updated",editForm.title,C.acc);notify([editForm.to,editForm.by,...(editForm.loop||[])],"Task Updated",editForm.title);setEditForm(null);}
   function togLoop(name,isEd){if(isEd){setEditForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}else{setForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}}
+  useEffect(()=>{
+    const check=()=>{
+      const now=Date.now();
+      tasks.forEach(t=>{
+        if(t.status==="Done"||!t.due||!t.due.includes("T")||!t.reminder||t.reminder==="none"||t.reminded)return;
+        const dueTime=new Date(t.due).getTime();
+        if(isNaN(dueTime))return;
+        const remindAt=dueTime-Number(t.reminder)*60000;
+        if(now>=remindAt&&now<dueTime){
+          pushNotif("⏰","Task Reminder",`${t.title} — due ${fmtDue(t.due)}`,C.orange);
+          notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`${t.title} — due ${fmtDue(t.due)}`);
+          setTasks(p=>p.map(x=>x.id===t.id?{...x,reminded:true}:x));
+        }
+      });
+    };
+    check();
+    const iv=setInterval(check,60000);
+    return ()=>clearInterval(iv);
+  },[tasks]);
   return (<div>
     {toast&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:toast.color,color:"#fff",padding:"14px 18px",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"tDn .28s ease"}}><style>{`@keyframes tDn{from{transform:translateY(-100%)}to{transform:translateY(0)}}`}</style><span style={{fontSize:18,flexShrink:0}}>{toast.icon}</span><span style={{flex:1,lineHeight:1.3,fontSize:13}}>{toast.text}</span><button onClick={()=>setToast(null)} style={{background:"rgba(255,255,255,0.22)",border:"none",color:"#fff",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:14,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>}
     {showNew&&<Mod onClose={()=>{setShowNew(false);setLoopOpen(false);}} title="+ New Task" sub={`Assigning as ${currentUser}`}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
         <div><label style={LBL}>Title *</label><input style={INP} placeholder="Task description" value={form.title} onChange={e=>setForm({...form,title:e.target.value})}/></div>
         <div><label style={LBL}>Assign To *</label><select style={{...INP,appearance:"none"}} value={form.to} onChange={e=>setForm({...form,to:e.target.value})}><option value="">Select...</option>{TEAM.map(m=><option key={m}>{m}</option>)}</select></div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Deadline</label><input type="date" style={INP} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={form.pri} onChange={e=>setForm({...form,pri:e.target.value})}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Due Date & Time</label><input type="datetime-local" style={INP} value={form.due} onChange={e=>setForm({...form,due:e.target.value})}/></div><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={form.pri} onChange={e=>setForm({...form,pri:e.target.value})}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div></div>
+        <div><label style={LBL}>Reminder</label><select style={{...INP,appearance:"none"}} value={form.reminder} onChange={e=>setForm({...form,reminder:e.target.value})}>{REMIND_OPTS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div>
         <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:50,resize:"vertical"}} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})}/></div>
         <div><label style={LBL}>Keep in Loop <span style={{color:C.dim,fontWeight:400}}>(they see all updates)</span></label><LoopPicker loop={form.loop||[]} onToggle={n=>togLoop(n,false)} exclude={form.to} open={loopOpen} setOpen={setLoopOpen}/></div>
         <div><label style={LBL}>Voice Note <span style={{color:C.dim,fontWeight:400}}>(optional)</span></label><VoiceRecorder onSave={a=>setForm(f=>({...f,audio:a}))}/></div>
@@ -247,12 +280,13 @@ function Tasks({role,currentUser,setNotifs}){
         <div><label style={LBL}>Title *</label><input style={INP} value={editForm.title} onChange={e=>setEditForm(f=>({...f,title:e.target.value}))}/></div>
         <div><label style={LBL}>Assign To *</label><select style={{...INP,appearance:"none"}} value={editForm.to} onChange={e=>setEditForm(f=>({...f,to:e.target.value}))}><option value="">Select...</option>{TEAM.map(m=><option key={m}>{m}</option>)}</select></div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Priority</label><select style={{...INP,appearance:"none"}} value={editForm.pri} onChange={e=>setEditForm(f=>({...f,pri:e.target.value}))}>{["High","Medium","Low"].map(p=><option key={p}>{p}</option>)}</select></div><div><label style={LBL}>Status</label><select style={{...INP,appearance:"none"}} value={editForm.status} onChange={e=>setEditForm(f=>({...f,status:e.target.value}))}>{["Pending","In Progress","Done"].map(s=><option key={s}>{s}</option>)}</select></div></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Due Date & Time</label><input type="datetime-local" style={INP} value={editForm.due&&editForm.due.includes("T")?editForm.due:""} onChange={e=>setEditForm(f=>({...f,due:e.target.value}))}/></div><div><label style={LBL}>Reminder</label><select style={{...INP,appearance:"none"}} value={editForm.reminder||"none"} onChange={e=>setEditForm(f=>({...f,reminder:e.target.value}))}>{REMIND_OPTS.map(([v,l])=><option key={v} value={v}>{l}</option>)}</select></div></div>
         <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:50,resize:"vertical"}} value={editForm.notes} onChange={e=>setEditForm(f=>({...f,notes:e.target.value}))}/></div>
         <div><label style={LBL}>Keep in Loop</label><LoopPicker loop={editForm.loop||[]} onToggle={n=>togLoop(n,true)} exclude={editForm.to} open={editLoopOpen} setOpen={setEditLoopOpen}/></div>
         <div style={{display:"flex",gap:8}}><button onClick={()=>setEditForm(null)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:10,padding:12,fontWeight:700,cursor:"pointer"}}>Cancel</button><button onClick={saveEdit} style={{flex:2,background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Save Changes ✓</button></div>
       </div>
     </Mod>}
-    {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);}} title={sel.title} sub={`${sel.type} · Due ${sel.due}`}>
+    {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);}} title={sel.title} sub={`${sel.type} · Due ${fmtDue(sel.due)}`}>
       <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
         <Bdg label={sel.pri} color={PC[sel.pri]} bg={PC[sel.pri]+"22"} border={PC[sel.pri]+"44"}/>
         <Bdg label={sel.status} color={SC[sel.status]} bg={SC[sel.status]+"22"} border={SC[sel.status]+"44"}/>
@@ -266,7 +300,7 @@ function Tasks({role,currentUser,setNotifs}){
         <div style={{color:C.muted,fontSize:12,marginBottom:9}}>This cannot be undone.</div>
         <div style={{display:"flex",gap:8}}><button onClick={()=>setShowDel(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"8px 0",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button><button onClick={()=>delTask(sel.id)} style={{flex:1,background:C.red,border:"none",color:"#fff",borderRadius:8,padding:"8px 0",fontWeight:800,cursor:"pointer",fontSize:12}}>Yes, Delete</button></div>
       </div>}
-      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:12}}>{[["By",sel.by],["To",sel.to],["Due",sel.due],["Type",sel.type]].map(([l,v])=><div key={l} style={{background:C.bg,borderRadius:8,padding:"8px 10px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>{l}</div><div style={{color:C.text,fontSize:13,fontWeight:600,marginTop:2}}>{v}</div></div>)}</div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:7,marginBottom:12}}>{[["By",sel.by],["To",sel.to],["Due",fmtDue(sel.due)],["Type",sel.type],...(sel.reminder&&sel.reminder!=="none"?[["Reminder",REMIND_OPTS.find(([v])=>v===sel.reminder)?.[1]||sel.reminder]]:[])].map(([l,v])=><div key={l} style={{background:C.bg,borderRadius:8,padding:"8px 10px"}}><div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase"}}>{l}</div><div style={{color:C.text,fontSize:13,fontWeight:600,marginTop:2}}>{v}</div></div>)}</div>
       {(sel.loop||[]).length>0&&<div style={{background:"#F5F3FF",border:"1px solid #DDD6FE",borderRadius:8,padding:"9px 11px",marginBottom:12}}>
         <div style={{color:"#6D28D9",fontSize:10,fontWeight:700,textTransform:"uppercase",marginBottom:7}}>🔄 In Loop ({(sel.loop||[]).length})</div>
         <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{(sel.loop||[]).map(n=><div key={n} style={{display:"flex",alignItems:"center",gap:5,background:"#EDE9FE",borderRadius:20,padding:"3px 9px 3px 5px"}}><Av name={n} size={20}/><span style={{color:"#5B21B6",fontSize:11,fontWeight:600}}>{n.split(" ")[0]}</span></div>)}</div>
@@ -289,7 +323,7 @@ function Tasks({role,currentUser,setNotifs}){
     </Mod>}
     <div style={{display:"flex",gap:7,marginBottom:13,flexWrap:"wrap"}}><Pill label="Pending" value={cnt.Pending} color={C.acc}/><Pill label="In Progress" value={cnt["In Progress"]} color={C.blue}/><Pill label="Done" value={cnt.Done} color={C.green}/>{can&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:C.blue,border:"none",color:"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
     <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?vis.length:cnt[s]||0})</button>)}</div>
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {t.due} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
+    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {fmtDue(t.due)} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
   </div>);
 }
 
@@ -1273,7 +1307,8 @@ export default function App(){
     setPushPerm("Notification"in window?Notification.permission:"unsupported");
     if(token){
       try{localStorage.setItem("tansha_fcm_token",token);}catch{}
-      setNotifs(p=>[{id:Date.now(),icon:"🔔",title:"Notifications Enabled",body:`Device token: ${token}`,time:"Just now",read:false,color:C.green},...p]);
+      registerDeviceToken(UM[role],token).catch(err=>console.error(err));
+      setNotifs(p=>[{id:Date.now(),icon:"🔔",title:"Notifications Enabled",body:"You'll now get alerts for your tasks.",time:"Just now",read:false,color:C.green},...p]);
     }
   }
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
