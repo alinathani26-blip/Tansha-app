@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const C={
   bg:"#F1F5F9",
@@ -383,35 +385,26 @@ function Dispatch({role}){
   function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
   function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
   function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
-  function printDispatch(){
-    const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-    const row=d=>`<tr><td>${esc(d.client)}</td><td>${d.qty?`${esc(d.qty)} ${esc(d.unit)}`:"—"}</td><td>${esc(d.transport)}</td><td>${esc(d.date)}</td><td>${d.lr?"✓":"—"}</td></tr>`;
-    const table=(title,rows)=>rows.length?`<h3>${title} (${rows.length})</h3><table><thead><tr><th>Client</th><th>Qty</th><th>Transport</th><th>Date</th><th>LR</th></tr></thead><tbody>${rows.map(row).join("")}</tbody></table>`:"";
-    const html=`<html><head><title>Dispatch - ${esc(loc)}</title><style>
-      body{font-family:Arial,sans-serif;padding:20px;color:#111}
-      h2{margin-bottom:2px}
-      .sub{color:#666;margin-bottom:16px;font-size:13px}
-      h3{margin-top:18px;margin-bottom:6px}
-      table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:13px}
-      th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}
-      th{background:#f3f3f3}
-      .lrbox{border:2px solid #d97706;border-radius:8px;padding:10px 14px;margin-top:16px;background:#fff7ed}
-      .lrbox h4{margin:0 0 6px;color:#d97706}
-    </style></head><body>
-      <h2>Tansha Hospitality — Dispatch Sheet</h2>
-      <div class="sub">${esc(loc)} · Printed ${new Date().toLocaleString("en-IN")}</div>
-      ${table("Ready to Dispatch (CTN)",ready)}
-      ${table("Not Ready / Pending",pend)}
-      ${table("On Hold",held)}
-      ${table("Dispatched / Done",disp)}
-      <div class="lrbox"><h4>Pending LR (${pendingLR.length})</h4>${pendingLR.length?pendingLR.map(d=>esc(d.client)).join(", "):"None — all LRs received"}</div>
-    </body></html>`;
-    const w=window.open("","_blank");
-    if(!w)return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(()=>w.print(),250);
+  function exportDispatchPDF(){
+    const doc=new jsPDF();
+    const rows=arr=>arr.map(d=>[d.client,d.qty?`${d.qty} ${d.unit}`:"—",d.transport,d.date,d.lr?"Y":"—"]);
+    const head=[["Client","Qty","Transport","Date","LR"]];
+    doc.setFontSize(14);doc.text("Tansha Hospitality — Dispatch Sheet",14,15);
+    doc.setFontSize(10);doc.setTextColor(120);doc.text(`${loc} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
+    let y=27;
+    const section=(title,arr)=>{
+      if(!arr.length)return;
+      doc.setFontSize(11);doc.setTextColor(30);doc.text(`${title} (${arr.length})`,14,y);
+      autoTable(doc,{head,body:rows(arr),startY:y+2,styles:{fontSize:9},headStyles:{fillColor:[230,230,230],textColor:30}});
+      y=doc.lastAutoTable.finalY+8;
+    };
+    section("Ready to Dispatch (CTN)",ready);
+    section("Not Ready / Pending",pend);
+    section("On Hold",held);
+    section("Dispatched / Done",disp);
+    doc.setFontSize(11);doc.setTextColor(217,119,6);
+    doc.text(`Pending LR (${pendingLR.length}): ${pendingLR.length?pendingLR.map(d=>d.client).join(", "):"None — all LRs received"}`,14,y,{maxWidth:180});
+    doc.save(`Dispatch_${loc.replace(/\s+/g,"_")}_${TODAY}.pdf`);
   }
   return (<div>
     {/* Detail Modal */}
@@ -482,7 +475,7 @@ function Dispatch({role}){
     <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}{allPendingLR>0&&<Pill label="Pending LR" value={allPendingLR} color={C.orange}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowLR(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Pending LR</button>
-        <button onClick={printDispatch} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🖨 Print</button>
+        <button onClick={exportDispatchPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
         <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
       </div>
     </div>
@@ -532,32 +525,25 @@ function Stocks(){
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||i.code.toLowerCase().includes(search.toLowerCase())):items;
   const ac=tab==="Ocean"?C.blue:C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
-  function printStock(){
-    const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
-    const row=it=>`<tr${it.isZ?' class="zero"':it.isL?' class="low"':""}><td>${esc(it.code)}</td><td>${esc(it.name)}</td><td>${it.k2d||"—"}</td><td>${it.k1f||"—"}</td><td>${it.k2f||"—"}</td><td><b>${it.tot}</b></td><td>${fmt(it.val)}</td></tr>`;
-    const html=`<html><head><title>Stock Sheet - ${esc(tab)}</title><style>
-      body{font-family:Arial,sans-serif;padding:20px;color:#111}
-      h2{margin-bottom:2px}
-      .sub{color:#666;margin-bottom:16px;font-size:13px}
-      table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px}
-      th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}
-      th{background:#f3f3f3}
-      td:nth-child(n+3){text-align:center}
-      tr.low{background:#fff7ed}
-      tr.zero{background:#fef2f2}
-      .totals{margin-top:10px;font-size:13px}
-    </style></head><body>
-      <h2>Tansha Hospitality — Stock Sheet</h2>
-      <div class="sub">${esc(tab)} · Printed ${new Date().toLocaleString("en-IN")}</div>
-      <table><thead><tr><th>Code</th><th>Item</th><th>K2D</th><th>K1F</th><th>K2F</th><th>Tot</th><th>Value</th></tr></thead><tbody>${items.map(row).join("")}</tbody></table>
-      <div class="totals">Total CTN: <b>${items.reduce((s,i)=>s+i.tot,0)}</b> &nbsp;·&nbsp; Total Value: <b>${fmt(items.reduce((s,i)=>s+i.val,0))}</b> &nbsp;·&nbsp; Low Stock: <b>${items.filter(i=>i.isL).length}</b> &nbsp;·&nbsp; Zero Stock: <b>${items.filter(i=>i.isZ).length}</b></div>
-    </body></html>`;
-    const w=window.open("","_blank");
-    if(!w)return;
-    w.document.write(html);
-    w.document.close();
-    w.focus();
-    setTimeout(()=>w.print(),250);
+  function exportStockPDF(){
+    const doc=new jsPDF();
+    doc.setFontSize(14);doc.text("Tansha Hospitality — Stock Sheet",14,15);
+    doc.setFontSize(10);doc.setTextColor(120);doc.text(`${tab} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
+    autoTable(doc,{
+      head:[["Code","Item","K2D","K1F","K2F","Tot","Value"]],
+      body:items.map(it=>[it.code,it.name,it.k2d||"—",it.k1f||"—",it.k2f||"—",it.tot,fmt(it.val)]),
+      startY:26,styles:{fontSize:9},headStyles:{fillColor:[230,230,230],textColor:30},
+      didParseCell:(data)=>{
+        if(data.section!=="body")return;
+        const it=items[data.row.index];
+        if(it.isZ)data.cell.styles.fillColor=[254,242,242];
+        else if(it.isL)data.cell.styles.fillColor=[255,247,237];
+      }
+    });
+    const y=doc.lastAutoTable.finalY+8;
+    doc.setFontSize(10);doc.setTextColor(30);
+    doc.text(`Total CTN: ${items.reduce((s,i)=>s+i.tot,0)}   ·   Total Value: ${fmt(items.reduce((s,i)=>s+i.val,0))}   ·   Low Stock: ${items.filter(i=>i.isL).length}   ·   Zero Stock: ${items.filter(i=>i.isZ).length}`,14,y);
+    doc.save(`Stock_${tab}_${TODAY}.pdf`);
   }
   return (<div>
     {editIt&&<Mod onClose={()=>setEditIt(null)} title={editIt.name} sub={editIt.code}>
@@ -566,7 +552,7 @@ function Stocks(){
       <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));setEditIt(null);}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>setTab(t)} style={{flex:1,background:tab===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${tab===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:tab===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t}</span></button>)}</div>
-    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}<button onClick={printStock} style={{marginLeft:"auto",background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🖨 Print</button></div>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}<button onClick={exportStockPDF} style={{marginLeft:"auto",background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button></div>
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:360}}>
       <thead><tr style={{background:C.card}}>{["Code","Item","K2D","K1F","K2F","Tot",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10}}>{h}</th>)}</tr></thead>
