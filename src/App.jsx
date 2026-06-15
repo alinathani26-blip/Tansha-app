@@ -529,6 +529,10 @@ function Stocks(){
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
+  function reloadCatalog(){
+    if(!window.confirm(`Replace ${tab} stock list with the full ${ST0[tab].length}-item catalog from the warehouse sheet? Any custom items/edits you added beyond the catalog will be lost.`))return;
+    setStocks(p=>({...p,[tab]:ST0[tab]}));
+  }
   function addItem(){
     if(!addForm.code.trim()||!addForm.name.trim())return;
     setStocks(p=>({...p,[tab]:[...p[tab],{id:Date.now(),code:addForm.code.trim(),name:addForm.name.trim(),mrp:0,cmrp:parseInt(addForm.cmrp)||0,k2d:0,k1f:0,k2f:0,re:0,boxCtn:parseInt(addForm.boxCtn)||0,cont:""}]}));
@@ -590,6 +594,7 @@ function Stocks(){
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
+        <button onClick={reloadCatalog} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📥 Load Catalog</button>
         <button onClick={exportStockPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
       </div>
     </div>
