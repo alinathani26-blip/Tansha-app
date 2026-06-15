@@ -1331,11 +1331,11 @@ function Operations({role,currentUser}){
 
     {sub==="att"&&<div>
       {showSalary&&<SalaryReport attLog={attLog} salaries={salaries} setSalaries={setSalaries} onClose={()=>setShowSalary(false)}/>}
-      <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+      <div style={{display:"flex",gap:7,marginBottom:can?8:12,flexWrap:"wrap",alignItems:"center"}}>
         <input type="date" style={{...INP,width:150}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
         <Pill label="Present" value={pr} color={C.green}/><Pill label="Absent" value={ab} color={C.red}/>
-        {can&&<button onClick={()=>setShowSalary(true)} style={{marginLeft:"auto",background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:7,padding:"5px 11px",fontWeight:700,fontSize:11,cursor:"pointer"}}>📊 Salary Report</button>}
       </div>
+      {can&&<button onClick={()=>setShowSalary(true)} style={{width:"100%",marginBottom:12,background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"9px 11px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📊 Salary Report</button>}
       <div style={{display:"flex",flexDirection:"column",gap:7}}>{TEAM.map(name=>{const a=getRec(attDate,name);const isMe=name===currentUser,cE=isMe||can,ed=editId===name;const sc=SC2[a.status]||C.dim;return<div key={name} style={{background:C.card,border:`1px solid ${a.status==="Present"?C.green+"33":a.status==="Absent"?C.red+"33":C.acc+"33"}`,borderRadius:11,padding:"10px 13px"}}>
         <div style={{display:"flex",alignItems:"center",gap:9}}>
           <Av name={name} size={28}/>
