@@ -532,6 +532,33 @@ function Stocks(){
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||i.code.toLowerCase().includes(search.toLowerCase())):items;
   const ac=tab==="Ocean"?C.blue:C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
+  function printStock(){
+    const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    const row=it=>`<tr${it.isZ?' class="zero"':it.isL?' class="low"':""}><td>${esc(it.code)}</td><td>${esc(it.name)}</td><td>${it.k2d||"—"}</td><td>${it.k1f||"—"}</td><td>${it.k2f||"—"}</td><td><b>${it.tot}</b></td><td>${fmt(it.val)}</td></tr>`;
+    const html=`<html><head><title>Stock Sheet - ${esc(tab)}</title><style>
+      body{font-family:Arial,sans-serif;padding:20px;color:#111}
+      h2{margin-bottom:2px}
+      .sub{color:#666;margin-bottom:16px;font-size:13px}
+      table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px}
+      th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}
+      th{background:#f3f3f3}
+      td:nth-child(n+3){text-align:center}
+      tr.low{background:#fff7ed}
+      tr.zero{background:#fef2f2}
+      .totals{margin-top:10px;font-size:13px}
+    </style></head><body>
+      <h2>Tansha Hospitality — Stock Sheet</h2>
+      <div class="sub">${esc(tab)} · Printed ${new Date().toLocaleString("en-IN")}</div>
+      <table><thead><tr><th>Code</th><th>Item</th><th>K2D</th><th>K1F</th><th>K2F</th><th>Tot</th><th>Value</th></tr></thead><tbody>${items.map(row).join("")}</tbody></table>
+      <div class="totals">Total CTN: <b>${items.reduce((s,i)=>s+i.tot,0)}</b> &nbsp;·&nbsp; Total Value: <b>${fmt(items.reduce((s,i)=>s+i.val,0))}</b> &nbsp;·&nbsp; Low Stock: <b>${items.filter(i=>i.isL).length}</b> &nbsp;·&nbsp; Zero Stock: <b>${items.filter(i=>i.isZ).length}</b></div>
+    </body></html>`;
+    const w=window.open("","_blank");
+    if(!w)return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>w.print(),250);
+  }
   return (<div>
     {editIt&&<Mod onClose={()=>setEditIt(null)} title={editIt.name} sub={editIt.code}>
       <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:12}}>{[["K2 Down","k2d",C.blue],["K1 1st Flr","k1f",C.purple],["K2 2nd Flr","k2f",C.teal]].map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
@@ -539,7 +566,7 @@ function Stocks(){
       <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));setEditIt(null);}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>setTab(t)} style={{flex:1,background:tab===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${tab===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:tab===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t}</span></button>)}</div>
-    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}</div>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}<button onClick={printStock} style={{marginLeft:"auto",background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🖨 Print</button></div>
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:360}}>
       <thead><tr style={{background:C.card}}>{["Code","Item","K2D","K1F","K2F","Tot",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10}}>{h}</th>)}</tr></thead>
