@@ -368,8 +368,10 @@ function Dispatch({role}){
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
   const [form,setForm]=useState({client:"",transport:"Rajesh",date:TODAY});
+  const [dispDate,setDispDate]=useState("");
   const lc=LC[loc];
-  const all=disps[loc]||[];
+  const allLoc=disps[loc]||[];
+  const all=dispDate?allLoc.filter(d=>d.date===dispDate):allLoc;
   const ready=all.filter(d=>d.status==="Ready");
   const held=all.filter(d=>d.status==="On Hold");
   const pend=all.filter(d=>d.status==="Pending");
@@ -469,6 +471,11 @@ function Dispatch({role}){
         <button onClick={add} style={{background:lc,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Save — Add Qty Later ›</button>
       </div>
     </Mod>}
+    <div style={{display:"flex",gap:8,marginBottom:12,alignItems:"center"}}>
+      <label style={{...LBL,marginBottom:0}}>📅 Date</label>
+      <input type="date" style={{...INP,maxWidth:170}} value={dispDate} onChange={e=>setDispDate(e.target.value)}/>
+      {dispDate&&<button onClick={()=>setDispDate("")} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"0 14px",height:38,fontWeight:700,cursor:"pointer",fontSize:12}}>Clear</button>}
+    </div>
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
     {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
