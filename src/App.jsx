@@ -361,6 +361,7 @@ function Dispatch({role}){
   const [showNew,setShowNew]=useState(false);
   const [showDel,setShowDel]=useState(false);
   const [showHold,setShowHold]=useState(false);
+  const [showLR,setShowLR]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -371,6 +372,8 @@ function Dispatch({role}){
   const held=all.filter(d=>d.status==="On Hold");
   const pend=all.filter(d=>d.status==="Pending");
   const disp=all.filter(d=>d.status==="Dispatched");
+  const pendingLR=disp.filter(d=>!d.lr);
+  const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
   const TR=["Rajesh","Munshi","Tukaram","Gujarat","VRL","Thane Motor","New Super","Porter","Hand Delivery"];
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
   function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:""}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
@@ -380,6 +383,36 @@ function Dispatch({role}){
   function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
   function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
   function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
+  function printDispatch(){
+    const esc=s=>String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+    const row=d=>`<tr><td>${esc(d.client)}</td><td>${d.qty?`${esc(d.qty)} ${esc(d.unit)}`:"—"}</td><td>${esc(d.transport)}</td><td>${esc(d.date)}</td><td>${d.lr?"✓":"—"}</td></tr>`;
+    const table=(title,rows)=>rows.length?`<h3>${title} (${rows.length})</h3><table><thead><tr><th>Client</th><th>Qty</th><th>Transport</th><th>Date</th><th>LR</th></tr></thead><tbody>${rows.map(row).join("")}</tbody></table>`:"";
+    const html=`<html><head><title>Dispatch - ${esc(loc)}</title><style>
+      body{font-family:Arial,sans-serif;padding:20px;color:#111}
+      h2{margin-bottom:2px}
+      .sub{color:#666;margin-bottom:16px;font-size:13px}
+      h3{margin-top:18px;margin-bottom:6px}
+      table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:13px}
+      th,td{border:1px solid #ccc;padding:5px 8px;text-align:left}
+      th{background:#f3f3f3}
+      .lrbox{border:2px solid #d97706;border-radius:8px;padding:10px 14px;margin-top:16px;background:#fff7ed}
+      .lrbox h4{margin:0 0 6px;color:#d97706}
+    </style></head><body>
+      <h2>Tansha Hospitality — Dispatch Sheet</h2>
+      <div class="sub">${esc(loc)} · Printed ${new Date().toLocaleString("en-IN")}</div>
+      ${table("Ready to Dispatch (CTN)",ready)}
+      ${table("Not Ready / Pending",pend)}
+      ${table("On Hold",held)}
+      ${table("Dispatched / Done",disp)}
+      <div class="lrbox"><h4>Pending LR (${pendingLR.length})</h4>${pendingLR.length?pendingLR.map(d=>esc(d.client)).join(", "):"None — all LRs received"}</div>
+    </body></html>`;
+    const w=window.open("","_blank");
+    if(!w)return;
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(()=>w.print(),250);
+  }
   return (<div>
     {/* Detail Modal */}
     {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);setShowHold(false);}} title={sel.client} sub={`${sel.transport} · ${sel.date}`}>
@@ -445,12 +478,47 @@ function Dispatch({role}){
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
-    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button></div>
+    {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
+    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}{allPendingLR>0&&<Pill label="Pending LR" value={allPendingLR} color={C.orange}/>}
+      <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+        <button onClick={()=>setShowLR(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Pending LR</button>
+        <button onClick={printDispatch} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🖨 Print</button>
+        <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
+      </div>
+    </div>
     {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
     {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
     {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
     {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
   </div>);
+}
+
+function LRSummary({disps,setDisps,onClose}){
+  const [date,setDate]=useState("");
+  const locs=["Bhiwandi","Local Tansha","Local Kaizen"];
+  function markLR(loc,id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,lr:true}:d)}));}
+  const groups=locs.map(loc=>({loc,items:(disps[loc]||[]).filter(d=>d.status==="Dispatched"&&!d.lr&&(!date||d.date===date))}));
+  const total=groups.reduce((s,g)=>s+g.items.length,0);
+  return (<Mod onClose={onClose} title="Pending LR Summary" sub="Across all sections">
+    <div style={{marginBottom:14}}>
+      <label style={LBL}>Filter by Date</label>
+      <div style={{display:"flex",gap:8}}>
+        <input type="date" style={INP} value={date} onChange={e=>setDate(e.target.value)}/>
+        {date&&<button onClick={()=>setDate("")} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"0 14px",fontWeight:700,cursor:"pointer",fontSize:12}}>Clear</button>}
+      </div>
+    </div>
+    {total===0&&<div style={{textAlign:"center",padding:"20px 0",color:C.muted,fontSize:13}}>✅ No pending LRs{date?" for this date":""}.</div>}
+    {groups.filter(g=>g.items.length>0).map(g=><div key={g.loc} style={{marginBottom:14}}>
+      <SL text={`${g.loc} (${g.items.length})`} color={LC[g.loc]}/>
+      <div style={{display:"flex",flexDirection:"column",gap:7}}>{g.items.map(d=><div key={d.id} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:9}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{color:C.text,fontWeight:700,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.client}</div>
+          <div style={{color:C.muted,fontSize:11,marginTop:2}}>{d.qty?`${d.qty} ${d.unit}`:"No Qty"} · {d.transport} · {d.date}</div>
+        </div>
+        <button onClick={()=>markLR(g.loc,d.id)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"7px 11px",fontWeight:700,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>✅ Mark LR</button>
+      </div>)}</div>
+    </div>)}
+  </Mod>);
 }
 
 // ── Stocks ──
