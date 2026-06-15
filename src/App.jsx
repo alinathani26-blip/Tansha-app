@@ -1287,7 +1287,7 @@ function Operations({role,currentUser}){
   const [showNewT,setShowNewT]=useState(false);const [showNewN,setShowNewN]=useState(false);
   const [tf,setTf]=useState({date:TODAY,client:"",invNo:"",reason:"",status:"Open",assignedTo:currentUser,notes:""});
   const [nf,setNf]=useState({title:"",body:"",tag:"General",pinned:false});
-  const [editId,setEditId]=useState(null);const can=["Owner","Manager"].includes(role);
+  const [editId,setEditId]=useState(null);const can=MANAGERS.includes(role);
   const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
   const DEF_REC={status:"Present",inTime:"",outTime:"",advance:0,travelExp:0,notes:""};
   function getRec(date,name){return (attLog[date]&&attLog[date][name])||DEF_REC;}
