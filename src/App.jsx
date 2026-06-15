@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
+import { jsPDF } from "jspdf";
+import autoTable from "jspdf-autotable";
 
 const C={
   bg:"#F1F5F9",
@@ -361,6 +363,7 @@ function Dispatch({role}){
   const [showNew,setShowNew]=useState(false);
   const [showDel,setShowDel]=useState(false);
   const [showHold,setShowHold]=useState(false);
+  const [showLR,setShowLR]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -371,6 +374,8 @@ function Dispatch({role}){
   const held=all.filter(d=>d.status==="On Hold");
   const pend=all.filter(d=>d.status==="Pending");
   const disp=all.filter(d=>d.status==="Dispatched");
+  const pendingLR=disp.filter(d=>!d.lr);
+  const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
   const TR=["Rajesh","Munshi","Tukaram","Gujarat","VRL","Thane Motor","New Super","Porter","Hand Delivery"];
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
   function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:""}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
@@ -380,6 +385,27 @@ function Dispatch({role}){
   function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
   function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
   function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
+  function exportDispatchPDF(){
+    const doc=new jsPDF();
+    const rows=arr=>arr.map(d=>[d.client,d.qty?`${d.qty} ${d.unit}`:"—",d.transport,d.date,d.lr?"Y":"—"]);
+    const head=[["Client","Qty","Transport","Date","LR"]];
+    doc.setFontSize(14);doc.text("Tansha Hospitality — Dispatch Sheet",14,15);
+    doc.setFontSize(10);doc.setTextColor(120);doc.text(`${loc} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
+    let y=27;
+    const section=(title,arr)=>{
+      if(!arr.length)return;
+      doc.setFontSize(11);doc.setTextColor(30);doc.text(`${title} (${arr.length})`,14,y);
+      autoTable(doc,{head,body:rows(arr),startY:y+2,styles:{fontSize:9},headStyles:{fillColor:[230,230,230],textColor:30}});
+      y=doc.lastAutoTable.finalY+8;
+    };
+    section("Ready to Dispatch (CTN)",ready);
+    section("Not Ready / Pending",pend);
+    section("On Hold",held);
+    section("Dispatched / Done",disp);
+    doc.setFontSize(11);doc.setTextColor(217,119,6);
+    doc.text(`Pending LR (${pendingLR.length}): ${pendingLR.length?pendingLR.map(d=>d.client).join(", "):"None — all LRs received"}`,14,y,{maxWidth:180});
+    doc.save(`Dispatch_${loc.replace(/\s+/g,"_")}_${TODAY}.pdf`);
+  }
   return (<div>
     {/* Detail Modal */}
     {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);setShowHold(false);}} title={sel.client} sub={`${sel.transport} · ${sel.date}`}>
@@ -445,7 +471,14 @@ function Dispatch({role}){
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
-    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button></div>
+    {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
+    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}{allPendingLR>0&&<Pill label="Pending LR" value={allPendingLR} color={C.orange}/>}
+      <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+        <button onClick={()=>setShowLR(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Pending LR</button>
+        <button onClick={exportDispatchPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
+        <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
+      </div>
+    </div>
     {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
     {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
     {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
@@ -453,33 +486,126 @@ function Dispatch({role}){
   </div>);
 }
 
+function LRSummary({disps,setDisps,onClose}){
+  const [date,setDate]=useState("");
+  const locs=["Bhiwandi","Local Tansha","Local Kaizen"];
+  function markLR(loc,id){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,lr:true}:d)}));}
+  const groups=locs.map(loc=>({loc,items:(disps[loc]||[]).filter(d=>d.status==="Dispatched"&&!d.lr&&(!date||d.date===date))}));
+  const total=groups.reduce((s,g)=>s+g.items.length,0);
+  return (<Mod onClose={onClose} title="Pending LR Summary" sub="Across all sections">
+    <div style={{marginBottom:14}}>
+      <label style={LBL}>Filter by Date</label>
+      <div style={{display:"flex",gap:8}}>
+        <input type="date" style={INP} value={date} onChange={e=>setDate(e.target.value)}/>
+        {date&&<button onClick={()=>setDate("")} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"0 14px",fontWeight:700,cursor:"pointer",fontSize:12}}>Clear</button>}
+      </div>
+    </div>
+    {total===0&&<div style={{textAlign:"center",padding:"20px 0",color:C.muted,fontSize:13}}>✅ No pending LRs{date?" for this date":""}.</div>}
+    {groups.filter(g=>g.items.length>0).map(g=><div key={g.loc} style={{marginBottom:14}}>
+      <SL text={`${g.loc} (${g.items.length})`} color={LC[g.loc]}/>
+      <div style={{display:"flex",flexDirection:"column",gap:7}}>{g.items.map(d=><div key={d.id} style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:9}}>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{color:C.text,fontWeight:700,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.client}</div>
+          <div style={{color:C.muted,fontSize:11,marginTop:2}}>{d.qty?`${d.qty} ${d.unit}`:"No Qty"} · {d.transport} · {d.date}</div>
+        </div>
+        <button onClick={()=>markLR(g.loc,d.id)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"7px 11px",fontWeight:700,fontSize:11,cursor:"pointer",whiteSpace:"nowrap"}}>✅ Mark LR</button>
+      </div>)}</div>
+    </div>)}
+  </Mod>);
+}
+
 // ── Stocks ──
-const ST0={Ocean:[{id:1,code:"B01709",name:"ALOHA 09 OZ",mrp:682,cmrp:7140,k2d:132,k1f:0,k2f:468,re:50},{id:2,code:"P02808",name:"CONNECTION HI BALL",mrp:949,cmrp:7592,k2d:26,k1f:200,k2f:234,re:50},{id:3,code:"P02807",name:"CONNECTION D ROCK",mrp:949,cmrp:7592,k2d:16,k1f:0,k2f:550,re:50},{id:4,code:"B07711",name:"HANSA 11 OZ",mrp:571,cmrp:6852,k2d:0,k1f:171,k2f:491,re:50},{id:5,code:"WG300",name:"WHISKY GLASS 300ML",mrp:738,cmrp:5904,k2d:4,k1f:0,k2f:21,re:50},{id:6,code:"B21413",name:"ETHAN 13 (360 ML)",mrp:810,cmrp:6480,k2d:0,k1f:0,k2f:239,re:30}],Ukiyo:[{id:1,code:"UK-SS-01",name:"UKIYO SAKE SET",mrp:850,cmrp:10200,k2d:4,k1f:2,k2f:1,re:10},{id:2,code:"UK-TM-400",name:"UKIYO TUMBLER",mrp:380,cmrp:4560,k2d:24,k1f:0,k2f:0,re:20},{id:3,code:"UK-CK-08",name:"CHEF KNIFE 08\"",mrp:275,cmrp:3300,k2d:12,k1f:0,k2f:0,re:10},{id:4,code:"UK-SB-01",name:"STONE BOWL 8001",mrp:1260,cmrp:7560,k2d:6,k1f:0,k2f:0,re:5}]};
+const ST0={Ocean:[{id:1,code:"B01709",name:"ALOHA 09 OZ",mrp:682,cmrp:7140,k2d:132,k1f:0,k2f:468,re:50,boxCtn:12,cont:""},{id:2,code:"P02808",name:"CONNECTION HI BALL",mrp:949,cmrp:7592,k2d:26,k1f:200,k2f:234,re:50,boxCtn:8,cont:""},{id:3,code:"P02807",name:"CONNECTION D ROCK",mrp:949,cmrp:7592,k2d:16,k1f:0,k2f:550,re:50,boxCtn:8,cont:""},{id:4,code:"B07711",name:"HANSA 11 OZ",mrp:571,cmrp:6852,k2d:0,k1f:171,k2f:491,re:50,boxCtn:8,cont:""},{id:5,code:"WG300",name:"WHISKY GLASS 300ML",mrp:738,cmrp:5904,k2d:4,k1f:0,k2f:21,re:50,boxCtn:6,cont:""},{id:6,code:"B21413",name:"ETHAN 13 (360 ML)",mrp:810,cmrp:6480,k2d:0,k1f:0,k2f:239,re:30,boxCtn:8,cont:""}],Ukiyo:[{id:1,code:"UK-SS-01",name:"UKIYO SAKE SET",mrp:850,cmrp:10200,k2d:4,k1f:2,k2f:1,re:10,boxCtn:6,cont:""},{id:2,code:"UK-TM-400",name:"UKIYO TUMBLER",mrp:380,cmrp:4560,k2d:24,k1f:0,k2f:0,re:20,boxCtn:6,cont:""},{id:3,code:"UK-CK-08",name:"CHEF KNIFE 08\"",mrp:275,cmrp:3300,k2d:12,k1f:0,k2f:0,re:10,boxCtn:6,cont:""},{id:4,code:"UK-SB-01",name:"STONE BOWL 8001",mrp:1260,cmrp:7560,k2d:6,k1f:0,k2f:0,re:5,boxCtn:6,cont:""}]};
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
   const [search,setSearch]=useState("");
   const [stocks,setStocks]=useFirestoreState("stocks",ST0);
   const [editIt,setEditIt]=useState(null);
-  const items=stocks[tab].map(it=>{const tot=it.k2d+it.k1f+it.k2f;return{...it,tot,val:tot*it.cmrp,isZ:tot===0,isL:tot>0&&tot<=it.re};});
+  const [showAdd,setShowAdd]=useState(false);
+  const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
+  const items=stocks[tab].map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||i.code.toLowerCase().includes(search.toLowerCase())):items;
   const ac=tab==="Ocean"?C.blue:C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
+  function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
+  function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
+  function addItem(){
+    if(!addForm.code.trim()||!addForm.name.trim())return;
+    setStocks(p=>({...p,[tab]:[...p[tab],{id:Date.now(),code:addForm.code.trim(),name:addForm.name.trim(),mrp:0,cmrp:parseInt(addForm.cmrp)||0,k2d:0,k1f:0,k2f:0,re:0,boxCtn:parseInt(addForm.boxCtn)||0,cont:""}]}));
+    setAddForm({code:"",name:"",cmrp:"",boxCtn:""});
+    setShowAdd(false);
+  }
+  function exportStockPDF(){
+    const doc=new jsPDF();
+    doc.setFontSize(14);doc.text("Tansha Hospitality — Stock Sheet",14,15);
+    doc.setFontSize(10);doc.setTextColor(120);doc.text(`${tab} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
+    autoTable(doc,{
+      head:[["C.MRP","Code","Item","Tot CTN","Ground","1st Flr","2nd Flr","Value","Box/CTN","Tot Box","Container"]],
+      body:items.map(it=>[fmt(it.cmrp),it.code,it.name,it.tot,it.k2d||"—",it.k1f||"—",it.k2f||"—",fmt(it.val),it.boxCtn||"—",it.totBox||"—",it.cont||""]),
+      startY:26,styles:{fontSize:8},headStyles:{fillColor:[230,230,230],textColor:30},
+      didParseCell:(data)=>{
+        if(data.section!=="body")return;
+        const it=items[data.row.index];
+        if(it.isZ)data.cell.styles.fillColor=[254,242,242];
+        else if(it.isL)data.cell.styles.fillColor=[255,247,237];
+      }
+    });
+    const y=doc.lastAutoTable.finalY+8;
+    doc.setFontSize(10);doc.setTextColor(30);
+    doc.text(`Total CTN: ${items.reduce((s,i)=>s+i.tot,0)}   ·   Total Value: ${fmt(items.reduce((s,i)=>s+i.val,0))}   ·   Low Stock: ${items.filter(i=>i.isL).length}   ·   Zero Stock: ${items.filter(i=>i.isZ).length}`,14,y);
+    doc.save(`Stock_${tab}_${TODAY}.pdf`);
+  }
   return (<div>
     {editIt&&<Mod onClose={()=>setEditIt(null)} title={editIt.name} sub={editIt.code}>
-      <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:12}}>{[["K2 Down","k2d",C.blue],["K1 1st Flr","k1f",C.purple],["K2 2nd Flr","k2f",C.teal]].map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
-      <div style={{background:C.bg,borderRadius:7,padding:"7px 11px",marginBottom:12,display:"flex",justifyContent:"space-between"}}><span style={{color:C.muted,fontSize:13}}>Total: <b style={{color:C.text}}>{(editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0)} CTN</b></span><span style={{color:C.green,fontWeight:700}}>{fmt(((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*editIt.cmrp)}</span></div>
-      <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));setEditIt(null);}} style={{background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer",width:"100%"}}>Save ✓</button>
+      <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:12}}>
+        <div><label style={LBL}>Item Name</label><input style={INP} value={editIt.name} onChange={e=>setEditIt(p=>({...p,name:e.target.value}))}/></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><label style={LBL}>Code</label><input style={INP} value={editIt.code} onChange={e=>setEditIt(p=>({...p,code:e.target.value}))}/></div>
+          <div><label style={LBL}>C.MRP (Carton)</label><input type="number" style={INP} value={editIt.cmrp} onChange={e=>setEditIt(p=>({...p,cmrp:parseInt(e.target.value)||0}))}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><label style={LBL}>Box in CTN</label><input type="number" style={INP} value={editIt.boxCtn||0} onChange={e=>setEditIt(p=>({...p,boxCtn:parseInt(e.target.value)||0}))}/></div>
+          <div><label style={LBL}>Container Note</label><input style={INP} value={editIt.cont||""} onChange={e=>setEditIt(p=>({...p,cont:e.target.value}))}/></div>
+        </div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:12}}>{[["Ground","k2d",C.blue],["1st Flr","k1f",C.purple],["2nd Flr","k2f",C.teal]].map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
+      <div style={{background:C.bg,borderRadius:7,padding:"7px 11px",marginBottom:12,display:"flex",justifyContent:"space-between"}}><span style={{color:C.muted,fontSize:13}}>Total: <b style={{color:C.text}}>{(editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0)} CTN · {((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*(editIt.boxCtn||0)} Boxes</b></span><span style={{color:C.green,fontWeight:700}}>{fmt(((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*editIt.cmrp)}</span></div>
+      <div style={{display:"flex",gap:8}}>
+        <button onClick={()=>{if(window.confirm("Delete this item? This cannot be undone."))delItem(editIt.id);}} style={{background:"#FEE2E2",border:"1px solid #FECACA",color:C.red,borderRadius:10,padding:"0 16px",fontWeight:700,cursor:"pointer"}}>🗑 Delete</button>
+        <button onClick={()=>{setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===editIt.id?{...i,...editIt}:i)}));setEditIt(null);}} style={{flex:1,background:C.green,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Save ✓</button>
+      </div>
+    </Mod>}
+    {showAdd&&<Mod onClose={()=>setShowAdd(false)} title="+ New Stock Item" sub={tab}>
+      <div style={{display:"flex",flexDirection:"column",gap:11}}>
+        <div><label style={LBL}>Item Name *</label><input style={INP} value={addForm.name} onChange={e=>setAddForm(f=>({...f,name:e.target.value}))}/></div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
+          <div><label style={LBL}>Code *</label><input style={INP} value={addForm.code} onChange={e=>setAddForm(f=>({...f,code:e.target.value}))}/></div>
+          <div><label style={LBL}>C.MRP (Carton)</label><input type="number" style={INP} value={addForm.cmrp} onChange={e=>setAddForm(f=>({...f,cmrp:e.target.value}))}/></div>
+        </div>
+        <div><label style={LBL}>Box in CTN</label><input type="number" style={INP} value={addForm.boxCtn} onChange={e=>setAddForm(f=>({...f,boxCtn:e.target.value}))}/></div>
+        <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
+      </div>
     </Mod>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>setTab(t)} style={{flex:1,background:tab===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${tab===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:tab===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t}</span></button>)}</div>
-    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}</div>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/><Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
+      <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+        <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
+        <button onClick={exportStockPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
+      </div>
+    </div>
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
-    <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:360}}>
-      <thead><tr style={{background:C.card}}>{["Code","Item","K2D","K1F","K2F","Tot",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10}}>{h}</th>)}</tr></thead>
+    <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
+      <thead><tr style={{background:C.card}}>{["C.MRP","Code","Item","Tot CTN","Ground","1st Flr","2nd Flr","Value","Box/CTN","Tot Box","Container",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
       <tbody>{shown.map((it,i)=><tr key={it.id} style={{background:it.isZ?C.red+"11":it.isL?C.acc+"11":i%2===0?C.card:"#F9FAFB",borderBottom:`1px solid ${C.cb}22`}}>
-        <td style={{padding:"6px 7px",color:ac,fontFamily:"monospace",fontSize:10,fontWeight:700}}>{it.code}</td>
-        <td style={{padding:"6px 7px",color:C.text,maxWidth:110,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.name}</td>
-        {LKs.map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
+        <td style={{padding:"6px 7px",textAlign:"center",color:C.muted,fontSize:10}}>{fmt(it.cmrp)}</td>
+        <td style={{padding:"6px 7px",textAlign:"center",color:ac,fontFamily:"monospace",fontSize:10,fontWeight:700}}>{it.code}</td>
+        <td style={{padding:"6px 7px",color:C.text,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.name}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:it.isZ?C.red:it.isL?C.acc:ac,fontWeight:800,fontSize:12}}>{it.tot}</td>
+        {LKs.map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
+        <td style={{padding:"5px 3px",textAlign:"center",color:C.green,fontWeight:700,fontSize:10}}>{fmt(it.val)}</td>
+        <td style={{padding:"5px 3px",textAlign:"center",color:C.muted}}>{it.boxCtn||"—"}</td>
+        <td style={{padding:"5px 3px",textAlign:"center",color:C.muted,fontWeight:700}}>{it.totBox||"—"}</td>
+        <td style={{padding:"3px 5px"}}><input value={it.cont||""} placeholder="—" onChange={e=>setItem(it.id,{cont:e.target.value})} style={{...INP,width:80,padding:"3px 6px",fontSize:10}}/></td>
         <td style={{padding:"3px 5px",textAlign:"center"}}><button onClick={()=>setEditIt({...it})} style={{background:C.cb,border:"none",color:C.muted,borderRadius:4,width:20,height:20,cursor:"pointer",fontSize:10}}>✏</button></td>
       </tr>)}</tbody>
     </table></div>
