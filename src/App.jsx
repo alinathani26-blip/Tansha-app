@@ -364,11 +364,14 @@ function Dispatch({role}){
   const [showDel,setShowDel]=useState(false);
   const [showHold,setShowHold]=useState(false);
   const [showLR,setShowLR]=useState(false);
+  const [showCopy,setShowCopy]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
   const [form,setForm]=useState({client:"",transport:"Rajesh",date:TODAY});
   const [dispDate,setDispDate]=useState("");
+  const YESTERDAY=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split("T")[0];})();
+  const [copyDate,setCopyDate]=useState(YESTERDAY);
   const lc=LC[loc];
   const allLoc=disps[loc]||[];
   const all=dispDate?allLoc.filter(d=>d.date===dispDate):allLoc;
@@ -387,6 +390,13 @@ function Dispatch({role}){
   function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
   function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
   function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
+  function pasteItems(){
+    const src=(disps[loc]||[]).filter(d=>d.date===copyDate&&(d.status==="Ready"||d.status==="Pending"));
+    if(!src.length)return;
+    const newItems=src.map(d=>({...d,id:Date.now()+Math.random(),date:TODAY,lr:false,photo:null,audio:null,holdNote:"",status:d.qty?d.status:"Pending"}));
+    setDisps(p=>({...p,[loc]:[...p[loc],...newItems]}));
+    setShowCopy(false);
+  }
   function exportDispatchPDF(){
     const doc=new jsPDF();
     const rows=arr=>arr.map(d=>[d.client,d.qty?`${d.qty} ${d.unit}`:"—",d.transport,d.date,d.lr?"Y":"—"]);
@@ -479,8 +489,16 @@ function Dispatch({role}){
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
     {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
+    {showCopy&&<Mod onClose={()=>setShowCopy(false)} title="📋 Copy to Today" sub={`${loc} — paste Ready & Pending items`}>
+      <div style={{marginBottom:12}}>
+        <label style={LBL}>Copy from Date</label>
+        <input type="date" style={INP} value={copyDate} onChange={e=>setCopyDate(e.target.value)}/>
+      </div>
+      {(()=>{const src=(disps[loc]||[]).filter(d=>d.date===copyDate&&(d.status==="Ready"||d.status==="Pending"));return src.length?(<><div style={{color:C.muted,fontSize:11,marginBottom:8}}>The following {src.length} item(s) will be copied to <strong>{TODAY}</strong>:</div><div style={{display:"flex",flexDirection:"column",gap:6,marginBottom:14}}>{src.map(d=><div key={d.id} style={{background:C.bg,border:`1px solid ${d.status==="Ready"?C.orange+"55":C.acc+"44"}`,borderRadius:8,padding:"7px 10px",display:"flex",alignItems:"center",gap:8}}><span style={{width:8,height:8,borderRadius:"50%",background:d.status==="Ready"?C.orange:C.acc,flexShrink:0,display:"inline-block"}}></span><div style={{flex:1}}><div style={{fontWeight:700,fontSize:12,color:C.text}}>{d.client}</div><div style={{color:C.muted,fontSize:10}}>{d.transport}{d.qty?` · ${d.qty} ${d.unit}`:""}</div></div><span style={{background:d.status==="Ready"?C.orange+"22":C.acc+"22",color:d.status==="Ready"?C.orange:C.acc,border:`1px solid ${d.status==="Ready"?C.orange+"44":C.acc+"44"}`,borderRadius:5,padding:"1px 7px",fontSize:9,fontWeight:700}}>{d.status}</span></div>)}</div><button onClick={pasteItems} style={{width:"100%",background:lc,border:"none",color:"#fff",borderRadius:10,padding:"13px 0",fontWeight:800,fontSize:13,cursor:"pointer"}}>✓ Paste {src.length} Item(s) to Today</button></>):(<div style={{textAlign:"center",padding:"22px 0",color:C.muted,fontSize:13}}>No Ready or Pending items found for this date in {loc}.</div>);})()}
+    </Mod>}
     <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Pill label="Ready" value={ready.length} color={C.orange}/><Pill label="Dispatched" value={disp.length} color={C.green}/><Pill label="Pending" value={pend.length} color={C.acc}/>{held.length>0&&<Pill label="On Hold" value={held.length} color={C.red}/>}{allPendingLR>0&&<Pill label="Pending LR" value={allPendingLR} color={C.orange}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+        <button onClick={()=>setShowCopy(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Copy</button>
         <button onClick={()=>setShowLR(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Pending LR</button>
         <button onClick={exportDispatchPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
         <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
