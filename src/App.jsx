@@ -393,7 +393,7 @@ function Dispatch({role}){
   function pasteItems(){
     const src=(disps[loc]||[]).filter(d=>d.date===copyDate&&(d.status==="Ready"||d.status==="Pending"));
     if(!src.length)return;
-    const newItems=src.map(d=>({...d,id:Date.now()+Math.random(),date:TODAY,lr:false,photo:null,audio:null,holdNote:"",status:d.qty?d.status:"Pending"}));
+    const newItems=src.map(d=>({...d,id:Date.now()+Math.random(),date:TODAY}));
     setDisps(p=>({...p,[loc]:[...p[loc],...newItems]}));
     setShowCopy(false);
   }
