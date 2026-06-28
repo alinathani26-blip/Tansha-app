@@ -81,14 +81,15 @@ function RankBars({items,color}){
     )}</div>
   );
 }
-function TrendBars({items,color,activeIdx}){
+function TrendBars({items,color,activeIdx,selectedIdx,onSelect}){
   const max=Math.max(1,...items.map(i=>i.value));
+  const hi=selectedIdx??activeIdx;
   return (
     <div style={{display:"flex",alignItems:"flex-end",gap:6,height:150,padding:"0 2px"}}>{items.map((it,i)=>
-      <div key={it.label} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%",justifyContent:"flex-end",minWidth:0}}>
+      <div key={it.label} onClick={()=>onSelect&&onSelect(i)} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,height:"100%",justifyContent:"flex-end",minWidth:0,cursor:onSelect?"pointer":"default"}}>
         <span style={{fontSize:8,color:C.muted,fontWeight:700,whiteSpace:"nowrap"}}>{it.value?fmtL(it.value):""}</span>
-        <div style={{width:"100%",maxWidth:30,borderRadius:"5px 5px 0 0",background:i===activeIdx?color:color+"55",height:`${it.value?Math.max(4,it.value/max*100):1}%`,transition:"height .2s"}}/>
-        <span style={{fontSize:10,color:i===activeIdx?color:C.muted,fontWeight:i===activeIdx?800:600}}>{it.label}</span>
+        <div style={{width:"100%",maxWidth:30,borderRadius:"5px 5px 0 0",background:i===hi?color:color+"55",height:`${it.value?Math.max(4,it.value/max*100):1}%`,transition:"height .2s"}}/>
+        <span style={{fontSize:10,color:i===hi?color:C.muted,fontWeight:i===hi?800:600}}>{it.label}</span>
       </div>
     )}</div>
   );
@@ -1207,7 +1208,7 @@ const CITY_PALETTE=["#DC2626","#EA580C","#D97706","#65A30D","#059669","#0D9488",
 function kaiCityColor(city){if(!city||city==="Mumbai")return"#475569";const idx=KAI_CITY_ORDER[city];return CITY_PALETTE[(idx??0)%CITY_PALETTE.length];}
 const SD0={Ocean:[{id:1,date:"2026-04-01",client:"Adams & Company",city:"Mumbai",invNo:"201",amount:80646},{id:2,date:"2026-04-01",client:"Anand Entp",city:"Mumbai",invNo:"202",amount:61005},{id:3,date:"2026-04-02",client:"Barsolution LLP",city:"Mumbai",invNo:"210",amount:22862},{id:4,date:"2026-04-03",client:"Indigo Metalware",city:"Mumbai",invNo:"215",amount:253121},{id:5,date:"2026-03-01",client:"Adams & Company",city:"Mumbai",invNo:"145",amount:62000},{id:6,date:"2026-02-05",client:"Anand Entp",city:"Mumbai",invNo:"118",amount:32000}],Ukiyo:[{id:1,date:"2026-04-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"155",amount:890000},{id:2,date:"2026-04-01",client:"Jaydeep Entp",city:"Pune",invNo:"160",amount:412000},{id:3,date:"2026-03-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"110",amount:539157},{id:4,date:"2026-02-01",client:"Balaji Traders Goa",city:"Goa",invNo:"60",amount:139537}]};
 function Sales(){
-  const [team,setTeam]=useState("Ocean");const [sales,setSales]=useFirestoreState("sales",SD0);const [kaiSales,setKaiSales]=useFirestoreState("salesKai",KAI0);const [view,setView]=useState("daily");const [dayMonth,setDayMonth]=useState(CM);const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);
+  const [team,setTeam]=useState("Ocean");const [sales,setSales]=useFirestoreState("sales",SD0);const [kaiSales,setKaiSales]=useFirestoreState("salesKai",KAI0);const [view,setView]=useState("daily");const [dayMonth,setDayMonth]=useState(CM);const [dashMonth,setDashMonth]=useState(null);const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);
   const [form,setForm]=useState({date:TODAY,client:"",city:"",invNo:"",amount:""});const [colW,setColW]=useState({});function cw(id,def){return colW[id]??def;}function startResize(id,def,e){e.stopPropagation();const startX=e.touches?e.touches[0].clientX:e.clientX;const startW=cw(id,def);function onMove(ev){if(ev.cancelable)ev.preventDefault();const x=ev.touches?ev.touches[0].clientX:ev.clientX;setColW(p=>({...p,[id]:Math.max(30,startW+x-startX)}));}function onUp(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);document.removeEventListener("touchmove",onMove);document.removeEventListener("touchend",onUp);}document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);document.addEventListener("touchmove",onMove,{passive:false});document.addEventListener("touchend",onUp);}function rHandle(id,def){return<span onMouseDown={e=>startResize(id,def,e)} onTouchStart={e=>startResize(id,def,e)} style={{position:"absolute",right:0,top:0,bottom:0,width:10,cursor:"col-resize",userSelect:"none",touchAction:"none"}}/>;}
   const teamSales=(t)=>t==="Kaizen"?kaiSales:(sales[t]||[]);
   const cur=teamSales(team);const total=cur.reduce((s,e)=>s+e.amount,0);const ac=team==="Ocean"?C.blue:team==="Ukiyo"?C.teal:C.orange;
@@ -1218,8 +1219,11 @@ function Sales(){
   const tableW=cw("client",110)+cw("area",55)+monthCols.reduce((s,m)=>s+cw(m,60),0)+cw("total",65);
   const monthTotalsAll=monthCols.map((_,mi)=>clientMap.reduce((s,c)=>s+(c.months[mi]||0),0));
   const bestMonthIdx=monthTotalsAll.reduce((bi,v,i,arr)=>v>arr[bi]?i:bi,0);
-  const topClients=clientMap.map(c=>({label:c.client,value:Object.values(c.months).reduce((s,v)=>s+v,0)})).sort((a,b)=>b.value-a.value).slice(0,8);
-  const topCities=Object.entries(clientMap.reduce((g,c)=>{const k=team==="Kaizen"?(c.area||"—"):(c.city||"—");g[k]=(g[k]||0)+Object.values(c.months).reduce((s,v)=>s+v,0);return g;},{})).map(([label,value])=>({label,value})).sort((a,b)=>b.value-a.value).slice(0,8);
+  const scopeVal=c=>dashMonth==null?Object.values(c.months).reduce((s,v)=>s+v,0):(c.months[dashMonth]||0);
+  const scopeTotal=dashMonth==null?total:(monthTotalsAll[dashMonth]||0);
+  const scopeClients=dashMonth==null?clientMap.length:clientMap.filter(c=>(c.months[dashMonth]||0)>0).length;
+  const topClients=clientMap.map(c=>({label:c.client,value:scopeVal(c)})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value).slice(0,8);
+  const topCities=Object.entries(clientMap.reduce((g,c)=>{const k=team==="Kaizen"?(c.area||"—"):(c.city||"—");g[k]=(g[k]||0)+scopeVal(c);return g;},{})).map(([label,value])=>({label,value})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value).slice(0,8);
   function rowCells(c,ri){const rt=Object.values(c.months).reduce((s,v)=>s+v,0);const rb=ri%2===0?C.card:"#F9FAFB";const cc=team==="Kaizen"?kaiCityColor(c.area):null;return<tr key={c.client} style={{borderBottom:`1px solid ${C.cb}22`}}><td style={{padding:"5px 9px",color:C.text,fontWeight:600,fontSize:10,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:0,background:rb,zIndex:1,borderLeft:cc?`3px solid ${cc}`:undefined}}>{c.client}</td><td style={{padding:"5px 5px",fontSize:9,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:cw("client",110),background:rb,zIndex:1}}>{team==="Kaizen"?<span style={{padding:"2px 7px",borderRadius:10,background:cc+"1F",color:cc,fontWeight:700,fontSize:9}}>{c.area}</span>:<span style={{color:C.muted}}>{c.city||"—"}</span>}</td><td style={{padding:"3px 7px",textAlign:"right",color:ac,fontWeight:700,fontSize:10,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:cw("client",110)+cw("area",55),background:rb,zIndex:1}}>{fmt(rt)}</td>{monthCols.map((_,mi)=>{const v=c.months[mi]||0;const hp=Object.keys(c.months).some(m=>parseInt(m)<mi);const ia=!v&&hp;return<td key={mi} style={{padding:"3px 2px",textAlign:"center",background:v>0?C.green+"22":ia?"#FB923C18":"transparent",minWidth:60}}>{v>0?<span style={{color:C.green,fontWeight:700,fontSize:10}}>{fmt(v)}</span>:ia?<span style={{color:"#FB923C",opacity:.7,fontSize:11}}>—</span>:null}</td>;})}</tr>;}
   function areaBlock(area){const rows=areaGroups[area];const areaTotal=rows.reduce((s,c)=>s+Object.values(c.months).reduce((s2,v)=>s2+v,0),0);const monthTotals=monthCols.map((_,mi)=>rows.reduce((s,c)=>s+(c.months[mi]||0),0));return[<tr key={`h-${area}`}><td colSpan={monthCols.length+3} style={{padding:"6px 9px",background:ac+"22",color:ac,fontWeight:800,fontSize:11,position:"sticky",left:0}}>{area==="Mumbai"?"🏙️":"🇮🇳"} {area} ({rows.length})</td></tr>,...rows.map((c,ri)=>rowCells(c,ri)),<tr key={`t-${area}`} style={{borderTop:`2px solid ${ac}55`,borderBottom:`2px solid ${ac}55`}}><td style={{padding:"6px 9px",color:ac,fontWeight:800,fontSize:10,position:"sticky",left:0,background:ac+"11"}}>Total — {area}</td><td style={{padding:"6px 5px",background:ac+"11",position:"sticky",left:cw("client",110)}}></td><td style={{padding:"4px 7px",textAlign:"right",color:ac,fontWeight:800,fontSize:11,background:ac+"11",position:"sticky",left:cw("client",110)+cw("area",55)}}>{fmt(areaTotal)}</td>{monthTotals.map((v,mi)=><td key={mi} style={{padding:"4px 2px",textAlign:"center",background:ac+"11"}}>{v>0?<span style={{color:ac,fontWeight:800,fontSize:10}}>{fmt(v)}</span>:null}</td>)}</tr>];}
   function addSale(){if(!form.client||!form.amount)return;const entry={...form,id:Date.now(),amount:parseFloat(form.amount)};if(team==="Kaizen")setKaiSales(p=>[entry,...p]);else setSales(p=>({...p,[team]:[entry,...p[team]]}));setForm({date:TODAY,client:"",city:"",invNo:"",amount:""});setShowNew(false);}
@@ -1259,10 +1263,12 @@ function Sales(){
       </tbody>
     </table></div></>}
     {view==="dashboard"&&<>
-    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label="Clients" value={clientMap.length} color={ac}/><Pill label="YTD" value={fmt(total)} color={C.green}/><Pill label="Avg/Client" value={fmt(clientMap.length?Math.round(total/clientMap.length):0)} color={C.blue}/><Pill label={`Best · ${monthCols[bestMonthIdx]||"—"}`} value={fmt(monthTotalsAll[bestMonthIdx]||0)} color={C.purple}/></div>
-    <Card style={{marginBottom:12}}><SL text="Monthly Trend"/><TrendBars items={monthCols.map((m,i)=>({label:m,value:monthTotalsAll[i]}))} color={ac} activeIdx={CM}/></Card>
-    <Card style={{marginBottom:12}}><SL text={team==="Kaizen"?"Top Areas":"Top Cities"}/><RankBars items={topCities} color={C.teal}/></Card>
-    <Card><SL text="Top Clients"/><RankBars items={topClients} color={C.orange}/></Card>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label={dashMonth==null?"Clients":`Clients · ${monthCols[dashMonth]}`} value={scopeClients} color={ac}/><Pill label={dashMonth==null?"YTD":monthCols[dashMonth]} value={fmt(scopeTotal)} color={C.green}/><Pill label="Avg/Client" value={fmt(scopeClients?Math.round(scopeTotal/scopeClients):0)} color={C.blue}/><Pill label={`Best · ${monthCols[bestMonthIdx]||"—"}`} value={fmt(monthTotalsAll[bestMonthIdx]||0)} color={C.purple}/></div>
+    <Card style={{marginBottom:12}}><SL text="Monthly Trend"/><TrendBars items={monthCols.map((m,i)=>({label:m,value:monthTotalsAll[i]}))} color={ac} activeIdx={CM} selectedIdx={dashMonth} onSelect={i=>setDashMonth(p=>p===i?null:i)}/>
+    <div style={{textAlign:"center",color:C.dim,fontSize:10,marginTop:8}}>{dashMonth==null?"Tap a month to filter Top Areas & Top Clients below":`Showing ${monthCols[dashMonth]} only — tap again to clear`}</div>
+    </Card>
+    <Card style={{marginBottom:12}}><SL text={`${team==="Kaizen"?"Top Areas":"Top Cities"}${dashMonth!=null?` — ${monthCols[dashMonth]}`:""}`}/><RankBars items={topCities} color={C.teal}/></Card>
+    <Card><SL text={`Top Clients${dashMonth!=null?` — ${monthCols[dashMonth]}`:""}`}/><RankBars items={topClients} color={C.orange}/></Card>
     </>}
   </div>);
 }
