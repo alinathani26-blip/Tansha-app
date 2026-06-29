@@ -2,6 +2,7 @@ import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
 import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL } from "firebase/storage";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDHcDsSEBY2jJELE-pOqM_aKD32ofxrIZE",
@@ -92,4 +93,23 @@ export async function sendPush(persons, title, body) {
   } catch (err) {
     console.error("sendPush failed:", err);
   }
+}
+
+export async function uploadVoiceNote(blob) {
+  await ensureAuth();
+  const storage = getStorage(app);
+  const path = `voice/${Date.now()}-${Math.random().toString(36).slice(2)}.webm`;
+  const ref = storageRef(storage, path);
+  await uploadBytes(ref, blob, { contentType: blob.type || "audio/webm" });
+  return await getDownloadURL(ref);
+}
+
+export async function uploadPhoto(file) {
+  await ensureAuth();
+  const storage = getStorage(app);
+  const ext = file.name && file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+  const path = `photos/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+  const ref = storageRef(storage, path);
+  await uploadBytes(ref, file, { contentType: file.type || "image/jpeg" });
+  return await getDownloadURL(ref);
 }

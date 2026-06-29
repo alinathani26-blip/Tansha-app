@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
+import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush, uploadVoiceNote, uploadPhoto } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -186,18 +186,22 @@ const TASKS0=[
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
 function VoiceRecorder({onSave,compact=false}){
-  const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);
+  const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);const [busy,setBusy]=useState(false);
   const mr=useRef(null);const ch=useRef([]);const tmr=useRef(null);
   async function start(){
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
       const mRec=new MediaRecorder(stream);mr.current=mRec;ch.current=[];
       mRec.ondataavailable=e=>{if(e.data.size>0)ch.current.push(e.data);};
-      mRec.onstop=()=>{
+      mRec.onstop=async()=>{
+        stream.getTracks().forEach(t=>t.stop());
         const blob=new Blob(ch.current,{type:mRec.mimeType||"audio/webm"});
-        const reader=new FileReader();
-        reader.onloadend=()=>{setUrl(reader.result);onSave(reader.result);};
-        reader.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop());
+        setBusy(true);
+        try{
+          const dl=await uploadVoiceNote(blob);
+          setUrl(dl);onSave(dl);
+        }catch(err){console.error("Voice upload failed:",err);alert("Couldn't upload voice note. Check your connection and try again.");}
+        setBusy(false);
       };
       mRec.start();setRec(true);setSecs(0);
       tmr.current=setInterval(()=>setSecs(s=>s+1),1000);
@@ -206,6 +210,7 @@ function VoiceRecorder({onSave,compact=false}){
   function stop(){if(mr.current)mr.current.stop();setRec(false);clearInterval(tmr.current);}
   function clear(){setUrl(null);setSecs(0);onSave(null);}
   const fmtS=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
+  if(busy)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"10px 14px",display:"flex",alignItems:"center",gap:8,color:C.acc,fontWeight:700,fontSize:12}}>⏳ Uploading voice note...</div>);
   if(url)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><span>🎤</span><audio src={url} controls style={{flex:1,height:28}}/><button onClick={clear} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,padding:2,lineHeight:1}}>✕</button></div>);
   return(<button onClick={rec?stop:start} style={{background:rec?"#FEE2E2":"#EEF2FF",border:`1.5px solid ${rec?"#FECACA":"#C7D2FE"}`,color:rec?C.red:C.acc,borderRadius:9,padding:compact?"6px 14px":"10px 14px",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:7,width:compact?"auto":"100%",justifyContent:"center"}}><span style={{width:8,height:8,borderRadius:"50%",background:rec?C.red:C.acc,display:"inline-block"}}/>{rec?`⏹ Stop · ${fmtS(secs)}`:"🎤 Record Voice Note"}</button>);
 }
@@ -396,6 +401,7 @@ function Dispatch({role}){
   const [showHold,setShowHold]=useState(false);
   const [showLR,setShowLR]=useState(false);
   const [showCopy,setShowCopy]=useState(false);
+  const [photoBusy,setPhotoBusy]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -471,7 +477,7 @@ function Dispatch({role}){
       {/* Quotation Photo */}
       <div style={{marginBottom:12}}>
         <label style={LBL}>Quotation Photo</label>
-        {sel.photo?<div style={{position:"relative"}}><img src={sel.photo} alt="quotation" style={{width:"100%",borderRadius:9,maxHeight:200,objectFit:"cover",display:"block"}}/><button onClick={()=>upd(sel.id,{photo:null})} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.55)",border:"none",color:"#fff",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>:<label style={{display:"flex",alignItems:"center",gap:9,background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",cursor:"pointer",color:C.acc,fontWeight:700,fontSize:12}}>📎 Upload Quotation Photo<input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onloadend=()=>upd(sel.id,{photo:r.result});r.readAsDataURL(f);e.target.value="";}}/></label>}
+        {photoBusy?<div style={{background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",color:C.acc,fontWeight:700,fontSize:12}}>⏳ Uploading photo...</div>:sel.photo?<div style={{position:"relative"}}><img src={sel.photo} alt="quotation" style={{width:"100%",borderRadius:9,maxHeight:200,objectFit:"cover",display:"block"}}/><button onClick={()=>upd(sel.id,{photo:null})} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.55)",border:"none",color:"#fff",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>:<label style={{display:"flex",alignItems:"center",gap:9,background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",cursor:"pointer",color:C.acc,fontWeight:700,fontSize:12}}>📎 Upload Quotation Photo<input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{const f=e.target.files[0];if(!f)return;e.target.value="";setPhotoBusy(true);try{const url=await uploadPhoto(f);upd(sel.id,{photo:url});}catch(err){console.error("Photo upload failed:",err);alert("Couldn't upload photo. Check your connection and try again.");}setPhotoBusy(false);}}/></label>}
       </div>
       {/* Voice Memo */}
       <div style={{marginBottom:12}}>
