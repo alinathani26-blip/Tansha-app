@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush, uploadVoiceNote, uploadPhoto } from "./firebase";
+import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -185,34 +185,47 @@ const TASKS0=[
   {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
+function compressPhoto(file){
+  return new Promise(resolve=>{
+    const img=new Image();const ou=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(ou);
+      const MAX=800;let w=img.width,h=img.height;
+      if(w>MAX||h>MAX){if(w>h){h=Math.round(h*MAX/w);w=MAX;}else{w=Math.round(w*MAX/h);h=MAX;}}
+      const cv=document.createElement("canvas");cv.width=w;cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      resolve(cv.toDataURL("image/jpeg",0.5));
+    };
+    img.src=ou;
+  });
+}
+const MAX_REC_SECS=60;
 function VoiceRecorder({onSave,compact=false}){
-  const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);const [busy,setBusy]=useState(false);
+  const [rec,setRec]=useState(false);const [url,setUrl]=useState(null);const [secs,setSecs]=useState(0);
   const mr=useRef(null);const ch=useRef([]);const tmr=useRef(null);
+  useEffect(()=>{if(rec&&secs>=MAX_REC_SECS)stop();},[rec,secs]);
   async function start(){
     try{
       const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      const mRec=new MediaRecorder(stream);mr.current=mRec;ch.current=[];
+      let mRec;try{mRec=new MediaRecorder(stream,{audioBitsPerSecond:32000});}catch(e){mRec=new MediaRecorder(stream);}
+      mr.current=mRec;ch.current=[];
       mRec.ondataavailable=e=>{if(e.data.size>0)ch.current.push(e.data);};
-      mRec.onstop=async()=>{
-        stream.getTracks().forEach(t=>t.stop());
+      mRec.onstop=()=>{
         const blob=new Blob(ch.current,{type:mRec.mimeType||"audio/webm"});
-        setBusy(true);
-        try{
-          const dl=await uploadVoiceNote(blob);
-          setUrl(dl);onSave(dl);
-        }catch(err){console.error("Voice upload failed:",err);alert("Couldn't upload voice note. Check your connection and try again.");}
-        setBusy(false);
+        const reader=new FileReader();
+        reader.onloadend=()=>{setUrl(reader.result);onSave(reader.result);};
+        reader.readAsDataURL(blob);stream.getTracks().forEach(t=>t.stop());
       };
       mRec.start();setRec(true);setSecs(0);
       tmr.current=setInterval(()=>setSecs(s=>s+1),1000);
     }catch(e){alert("Microphone access denied. Please allow mic in browser settings.");}
   }
-  function stop(){if(mr.current)mr.current.stop();setRec(false);clearInterval(tmr.current);}
+  function stop(){if(mr.current&&mr.current.state==="recording")mr.current.stop();setRec(false);clearInterval(tmr.current);}
   function clear(){setUrl(null);setSecs(0);onSave(null);}
   const fmtS=s=>`${Math.floor(s/60)}:${String(s%60).padStart(2,"0")}`;
-  if(busy)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"10px 14px",display:"flex",alignItems:"center",gap:8,color:C.acc,fontWeight:700,fontSize:12}}>⏳ Uploading voice note...</div>);
+  const warn=rec&&secs>=50;
   if(url)return(<div style={{background:"#EEF2FF",border:"1px solid #C7D2FE",borderRadius:9,padding:"8px 10px",display:"flex",alignItems:"center",gap:8}}><span>🎤</span><audio src={url} controls style={{flex:1,height:28}}/><button onClick={clear} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,padding:2,lineHeight:1}}>✕</button></div>);
-  return(<button onClick={rec?stop:start} style={{background:rec?"#FEE2E2":"#EEF2FF",border:`1.5px solid ${rec?"#FECACA":"#C7D2FE"}`,color:rec?C.red:C.acc,borderRadius:9,padding:compact?"6px 14px":"10px 14px",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:7,width:compact?"auto":"100%",justifyContent:"center"}}><span style={{width:8,height:8,borderRadius:"50%",background:rec?C.red:C.acc,display:"inline-block"}}/>{rec?`⏹ Stop · ${fmtS(secs)}`:"🎤 Record Voice Note"}</button>);
+  return(<button onClick={rec?stop:start} style={{background:rec?(warn?"#FFF7ED":"#FEE2E2"):"#EEF2FF",border:`1.5px solid ${rec?(warn?"#FED7AA":"#FECACA"):"#C7D2FE"}`,color:rec?(warn?"#EA580C":C.red):C.acc,borderRadius:9,padding:compact?"6px 14px":"10px 14px",fontWeight:700,fontSize:12,cursor:"pointer",display:"flex",alignItems:"center",gap:7,width:compact?"auto":"100%",justifyContent:"center"}}><span style={{width:8,height:8,borderRadius:"50%",background:rec?(warn?"#EA580C":C.red):C.acc,display:"inline-block"}}/>{rec?`⏹ Stop · ${fmtS(secs)}${warn?" (max 1 min)":""}`:"🎤 Record Voice Note"}</button>);
 }
 function LoopPicker({loop,onToggle,exclude,open,setOpen}){
   const avail=TEAM.filter(m=>m!==exclude);
@@ -401,7 +414,6 @@ function Dispatch({role}){
   const [showHold,setShowHold]=useState(false);
   const [showLR,setShowLR]=useState(false);
   const [showCopy,setShowCopy]=useState(false);
-  const [photoBusy,setPhotoBusy]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -477,7 +489,7 @@ function Dispatch({role}){
       {/* Quotation Photo */}
       <div style={{marginBottom:12}}>
         <label style={LBL}>Quotation Photo</label>
-        {photoBusy?<div style={{background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",color:C.acc,fontWeight:700,fontSize:12}}>⏳ Uploading photo...</div>:sel.photo?<div style={{position:"relative"}}><img src={sel.photo} alt="quotation" style={{width:"100%",borderRadius:9,maxHeight:200,objectFit:"cover",display:"block"}}/><button onClick={()=>upd(sel.id,{photo:null})} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.55)",border:"none",color:"#fff",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>:<label style={{display:"flex",alignItems:"center",gap:9,background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",cursor:"pointer",color:C.acc,fontWeight:700,fontSize:12}}>📎 Upload Quotation Photo<input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{const f=e.target.files[0];if(!f)return;e.target.value="";setPhotoBusy(true);try{const url=await uploadPhoto(f);upd(sel.id,{photo:url});}catch(err){console.error("Photo upload failed:",err);alert("Couldn't upload photo. Check your connection and try again.");}setPhotoBusy(false);}}/></label>}
+        {sel.photo?<div style={{position:"relative"}}><img src={sel.photo} alt="quotation" style={{width:"100%",borderRadius:9,maxHeight:200,objectFit:"cover",display:"block"}}/><button onClick={()=>upd(sel.id,{photo:null})} style={{position:"absolute",top:6,right:6,background:"rgba(0,0,0,0.55)",border:"none",color:"#fff",borderRadius:"50%",width:26,height:26,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>:<label style={{display:"flex",alignItems:"center",gap:9,background:"#F8F9FF",border:`1.5px dashed ${C.acc}55`,borderRadius:9,padding:"12px 14px",cursor:"pointer",color:C.acc,fontWeight:700,fontSize:12}}>📎 Upload Quotation Photo<input type="file" accept="image/*" capture="environment" style={{display:"none"}} onChange={async e=>{const f=e.target.files[0];if(!f)return;e.target.value="";const compressed=await compressPhoto(f);upd(sel.id,{photo:compressed});}}/></label>}
       </div>
       {/* Voice Memo */}
       <div style={{marginBottom:12}}>
