@@ -1752,11 +1752,11 @@ function SaeedRoute(){
 }
 
 // ── App Shell ──
-const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"routes",i:"🗺️",l:"Routes"},{id:"payment",i:"💰",l:"Payments"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
+const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"payment",i:"💰",l:"Payments"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
 const _ALL=NAV.map(n=>n.id);
 const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
-const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",routes:"Saeed Bhai — Routes",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
+const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
 
 export default function App(){
   const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
@@ -1853,7 +1853,6 @@ export default function App(){
       {active==="quote"&&<Quotation/>}
       {active==="stocks"&&<Stocks/>}
       {active==="sales"&&<Sales/>}
-      {active==="routes"&&<SaeedRoute/>}
       {active==="payment"&&<Payment/>}
       {active==="ops"&&<Operations role={role} currentUser={cu}/>}
       {active==="chat"&&<Chat currentUser={cu}/>}
