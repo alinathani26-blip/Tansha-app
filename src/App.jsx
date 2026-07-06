@@ -407,7 +407,7 @@ function DCard({d,lc,onOpen}){
 }
 function Dispatch({role}){
   const [loc,setLoc]=useState("Bhiwandi");
-  const [disps,setDisps]=useFirestoreState("dispatch",DISP0);
+  const [disps,setDisps,loading]=useFirestoreState("dispatch",DISP0);
   const [sel,setSel]=useState(null);
   const [editForm,setEditForm]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -468,6 +468,7 @@ function Dispatch({role}){
     doc.text(`Pending LR (${pendingLR.length}): ${pendingLR.length?pendingLR.map(d=>d.client).join(", "):"None — all LRs received"}`,14,y,{maxWidth:180});
     doc.save(`Dispatch_${loc.replace(/\s+/g,"_")}_${TODAY}.pdf`);
   }
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {/* Detail Modal */}
     {sel&&!editForm&&<Mod onClose={()=>{setSel(null);setShowDel(false);setShowHold(false);}} title={sel.client} sub={`${sel.transport} · ${sel.date}`}>
@@ -594,7 +595,7 @@ const ST0={Ocean:[{id:1,code:"B01709",name:"ALOHA 09 OZ (280 ML)",mrp:682,cmrp:7
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
   const [search,setSearch]=useState("");
-  const [stocks,setStocks]=useFirestoreState("stocks",ST0);
+  const [stocks,setStocks,loading]=useFirestoreState("stocks",ST0);
   const [editIt,setEditIt]=useState(null);
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
@@ -634,6 +635,7 @@ function Stocks(){
     doc.text(`Total CTN: ${items.reduce((s,i)=>s+i.tot,0)}   ·   Total Value: ${fmt(items.reduce((s,i)=>s+i.val,0))}   ·   Low Stock: ${items.filter(i=>i.isL).length}   ·   Zero Stock: ${items.filter(i=>i.isZ).length}`,14,y);
     doc.save(`Stock_${tab}_${TODAY}.pdf`);
   }
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {editIt&&<Mod onClose={()=>setEditIt(null)} title={editIt.name} sub={editIt.code}>
       <div style={{display:"flex",flexDirection:"column",gap:11,marginBottom:12}}>
@@ -1136,7 +1138,7 @@ const UP=[
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
   const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");
-  const [saved,setSaved]=useFirestoreState("quotes",[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}]);
+  const [saved,setSaved,loading]=useFirestoreState("quotes",[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
   const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
@@ -1162,6 +1164,7 @@ function Quotation(){
     document.body.appendChild(a);a.click();document.body.removeChild(a);
     setTimeout(()=>URL.revokeObjectURL(url),15000);
   }
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {editingId&&<div style={{background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.orange,fontWeight:700,fontSize:13}}>✏️ Editing {qNo}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>Make changes then save to update</div></div><button onClick={cancelEdit} style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,color:C.orange,borderRadius:7,padding:"4px 11px",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button></div>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>{setTeam(t);setItems([]);}} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t} Team</span></button>)}</div>
@@ -1292,7 +1295,7 @@ const CITY_PALETTE=["#DC2626","#EA580C","#D97706","#65A30D","#059669","#0D9488",
 function kaiCityColor(city){if(!city||city==="Mumbai")return"#475569";const idx=KAI_CITY_ORDER[city];return CITY_PALETTE[(idx??0)%CITY_PALETTE.length];}
 const SD0={Ocean:[{id:1,date:"2026-04-01",client:"Adams & Company",city:"Mumbai",invNo:"201",amount:80646},{id:2,date:"2026-04-01",client:"Anand Entp",city:"Mumbai",invNo:"202",amount:61005},{id:3,date:"2026-04-02",client:"Barsolution LLP",city:"Mumbai",invNo:"210",amount:22862},{id:4,date:"2026-04-03",client:"INDIGO METALWARE LLP",city:"Mumbai",invNo:"215",amount:253121},{id:5,date:"2026-03-01",client:"Adams & Company",city:"Mumbai",invNo:"145",amount:62000},{id:6,date:"2026-02-05",client:"Anand Entp",city:"Mumbai",invNo:"118",amount:32000}],Ukiyo:[{id:1,date:"2026-04-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"155",amount:890000},{id:2,date:"2026-04-01",client:"Jaydeep Entp",city:"Pune",invNo:"160",amount:412000},{id:3,date:"2026-03-01",client:"Sameer Hotel Supplies",city:"Goa",invNo:"110",amount:539157},{id:4,date:"2026-02-01",client:"Balaji Traders Goa",city:"Goa",invNo:"60",amount:139537}]};
 function Sales(){
-  const [team,setTeam]=useState("Ocean");const [sales,setSales]=useFirestoreState("sales",SD0);const [kaiSales,setKaiSales]=useFirestoreState("salesKai",KAI0);const [view,setView]=useState("daily");const [dayMonth,setDayMonth]=useState(CM);const [dashMonth,setDashMonth]=useState(null);const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);const [saeedMonth,setSaeedMonth]=useState(CM);const [akshayMonth,setAkshayMonth]=useState(CM);const [salesSearch,setSalesSearch]=useState("");const [showDups,setShowDups]=useState(false);const [monthSearch,setMonthSearch]=useState("");const [showMonthDups,setShowMonthDups]=useState(false);
+  const [team,setTeam]=useState("Ocean");const [sales,setSales,salesLoading]=useFirestoreState("sales",SD0);const [kaiSales,setKaiSales,kaiLoading]=useFirestoreState("salesKai",KAI0);const [view,setView]=useState("daily");const [dayMonth,setDayMonth]=useState(CM);const [dashMonth,setDashMonth]=useState(null);const [showNew,setShowNew]=useState(false);const [editE,setEditE]=useState(null);const [saeedMonth,setSaeedMonth]=useState(CM);const [akshayMonth,setAkshayMonth]=useState(CM);const [salesSearch,setSalesSearch]=useState("");const [showDups,setShowDups]=useState(false);const [monthSearch,setMonthSearch]=useState("");const [showMonthDups,setShowMonthDups]=useState(false);
   const [form,setForm]=useState({date:TODAY,client:"",city:"",invNo:"",amount:""});const [colW,setColW]=useState({});function cw(id,def){return colW[id]??def;}function startResize(id,def,e){e.stopPropagation();const startX=e.touches?e.touches[0].clientX:e.clientX;const startW=cw(id,def);function onMove(ev){if(ev.cancelable)ev.preventDefault();const x=ev.touches?ev.touches[0].clientX:ev.clientX;setColW(p=>({...p,[id]:Math.max(30,startW+x-startX)}));}function onUp(){document.removeEventListener("mousemove",onMove);document.removeEventListener("mouseup",onUp);document.removeEventListener("touchmove",onMove);document.removeEventListener("touchend",onUp);}document.addEventListener("mousemove",onMove);document.addEventListener("mouseup",onUp);document.addEventListener("touchmove",onMove,{passive:false});document.addEventListener("touchend",onUp);}function rHandle(id,def){return<span onMouseDown={e=>startResize(id,def,e)} onTouchStart={e=>startResize(id,def,e)} style={{position:"absolute",right:0,top:0,bottom:0,width:10,cursor:"col-resize",userSelect:"none",touchAction:"none"}}/>;}
   const teamSales=(t)=>t==="Kaizen"?kaiSales:(sales[t]||[]);
   const cur=teamSales(team);const total=cur.reduce((s,e)=>s+e.amount,0);const ac=team==="Ocean"?C.blue:team==="Ukiyo"?C.teal:C.orange;
@@ -1327,6 +1330,7 @@ function Sales(){
   function addSale(){if(!form.client||!form.amount)return;const entry={...form,id:Date.now(),amount:parseFloat(form.amount)};if(team==="Kaizen")setKaiSales(p=>[entry,...p]);else setSales(p=>({...p,[team]:[entry,...p[team]]}));setForm({date:TODAY,client:"",city:"",invNo:"",amount:""});setShowNew(false);}
   function delSale(id){if(team==="Kaizen")setKaiSales(p=>p.filter(s=>s.id!==id));else setSales(p=>({...p,[team]:p[team].filter(s=>s.id!==id)}));setEditE(null);}
   function saveSale(){if(team==="Kaizen")setKaiSales(p=>p.map(s=>s.id===editE.id?{...s,...editE}:s));else setSales(p=>({...p,[team]:p[team].map(s=>s.id===editE.id?{...s,...editE}:s)}));setEditE(null);}
+  if(salesLoading||kaiLoading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Sale"><div style={{display:"flex",flexDirection:"column",gap:10}}>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}><div><label style={LBL}>Date</label><input type="date" style={INP} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div><div><label style={LBL}>Invoice No</label><input style={INP} value={form.invNo} onChange={e=>setForm({...form,invNo:e.target.value})}/></div></div>
@@ -1455,11 +1459,12 @@ function Sales(){
 const PAY0=[{id:1,client:"Ornate Glassware",month:"Apr",totalBal:1333659,currBal:859529,assignee:"Saud Bhai",followUpDate:"2026-04-28",notes:"Hard client",status:"Pending"},{id:2,client:"JAYDEEP ENTP",month:"Apr",totalBal:891778,currBal:891778,assignee:"Accountant",followUpDate:"2026-04-27",notes:"",status:"Pending"},{id:3,client:"Janta Steel",month:"Jan",totalBal:632761,currBal:64562,assignee:"Saud Bhai",followUpDate:"2026-04-27",notes:"3.2 WA",status:"Pending"},{id:4,client:"MMF ENTP",month:"Feb",totalBal:445802,currBal:220513,assignee:"Saud Bhai",followUpDate:"2026-04-27",notes:"27.4 C not rec WA",status:"Pending"},{id:5,client:"FS GLASSWARE CROCKERY",month:"Apr",totalBal:604485,currBal:0,notes:"ALL CLR",status:"Paid"},{id:6,client:"Indigo Metalware LLP",month:"Apr",totalBal:253121,currBal:0,notes:"pdc rec",status:"Paid"}];
 const MC={Jan:C.blue,Feb:C.purple,Mar:C.teal,Apr:C.acc,May:C.green};
 function Payment(){
-  const [entries,setEntries]=useFirestoreState("payments",PAY0);const [am,setAm]=useState("All");const [sel,setSel]=useState(null);const [pa,setPa]=useState("");const [sp,setSp]=useState(false);const today=TODAY;
+  const [entries,setEntries,loading]=useFirestoreState("payments",PAY0);const [am,setAm]=useState("All");const [sel,setSel]=useState(null);const [pa,setPa]=useState("");const [sp,setSp]=useState(false);const today=TODAY;
   const months=[...new Set(entries.map(e=>e.month))];const fil=am==="All"?entries:entries.filter(e=>e.month===am);
   const pend=fil.filter(e=>e.status==="Pending").sort((a,b)=>b.currBal-a.currBal);const paid=fil.filter(e=>e.status==="Paid");
   const tot=pend.reduce((s,e)=>s+e.currBal,0);const od=entries.filter(e=>e.status==="Pending"&&e.followUpDate&&e.followUpDate<=today).length;
   function recP(){const amt=parseFloat(pa)||0;if(amt<=0||!sel)return;const nb=Math.max(0,sel.currBal-amt);const u={...sel,currBal:nb,status:nb===0?"Paid":"Pending"};setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setPa("");}
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {sel&&<Mod onClose={()=>setSel(null)} title={sel.client} sub={`${sel.month} Outstanding`}>
       <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap"}}><Bdg label={sel.month} color={MC[sel.month]||C.acc} bg={(MC[sel.month]||C.acc)+"22"} border={(MC[sel.month]||C.acc)+"44"}/>{sel.assignee&&<Bdg label={sel.assignee} color={sel.assignee==="Saud Bhai"?C.purple:C.blue} bg={(sel.assignee==="Saud Bhai"?C.purple:C.blue)+"22"} border={(sel.assignee==="Saud Bhai"?C.purple:C.blue)+"44"}/>}</div>
@@ -1541,7 +1546,7 @@ function SalaryReport({attLog,salaries,setSalaries,onClose}){
 }
 function Operations({role,currentUser}){
   const [sub,setSub]=useState("att");
-  const [attLog,setAttLog]=useFirestoreState("attLog",{});
+  const [attLog,setAttLog,loading]=useFirestoreState("attLog",{});
   const [salaries,setSalaries]=useFirestoreState("salaries",{});
   const [attDate,setAttDate]=useState(TODAY);
   const [showSalary,setShowSalary]=useState(false);
@@ -1557,6 +1562,7 @@ function Operations({role,currentUser}){
   function setRec(date,name,changes){setAttLog(p=>({...p,[date]:{...(p[date]||{}),[name]:{...getRec(date,name),...changes}}}));}
   const pr=TEAM.filter(n=>getRec(attDate,n).status==="Present").length;const ab=TEAM.filter(n=>getRec(attDate,n).status==="Absent").length;
   const SUBS=[{id:"att",i:"🗓️",l:"Attendance"},{id:"exp",i:"💸",l:"Expenses"},{id:"sup",i:"🎫",l:"Support",b:sup.filter(t=>t.status==="Open").length},{id:"nts",i:"📝",l:"Notes"},{id:"sht",i:"📊",l:"Sheets"}];
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {showNewT&&<Mod onClose={()=>setShowNewT(false)} title="🎫 New Support Ticket" sub="Log a claim, damage or shortage">
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1680,10 +1686,11 @@ function CBubble({msg,isMe,onLong}){
   </div>);
 }
 function Chat({currentUser}){
-  const [ach,setAch]=useState("gen");const [msgs,setMsgs]=useFirestoreState("chat",MSGS0);const [inp,setInp]=useState("");const [ss,setSs]=useState(true);const [lp,setLp]=useState(null);const [ct,setCt]=useState(null);const [ctf,setCtf]=useState({title:"",to:"",due:""});const eRef=useRef();
+  const [ach,setAch]=useState("gen");const [msgs,setMsgs,loading]=useFirestoreState("chat",MSGS0);const [inp,setInp]=useState("");const [ss,setSs]=useState(true);const [lp,setLp]=useState(null);const [ct,setCt]=useState(null);const [ctf,setCtf]=useState({title:"",to:"",due:""});const eRef=useRef();
   useEffect(()=>{eRef.current?.scrollIntoView({behavior:"smooth"});},[ach,msgs]);
   function send(){if(!inp.trim())return;const m={id:Date.now(),sender:currentUser,text:inp.trim(),time:tF(new Date()),type:"text",reads:[]};setMsgs(p=>({...p,[ach]:[...(p[ach]||[]),m]}));setInp("");}
   const an=[...CHS,...DMS].find(c=>c.id===ach)?.name||"";const cm=msgs[ach]||[];const tu=[...CHS,...DMS].reduce((s,c)=>s+c.unread,0);
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div style={{display:"flex",height:"calc(100vh - 130px)",overflow:"hidden",margin:"-16px",borderRadius:11,border:`1px solid ${C.cb}`,background:C.card}}>
     {ss&&<div style={{width:180,background:C.card,borderRight:`1px solid ${C.cb}`,display:"flex",flexDirection:"column",flexShrink:0,overflowY:"auto"}}>
       <div style={{padding:"9px 11px",borderBottom:`1px solid ${C.cb}`}}><input style={{...INP,padding:"5px 9px",fontSize:10}} placeholder="🔍 Search..."/></div>
