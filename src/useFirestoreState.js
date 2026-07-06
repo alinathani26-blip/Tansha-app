@@ -5,7 +5,8 @@ import { app, ensureAuth } from "./firebase";
 const db = getFirestore(app);
 
 export function useFirestoreState(key, initialValue) {
-  const [value, setValue] = useState(initialValue);
+  const [value, setValue] = useState(null);
+  const [loading, setLoading] = useState(true);
   const ready = useRef(false);
   const lastSynced = useRef(null);
 
@@ -22,9 +23,11 @@ export function useFirestoreState(key, initialValue) {
           setValue(data);
         } else {
           lastSynced.current = JSON.stringify(initialValue);
+          setValue(initialValue);
           setDoc(ref, { value: initialValue }).catch((err) => console.error("Firestore init failed:", err));
         }
         ready.current = true;
+        setLoading(false);
       }, (err) => console.error("Firestore snapshot error:", err));
     });
     return () => { cancelled = true; unsub(); };
@@ -42,5 +45,5 @@ export function useFirestoreState(key, initialValue) {
     return () => clearTimeout(t);
   }, [value, key]);
 
-  return [value, setValue];
+  return [value ?? initialValue, setValue, loading];
 }

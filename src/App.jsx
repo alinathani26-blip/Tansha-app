@@ -259,7 +259,7 @@ function fmtDue(due){
   return due;
 }
 function Tasks({role,currentUser,setNotifs}){
-  const [tasks,setTasks]=useFirestoreState("tasks",TASKS0);
+  const [tasks,setTasks,tasksLoading]=useFirestoreState("tasks",TASKS0);
   const [filter,setFilter]=useState("All");
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -312,6 +312,7 @@ function Tasks({role,currentUser,setNotifs}){
     const iv=setInterval(check,60000);
     return ()=>clearInterval(iv);
   },[tasks]);
+  if(tasksLoading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading tasks…</div>);
   return (<div>
     {toast&&<div style={{position:"fixed",top:0,left:0,right:0,zIndex:9999,background:toast.color,color:"#fff",padding:"14px 18px",fontWeight:700,fontSize:14,display:"flex",alignItems:"center",gap:10,boxShadow:"0 4px 20px rgba(0,0,0,0.3)",animation:"tDn .28s ease"}}><style>{`@keyframes tDn{from{transform:translateY(-100%)}to{transform:translateY(0)}}`}</style><span style={{fontSize:18,flexShrink:0}}>{toast.icon}</span><span style={{flex:1,lineHeight:1.3,fontSize:13}}>{toast.text}</span><button onClick={()=>setToast(null)} style={{background:"rgba(255,255,255,0.22)",border:"none",color:"#fff",borderRadius:6,width:26,height:26,cursor:"pointer",fontSize:14,flexShrink:0,display:"flex",alignItems:"center",justifyContent:"center"}}>✕</button></div>}
     {showNew&&<Mod onClose={()=>{setShowNew(false);setLoopOpen(false);}} title="+ New Task" sub={`Assigning as ${currentUser}`}>
