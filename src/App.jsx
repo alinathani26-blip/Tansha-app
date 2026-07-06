@@ -1315,6 +1315,11 @@ function Sales(){
   const scopeClients=dashMonth==null?clientMap.length:clientMap.filter(c=>(c.months[dashMonth]||0)>0).length;
   const topClients=clientMap.map(c=>({label:c.client,value:scopeVal(c)})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value).slice(0,8);
   const topCities=Object.entries(clientMap.reduce((g,c)=>{const k=team==="Kaizen"?(c.area||"—"):(c.city||"—");g[k]=(g[k]||0)+scopeVal(c);return g;},{})).map(([label,value])=>({label,value})).filter(c=>c.value>0).sort((a,b)=>b.value-a.value).slice(0,8);
+  const momGrowth=CM>0&&monthTotalsAll[CM-1]>0?Math.round(((monthTotalsAll[CM]-monthTotalsAll[CM-1])/monthTotalsAll[CM-1])*100):null;
+  const activeNow=clientMap.filter(c=>(c.months[CM]||0)>0);
+  const newClients=clientMap.filter(c=>{const ms=Object.keys(c.months).map(Number);return ms.length>0&&Math.min(...ms)===CM;});
+  const lapsed=clientMap.filter(c=>Object.keys(c.months).some(m=>parseInt(m)<CM)&&!(c.months[CM]>0));
+  const topSale=cur.reduce((mx,e)=>e.amount>mx.amount?e:mx,{amount:0,client:"",date:""});
   function rowCells(c,ri){const rt=Object.values(c.months).reduce((s,v)=>s+v,0);const rb=ri%2===0?C.card:"#F9FAFB";const cc=team==="Kaizen"?kaiCityColor(c.area):null;return<tr key={c.client} style={{borderBottom:`1px solid ${C.cb}22`}}><td style={{padding:"5px 9px",color:showMonthDups&&monthDupSet.has(c.client.toLowerCase())?C.red:C.text,fontWeight:600,fontSize:10,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:0,background:rb,zIndex:1,borderLeft:cc?`3px solid ${cc}`:undefined}}>{c.client}</td><td style={{padding:"5px 5px",fontSize:9,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:cw("client",110),background:rb,zIndex:1}}>{team==="Kaizen"?<span style={{padding:"2px 7px",borderRadius:10,background:cc+"1F",color:cc,fontWeight:700,fontSize:9}}>{c.area}</span>:<span style={{color:C.muted}}>{c.city||"—"}</span>}</td><td style={{padding:"3px 7px",textAlign:"right",color:ac,fontWeight:700,fontSize:10,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",position:"sticky",left:cw("client",110)+cw("area",55),background:rb,zIndex:1}}>{fmt(rt)}</td>{monthCols.map((_,mi)=>{const v=c.months[mi]||0;const hp=Object.keys(c.months).some(m=>parseInt(m)<mi);const ia=!v&&hp;return<td key={mi} style={{padding:"3px 2px",textAlign:"center",background:v>0?C.green+"22":ia?"#FB923C18":"transparent",minWidth:60}}>{v>0?<span style={{color:C.green,fontWeight:700,fontSize:10}}>{fmt(v)}</span>:ia?<span style={{color:"#FB923C",opacity:.7,fontSize:11}}>—</span>:null}</td>;})}</tr>;}
   function areaBlock(area){const rows=monthSearch?areaGroups[area].filter(c=>c.client.toLowerCase().includes(monthSearch.toLowerCase())):showMonthDups?areaGroups[area].filter(c=>monthDupSet.has(c.client.toLowerCase())):areaGroups[area];if(!rows.length)return[];const areaTotal=rows.reduce((s,c)=>s+Object.values(c.months).reduce((s2,v)=>s2+v,0),0);const monthTotals=monthCols.map((_,mi)=>rows.reduce((s,c)=>s+(c.months[mi]||0),0));return[<tr key={`h-${area}`}><td colSpan={monthCols.length+3} style={{padding:"6px 9px",background:ac+"22",color:ac,fontWeight:800,fontSize:11,position:"sticky",left:0}}>{area==="Mumbai"?"🏙️":"🇮🇳"} {area} ({rows.length})</td></tr>,...rows.map((c,ri)=>rowCells(c,ri)),<tr key={`t-${area}`} style={{borderTop:`2px solid ${ac}55`,borderBottom:`2px solid ${ac}55`}}><td style={{padding:"6px 9px",color:ac,fontWeight:800,fontSize:10,position:"sticky",left:0,background:ac+"11"}}>Total — {area}</td><td style={{padding:"6px 5px",background:ac+"11",position:"sticky",left:cw("client",110)}}></td><td style={{padding:"4px 7px",textAlign:"right",color:ac,fontWeight:800,fontSize:11,background:ac+"11",position:"sticky",left:cw("client",110)+cw("area",55)}}>{fmt(areaTotal)}</td>{monthTotals.map((v,mi)=><td key={mi} style={{padding:"4px 2px",textAlign:"center",background:ac+"11"}}>{v>0?<span style={{color:ac,fontWeight:800,fontSize:10}}>{fmt(v)}</span>:null}</td>)}</tr>];}
   function addSale(){if(!form.client||!form.amount)return;const entry={...form,id:Date.now(),amount:parseFloat(form.amount)};if(team==="Kaizen")setKaiSales(p=>[entry,...p]);else setSales(p=>({...p,[team]:[entry,...p[team]]}));setForm({date:TODAY,client:"",city:"",invNo:"",amount:""});setShowNew(false);}
@@ -1355,9 +1360,34 @@ function Sales(){
       </tbody>
     </table></div></>}
     {view==="dashboard"&&<>
-    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}><Pill label={dashMonth==null?"Clients":`Clients · ${monthCols[dashMonth]}`} value={scopeClients} color={ac}/><Pill label={dashMonth==null?"YTD":monthCols[dashMonth]} value={fmt(scopeTotal)} color={C.green}/><Pill label="Avg/Client" value={fmt(scopeClients?Math.round(scopeTotal/scopeClients):0)} color={C.blue}/><Pill label={`Best · ${monthCols[bestMonthIdx]||"—"}`} value={fmt(monthTotalsAll[bestMonthIdx]||0)} color={C.purple}/></div>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}>
+      <Pill label={dashMonth==null?"Clients":`Clients · ${monthCols[dashMonth]}`} value={scopeClients} color={ac}/>
+      <Pill label={dashMonth==null?"YTD":monthCols[dashMonth]} value={fmt(scopeTotal)} color={C.green}/>
+      <Pill label="Avg/Client" value={fmt(scopeClients?Math.round(scopeTotal/scopeClients):0)} color={C.blue}/>
+      <Pill label={`Best · ${monthCols[bestMonthIdx]||"—"}`} value={fmt(monthTotalsAll[bestMonthIdx]||0)} color={C.purple}/>
+      {momGrowth!==null&&<Pill label={`MoM ${momGrowth>=0?"▲":"▼"}`} value={`${momGrowth>0?"+":""}${momGrowth}%`} color={momGrowth>=0?C.green:C.red}/>}
+      <Pill label={`Active · ${monthCols[CM]}`} value={activeNow.length} color={C.teal}/>
+      <Pill label="New Clients" value={newClients.length} color={C.blue}/>
+      <Pill label="Lapsed" value={lapsed.length} color={C.orange}/>
+    </div>
     <Card style={{marginBottom:12}}><SL text="Monthly Trend"/><TrendBars items={monthCols.map((m,i)=>({label:m,value:monthTotalsAll[i]}))} color={ac} activeIdx={CM} selectedIdx={dashMonth} onSelect={i=>setDashMonth(p=>p===i?null:i)}/>
     <div style={{textAlign:"center",color:C.dim,fontSize:10,marginTop:8}}>{dashMonth==null?"Tap a month to filter Top Areas & Top Clients below":`Showing ${monthCols[dashMonth]} only — tap again to clear`}</div>
+    </Card>
+    <Card style={{marginBottom:12}}>
+      <SL text={`Client Pulse — ${monthCols[CM]}`}/>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginTop:4}}>
+        {[{label:"Active",value:activeNow.length,sub:"bought this month",color:C.green},{label:"New",value:newClients.length,sub:"first-time buyer",color:C.blue},{label:"Returning",value:activeNow.length-newClients.length,sub:"bought before too",color:C.teal},{label:"Lapsed",value:lapsed.length,sub:"missed this month",color:C.orange}].map(s=>(
+          <div key={s.label} style={{background:s.color+"15",border:`1px solid ${s.color}33`,borderRadius:9,padding:"10px 12px"}}>
+            <div style={{fontSize:20,fontWeight:800,color:s.color}}>{s.value}</div>
+            <div style={{fontSize:11,fontWeight:700,color:s.color,marginTop:1}}>{s.label}</div>
+            <div style={{fontSize:9,color:C.muted,marginTop:2}}>{s.sub}</div>
+          </div>
+        ))}
+      </div>
+      {topSale.amount>0&&<div style={{marginTop:10,padding:"8px 12px",background:C.card,borderRadius:8,border:`1px solid ${C.cb}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div><div style={{fontSize:9,color:C.muted,fontWeight:700}}>HIGHEST SINGLE ORDER</div><div style={{fontSize:11,fontWeight:700,color:C.text,marginTop:2}}>{topSale.client}</div><div style={{fontSize:9,color:C.muted}}>{topSale.date}</div></div>
+        <div style={{fontSize:16,fontWeight:800,color:C.green}}>{fmt(topSale.amount)}</div>
+      </div>}
     </Card>
     <Card style={{marginBottom:12}}><SL text={`${team==="Kaizen"?"Top Areas":"Top Cities"}${dashMonth!=null?` — ${monthCols[dashMonth]}`:""}`}/><RankBars items={topCities} color={C.teal}/></Card>
     <Card><SL text={`Top Clients${dashMonth!=null?` — ${monthCols[dashMonth]}`:""}`}/><RankBars items={topClients} color={C.orange}/></Card>
