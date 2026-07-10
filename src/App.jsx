@@ -1475,6 +1475,10 @@ function Payment(){
   const [showAdd,setShowAdd]=useState(false);
   const [showDel,setShowDel]=useState(false);
   const [showPaid,setShowPaid]=useState(false);
+  const [showImport,setShowImport]=useState(false);
+  const [importMonth,setImportMonth]=useState(MONTHS[new Date().getMonth()]||"Jul");
+  const [importText,setImportText]=useState("");
+  const [importPreview,setImportPreview]=useState(null);
   const today=TODAY;
   const BLANK={client:"",month:MONTHS[new Date().getMonth()]||"Jul",totalBal:"",currBal:"",assignee:"",followUpDate:"",followUpType:"WA",notes:""};
   const [form,setForm]=useState(BLANK);
@@ -1507,9 +1511,93 @@ function Payment(){
     const e={...form,id:Date.now(),totalBal:tb,currBal:cb,status:cb<=0?"Paid":cb<tb?"Partial":"Pending",log:[]};
     setEntries(p=>[e,...p]);setForm(BLANK);setShowAdd(false);
   }
+  function parseImport(text,month){
+    const lines=text.trim().split(/\r?\n/).filter(l=>l.trim());
+    if(!lines.length)return[];
+    const sep=lines[0].includes('\t')?'\t':',';
+    const hdrs=lines[0].split(sep).map(h=>h.trim().toLowerCase().replace(/[^a-z]/g,''));
+    const ci=hdrs.findIndex(h=>h.includes('account')||h.includes('client')||h.includes('name'));
+    const ti=hdrs.findIndex(h=>h.includes('total')||h.includes('bal')||h.includes('balance'));
+    const ri=hdrs.findIndex(h=>(h.includes('curr')||h.includes('current'))&&(h.includes('bal')||h.includes('balance')));
+    const ni=hdrs.findIndex(h=>h.includes('note')||h.includes('remark'));
+    const ds=(ci>=0||ti>=0)?1:0;
+    const out=[];
+    for(let i=ds;i<lines.length;i++){
+      const c=lines[i].split(sep).map(x=>x.trim().replace(/^"|"$/g,''));
+      const client=(ci>=0?c[ci]:c[0]||'').trim();
+      const totalBal=parseFloat((ti>=0?c[ti]:c[1]||'').replace(/[,₹\s]/g,''));
+      const currBal=ri>=0?parseFloat((c[ri]||'').replace(/[,₹\s]/g,'')):totalBal;
+      const notes=ni>=0?(c[ni]||''):'';
+      if(!client||isNaN(totalBal)||totalBal<=0)continue;
+      const cb=isNaN(currBal)||currBal<0?totalBal:currBal;
+      out.push({id:Date.now()+i,client:client.toUpperCase(),month,totalBal,currBal:cb,status:cb<=0?'Paid':cb<totalBal?'Partial':'Pending',assignee:'',followUpDate:'',followUpType:'WA',notes,log:[]});
+    }
+    return out.sort((a,b)=>b.currBal-a.currBal);
+  }
+  function handleImportFile(ev){
+    const f=ev.target.files[0];if(!f)return;
+    const reader=new FileReader();
+    reader.onload=e=>setImportText(e.target.result);
+    reader.readAsText(f);
+  }
+  function confirmImport(){
+    if(!importPreview||!importPreview.length)return;
+    setEntries(p=>[...importPreview,...p.filter(e=>!importPreview.find(x=>x.client===e.client&&x.month===importMonth))]);
+    setShowImport(false);setImportText("");setImportPreview(null);
+  }
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return(<div>
+
+  {/* ── Import Modal ── */}
+  {showImport&&<Mod onClose={()=>{setShowImport(false);setImportText("");setImportPreview(null);}} title="📥 Import Month Sheet">
+    <div style={{display:"flex",flexDirection:"column",gap:11}}>
+      <div style={{background:C.bg,border:`1px solid ${C.cb}`,borderRadius:9,padding:"9px 12px",fontSize:11,color:C.muted,lineHeight:1.6}}>
+        Copy your list from Excel / Busy and paste below — or upload the CSV file.<br/>
+        <span style={{color:C.acc,fontWeight:700}}>Columns needed: Account Name, Total Balance</span> (Current Balance & Notes optional)
+      </div>
+      <div><label style={LBL}>Month for this import</label>
+        <select style={{...INP,appearance:"none"}} value={importMonth} onChange={e=>setImportMonth(e.target.value)}>
+          {MONTHS.map(m=><option key={m}>{m}</option>)}
+        </select>
+      </div>
+      <div>
+        <label style={LBL}>Paste data here</label>
+        <textarea style={{...INP,height:120,resize:"vertical",fontFamily:"monospace",fontSize:11}} value={importText} onChange={e=>setImportText(e.target.value)} placeholder={"Account\tTotal Bal\tCurr Bal\nOrnate Glassware\t1333659\t859529\nJAYDEEP ENTP\t891778\t891778"}/>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:8}}>
+        <span style={{fontSize:11,color:C.muted}}>Or upload CSV:</span>
+        <input type="file" accept=".csv,.txt" onChange={handleImportFile} style={{fontSize:11,color:C.muted}}/>
+      </div>
+      <button onClick={()=>setImportPreview(parseImport(importText,importMonth))} style={{background:C.blue,border:"none",color:"#fff",borderRadius:9,padding:"9px",fontWeight:700,cursor:"pointer",fontSize:12}}>Preview Import →</button>
+      {importPreview&&<div>
+        <div style={{fontSize:11,fontWeight:700,color:C.text,marginBottom:6}}>{importPreview.length} entries parsed — sorted highest to lowest:</div>
+        <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`,marginBottom:8}}>
+          <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:340}}>
+            <thead><tr style={{background:C.bg,borderBottom:`1px solid ${C.cb}`}}>
+              <th style={{padding:"7px 9px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10}}>CLIENT</th>
+              <th style={{padding:"7px 9px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10}}>TOTAL ₹</th>
+              <th style={{padding:"7px 9px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10}}>CURR BAL ₹</th>
+              <th style={{padding:"7px 9px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10}}>NOTES</th>
+            </tr></thead>
+            <tbody>
+              {importPreview.map((e,i)=><tr key={i} style={{borderBottom:`1px solid ${C.cb}`}}>
+                <td style={{padding:"7px 9px",fontWeight:700,color:C.text,textTransform:"uppercase"}}>{e.client}</td>
+                <td style={{padding:"7px 9px",textAlign:"right",color:C.muted}}>{fmt(e.totalBal)}</td>
+                <td style={{padding:"7px 9px",textAlign:"right",color:C.red,fontWeight:700}}>{fmt(e.currBal)}</td>
+                <td style={{padding:"7px 9px",color:C.dim}}>{e.notes||"—"}</td>
+              </tr>)}
+            </tbody>
+          </table>
+        </div>
+        <div style={{display:"flex",gap:8}}>
+          <button onClick={()=>setImportPreview(null)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:9,padding:10,fontWeight:700,cursor:"pointer"}}>Back</button>
+          <button onClick={confirmImport} style={{flex:2,background:C.green,border:"none",color:"#fff",borderRadius:9,padding:10,fontWeight:800,cursor:"pointer"}}>✓ Confirm Import ({importPreview.length} entries)</button>
+        </div>
+      </div>}
+      {importPreview&&importPreview.length===0&&<div style={{textAlign:"center",color:C.orange,fontSize:12,fontWeight:700}}>⚠️ No valid rows found — check your data format</div>}
+    </div>
+  </Mod>}
 
   {/* ── Add Modal ── */}
   {showAdd&&<Mod onClose={()=>{setShowAdd(false);setForm(BLANK);}} title="+ New Entry">
@@ -1589,7 +1677,10 @@ function Payment(){
     <Pill label="Outstanding" value={fmt(tot)} color={C.red}/>
     <Pill label="Pending" value={entries.filter(e=>e.status!=="Paid").length} color={C.orange}/>
     <Pill label="Cleared" value={entries.filter(e=>e.status==="Paid").length} color={C.green}/>
-    <button onClick={()=>setShowAdd(true)} style={{marginLeft:"auto",background:C.acc,border:"none",color:"#fff",borderRadius:8,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Add</button>
+    <div style={{marginLeft:"auto",display:"flex",gap:6}}>
+      <button onClick={()=>setShowImport(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:"7px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📥 Import</button>
+      <button onClick={()=>setShowAdd(true)} style={{background:C.acc,border:"none",color:"#fff",borderRadius:8,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Add</button>
+    </div>
   </div>
 
   {/* ── Month tabs ── */}
@@ -1630,7 +1721,7 @@ function Payment(){
             onMouseEnter={x=>x.currentTarget.style.background=C.bg}
             onMouseLeave={x=>x.currentTarget.style.background="transparent"}>
             <td style={{padding:"10px 7px",color:C.dim,fontSize:10,textAlign:"right",fontWeight:600}}>{i+1}</td>
-            <td style={{padding:"10px 10px",fontWeight:700,color:C.text,maxWidth:160,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.client}</td>
+            <td style={{padding:"10px 10px",fontWeight:700,color:C.text,maxWidth:160,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textTransform:"uppercase"}}>{e.client}</td>
             <td style={{padding:"10px 7px",textAlign:"center"}}>
               <span style={{background:mc(e.month)+"22",color:mc(e.month),border:`1px solid ${mc(e.month)}44`,borderRadius:5,padding:"2px 7px",fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>{e.month}</span>
             </td>
@@ -1646,17 +1737,17 @@ function Payment(){
             </td>
             <td style={{padding:"10px 10px",textAlign:"center"}}>
               {e.assignee
-                ?<span style={{fontSize:10,color:C.purple,fontWeight:700,whiteSpace:"nowrap"}}>{e.assignee.split(" ")[0]}</span>
+                ?<span style={{fontSize:10,color:C.purple,fontWeight:700,whiteSpace:"nowrap",textTransform:"uppercase"}}>{e.assignee.split(" ")[0]}</span>
                 :<span style={{color:C.dim,fontSize:11}}>—</span>}
             </td>
-            <td style={{padding:"10px 10px",color:C.dim,fontSize:10,maxWidth:120,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.notes||"—"}</td>
+            <td style={{padding:"10px 10px",color:C.dim,fontSize:10,maxWidth:120,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textTransform:"uppercase"}}>{e.notes||"—"}</td>
           </tr>;
         })}
         {!pend.length&&<tr><td colSpan={8} style={{padding:32,textAlign:"center",color:C.dim,fontSize:13}}>🎉 All cleared{am!=="All"?` for ${am}`:""}!</td></tr>}
       </tbody>
       {pend.length>0&&<tfoot>
         <tr style={{background:C.bg,borderTop:`2px solid ${C.cb}`}}>
-          <td colSpan={4} style={{padding:"9px 10px",fontWeight:800,fontSize:12,color:C.text}}>Total Outstanding</td>
+          <td colSpan={4} style={{padding:"9px 10px",fontWeight:800,fontSize:12,color:C.text,textTransform:"uppercase",letterSpacing:".5px"}}>Total Outstanding</td>
           <td style={{padding:"9px 10px",textAlign:"right",fontWeight:800,fontSize:14,color:C.red}}>{fmt(pend.reduce((s,e)=>s+e.currBal,0))}</td>
           <td colSpan={3}/>
         </tr>
@@ -1675,7 +1766,7 @@ function Payment(){
             style={{cursor:"pointer",borderBottom:`1px solid ${C.green}18`,opacity:.75}}
             onMouseEnter={x=>x.currentTarget.style.background=C.green+"0A"}
             onMouseLeave={x=>x.currentTarget.style.background="transparent"}>
-            <td style={{padding:"8px 10px",textDecoration:"line-through",color:C.muted,fontWeight:600}}>{e.client}</td>
+            <td style={{padding:"8px 10px",textDecoration:"line-through",color:C.muted,fontWeight:600,textTransform:"uppercase"}}>{e.client}</td>
             <td style={{padding:"8px 7px",textAlign:"center"}}>
               <span style={{background:mc(e.month)+"22",color:mc(e.month),borderRadius:5,padding:"2px 6px",fontWeight:700,fontSize:9}}>{e.month}</span>
             </td>
