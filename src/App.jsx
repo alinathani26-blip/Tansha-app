@@ -1605,47 +1605,85 @@ function Payment(){
     })}
   </div></div>
 
-  {/* ── Client list ── */}
-  <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:12}}>
-    {pend.map(e=>{
-      const od2=isOD(e);
-      return<div key={e.id} onClick={()=>{setSel(e);setPa("");setShowDel(false);}} style={{background:C.card,border:`1px solid ${od2?C.orange+"55":C.cb}`,borderLeft:`3px solid ${od2?C.orange:e.status==="Partial"?C.teal:C.acc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={x=>x.currentTarget.style.opacity=".85"} onMouseLeave={x=>x.currentTarget.style.opacity="1"}>
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
-          <div style={{flex:1,minWidth:0}}>
-            <div style={{color:C.text,fontWeight:700,fontSize:13,marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.client}</div>
-            <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
-              <Bdg label={e.month} color={mc(e.month)} bg={mc(e.month)+"22"} border={mc(e.month)+"44"}/>
-              {e.status==="Partial"&&<Bdg label="Part Paid" color={C.teal} bg={C.teal+"22"} border={C.teal+"44"}/>}
-              {od2&&<Bdg label="⏰ Overdue" color={C.orange} bg={C.orange+"22"} border={C.orange+"44"}/>}
-              {e.assignee&&<Bdg label={e.assignee} color={C.purple} bg={C.purple+"22"} border={C.purple+"44"}/>}
-              {e.followUpDate&&<Bdg label={`${FT[e.followUpType]||"📅"} ${e.followUpDate.slice(5).replace("-",".")}`} color={od2?C.orange:C.blue} bg={(od2?C.orange:C.blue)+"1A"} border={(od2?C.orange:C.blue)+"44"}/>}
-            </div>
-            {e.notes&&<div style={{color:C.dim,fontSize:10,marginTop:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>📝 {e.notes}</div>}
-          </div>
-          <div style={{textAlign:"right",flexShrink:0}}>
-            <div style={{color:C.red,fontWeight:800,fontSize:16}}>{fmt(e.currBal)}</div>
-            {e.totalBal!==e.currBal&&<div style={{color:C.muted,fontSize:9,marginTop:1}}>of {fmt(e.totalBal)}</div>}
-          </div>
-        </div>
-        {e.status==="Partial"&&<div style={{background:C.cb,borderRadius:3,height:3,overflow:"hidden",marginTop:8}}>
-          <div style={{height:"100%",background:C.teal,width:`${Math.round((1-e.currBal/e.totalBal)*100)}%`,borderRadius:3}}/>
-        </div>}
-      </div>;
-    })}
-    {!pend.length&&<div style={{textAlign:"center",padding:36,color:C.dim,fontSize:13}}>🎉 All cleared{am!=="All"?` for ${am}`:""}!</div>}
+  {/* ── Table ── */}
+  <div style={{overflowX:"auto",marginBottom:12,borderRadius:11,border:`1px solid ${C.cb}`,background:C.card}}>
+    <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:560}}>
+      <thead>
+        <tr style={{background:C.bg,borderBottom:`2px solid ${C.cb}`}}>
+          <th style={{padding:"9px 7px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:26,userSelect:"none"}}>#</th>
+          <th style={{padding:"9px 10px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10,userSelect:"none"}}>CLIENT</th>
+          <th style={{padding:"9px 7px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:44,userSelect:"none"}}>MTH</th>
+          <th style={{padding:"9px 10px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:90,userSelect:"none"}}>TOTAL ₹</th>
+          <th style={{padding:"9px 10px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:95,userSelect:"none"}}>CURR BAL ₹</th>
+          <th style={{padding:"9px 10px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:88,userSelect:"none"}}>FOLLOW UP</th>
+          <th style={{padding:"9px 10px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:80,userSelect:"none"}}>ASSIGNED</th>
+          <th style={{padding:"9px 10px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10,userSelect:"none"}}>NOTES</th>
+        </tr>
+      </thead>
+      <tbody>
+        {pend.map((e,i)=>{
+          const od2=isOD(e);
+          const lc=od2?C.orange:e.status==="Partial"?C.teal:C.acc;
+          return<tr key={e.id}
+            onClick={()=>{setSel(e);setPa("");setShowDel(false);}}
+            style={{cursor:"pointer",borderBottom:`1px solid ${C.cb}`,borderLeft:`3px solid ${lc}`}}
+            onMouseEnter={x=>x.currentTarget.style.background=C.bg}
+            onMouseLeave={x=>x.currentTarget.style.background="transparent"}>
+            <td style={{padding:"10px 7px",color:C.dim,fontSize:10,textAlign:"right",fontWeight:600}}>{i+1}</td>
+            <td style={{padding:"10px 10px",fontWeight:700,color:C.text,maxWidth:160,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.client}</td>
+            <td style={{padding:"10px 7px",textAlign:"center"}}>
+              <span style={{background:mc(e.month)+"22",color:mc(e.month),border:`1px solid ${mc(e.month)}44`,borderRadius:5,padding:"2px 7px",fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>{e.month}</span>
+            </td>
+            <td style={{padding:"10px 10px",textAlign:"right",color:C.muted,fontSize:11}}>{fmt(e.totalBal)}</td>
+            <td style={{padding:"10px 10px",textAlign:"right"}}>
+              <div style={{fontWeight:800,fontSize:12,color:od2?C.orange:C.red}}>{fmt(e.currBal)}</div>
+              {e.status==="Partial"&&<div style={{height:3,background:C.cb,borderRadius:2,marginTop:4,overflow:"hidden"}}><div style={{height:"100%",background:C.teal,width:`${Math.round((1-e.currBal/e.totalBal)*100)}%`}}/></div>}
+            </td>
+            <td style={{padding:"10px 10px",textAlign:"center",whiteSpace:"nowrap"}}>
+              {e.followUpDate
+                ?<span style={{fontSize:11,color:od2?C.orange:C.blue,fontWeight:700}}>{FT[e.followUpType]||"📅"} {e.followUpDate.slice(5).replace("-",".")}</span>
+                :<span style={{color:C.dim,fontSize:11}}>—</span>}
+            </td>
+            <td style={{padding:"10px 10px",textAlign:"center"}}>
+              {e.assignee
+                ?<span style={{fontSize:10,color:C.purple,fontWeight:700,whiteSpace:"nowrap"}}>{e.assignee.split(" ")[0]}</span>
+                :<span style={{color:C.dim,fontSize:11}}>—</span>}
+            </td>
+            <td style={{padding:"10px 10px",color:C.dim,fontSize:10,maxWidth:120,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.notes||"—"}</td>
+          </tr>;
+        })}
+        {!pend.length&&<tr><td colSpan={8} style={{padding:32,textAlign:"center",color:C.dim,fontSize:13}}>🎉 All cleared{am!=="All"?` for ${am}`:""}!</td></tr>}
+      </tbody>
+      {pend.length>0&&<tfoot>
+        <tr style={{background:C.bg,borderTop:`2px solid ${C.cb}`}}>
+          <td colSpan={4} style={{padding:"9px 10px",fontWeight:800,fontSize:12,color:C.text}}>Total Outstanding</td>
+          <td style={{padding:"9px 10px",textAlign:"right",fontWeight:800,fontSize:14,color:C.red}}>{fmt(pend.reduce((s,e)=>s+e.currBal,0))}</td>
+          <td colSpan={3}/>
+        </tr>
+      </tfoot>}
+    </table>
   </div>
 
   {/* ── Cleared toggle ── */}
   {paid.length>0&&<>
     <button onClick={()=>setShowPaid(p=>!p)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:9,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:6,fontSize:12}}>✅ Cleared ({paid.length}) {showPaid?"▲":"▼"}</button>
-    {showPaid&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
-      {paid.map(e=><div key={e.id} onClick={()=>{setSel(e);setPa("");setShowDel(false);}} style={{background:C.green+"08",border:`1px solid ${C.green}22`,borderRadius:9,padding:"9px 13px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
-        <div>
-          <div style={{color:C.muted,fontSize:11,textDecoration:"line-through"}}>{e.client}</div>
-          {e.notes&&<div style={{color:C.dim,fontSize:10}}>{e.notes}</div>}
-        </div>
-        <span style={{color:C.green,fontWeight:700,fontSize:12}}>{fmt(e.totalBal)}</span>
-      </div>)}
+    {showPaid&&<div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.green}22`,background:C.card}}>
+      <table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:400}}>
+        <tbody>
+          {paid.map(e=><tr key={e.id}
+            onClick={()=>{setSel(e);setPa("");setShowDel(false);}}
+            style={{cursor:"pointer",borderBottom:`1px solid ${C.green}18`,opacity:.75}}
+            onMouseEnter={x=>x.currentTarget.style.background=C.green+"0A"}
+            onMouseLeave={x=>x.currentTarget.style.background="transparent"}>
+            <td style={{padding:"8px 10px",textDecoration:"line-through",color:C.muted,fontWeight:600}}>{e.client}</td>
+            <td style={{padding:"8px 7px",textAlign:"center"}}>
+              <span style={{background:mc(e.month)+"22",color:mc(e.month),borderRadius:5,padding:"2px 6px",fontWeight:700,fontSize:9}}>{e.month}</span>
+            </td>
+            <td style={{padding:"8px 10px",color:C.dim,maxWidth:140,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.notes||""}</td>
+            <td style={{padding:"8px 10px",textAlign:"right",color:C.green,fontWeight:700,whiteSpace:"nowrap"}}>{fmt(e.totalBal)}</td>
+          </tr>)}
+        </tbody>
+      </table>
     </div>}
   </>}
   </div>);
