@@ -1472,55 +1472,34 @@ function Payment(){
   const [am,setAm]=useState("All");
   const [sel,setSel]=useState(null);
   const [pa,setPa]=useState("");
-  const [sp,setSp]=useState(false);
   const [showAdd,setShowAdd]=useState(false);
-  const [sort,setSort]=useState("bal");
-  const [showFU,setShowFU]=useState(false);
-  const [fuDate,setFuDate]=useState("");
-  const [fuType,setFuType]=useState("Call");
-  const [logNote,setLogNote]=useState("");
-  const [logType,setLogType]=useState("Call");
-  const [showLog,setShowLog]=useState(false);
   const [showDel,setShowDel]=useState(false);
+  const [showPaid,setShowPaid]=useState(false);
   const today=TODAY;
-  const BLANK={client:"",month:MONTHS[new Date().getMonth()]||"Jul",totalBal:"",currBal:"",assignee:"Saud Bhai",followUpDate:"",followUpType:"WA",notes:""};
+  const BLANK={client:"",month:MONTHS[new Date().getMonth()]||"Jul",totalBal:"",currBal:"",assignee:"",followUpDate:"",followUpType:"WA",notes:""};
   const [form,setForm]=useState(BLANK);
 
   const months=[...new Set(entries.map(e=>e.month))].sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b));
   const fil=am==="All"?entries:entries.filter(e=>e.month===am);
-  const pend=fil.filter(e=>e.status!=="Paid").sort((a,b)=>{
-    if(sort==="bal")return b.currBal-a.currBal;
-    if(sort==="date")return(a.followUpDate||"9999")>(b.followUpDate||"9999")?1:-1;
-    return(a.assignee||"").localeCompare(b.assignee||"");
-  });
+  const pend=fil.filter(e=>e.status!=="Paid").sort((a,b)=>b.currBal-a.currBal);
   const paid=fil.filter(e=>e.status==="Paid");
   const tot=entries.filter(e=>e.status!=="Paid").reduce((s,e)=>s+e.currBal,0);
-  const od=entries.filter(e=>e.status!=="Paid"&&e.followUpDate&&e.followUpDate<today).length;
-  const dueToday=entries.filter(e=>e.status!=="Paid"&&e.followUpDate&&e.followUpDate===today).length;
+  const isOD=e=>e.followUpDate&&e.followUpDate<today;
+  const mc=m=>MC[m]||C.acc;
 
   function recP(){
     const amt=parseFloat(pa)||0;if(amt<=0||!sel)return;
     const nb=Math.max(0,sel.currBal-amt);
-    const lg=[...(sel.log||[]),{id:Date.now(),date:today,type:"Payment",note:`₹${fmt(amt)} received — balance ₹${fmt(nb)}`,by:""}];
-    const u={...sel,currBal:nb,status:nb===0?"Paid":"Partial",log:lg};
+    const u={...sel,currBal:nb,status:nb===0?"Paid":"Partial",log:[...(sel.log||[]),{id:Date.now(),date:today,type:"Payment",note:`₹${fmt(amt)} received`,by:""}]};
     setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setPa("");
   }
   function markPaid(){
-    const lg=[...(sel.log||[]),{id:Date.now(),date:today,type:"Payment",note:`Full payment ₹${fmt(sel.currBal)} received`,by:""}];
-    const u={...sel,currBal:0,status:"Paid",log:lg};
+    const u={...sel,currBal:0,status:"Paid"};
     setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(null);
   }
-  function reschedule(){
-    if(!fuDate||!sel)return;
-    const lg=[...(sel.log||[]),{id:Date.now(),date:today,type:"Reschedule",note:`Follow-up rescheduled → ${fuDate} via ${FT[fuType]||""} ${fuType}`,by:""}];
-    const u={...sel,followUpDate:fuDate,followUpType:fuType,log:lg};
-    setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setFuDate("");setShowFU(false);
-  }
-  function addLog(){
-    if(!logNote.trim()||!sel)return;
-    const lg=[...(sel.log||[]),{id:Date.now(),date:today,type:logType,note:logNote.trim(),by:""}];
-    const u={...sel,log:lg};
-    setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);setLogNote("");setShowLog(false);
+  function updateSel(changes){
+    const u={...sel,...changes};
+    setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);
   }
   function addEntry(){
     if(!form.client||!form.totalBal)return;
@@ -1528,25 +1507,17 @@ function Payment(){
     const e={...form,id:Date.now(),totalBal:tb,currBal:cb,status:cb<=0?"Paid":cb<tb?"Partial":"Pending",log:[]};
     setEntries(p=>[e,...p]);setForm(BLANK);setShowAdd(false);
   }
-  function updateSel(changes){
-    const u={...sel,...changes};
-    setEntries(p=>p.map(e=>e.id===sel.id?u:e));setSel(u);
-  }
-
-  const isOD=e=>e.followUpDate&&e.followUpDate<today;
-  const mc=m=>MC[m]||C.acc;
-  const pct=e=>e.totalBal>0?Math.round((1-e.currBal/e.totalBal)*100):100;
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return(<div>
 
-  {/* ── Add New Entry Modal ── */}
-  {showAdd&&<Mod onClose={()=>{setShowAdd(false);setForm(BLANK);}} title="+ New Outstanding Entry">
+  {/* ── Add Modal ── */}
+  {showAdd&&<Mod onClose={()=>{setShowAdd(false);setForm(BLANK);}} title="+ New Entry">
     <div style={{display:"flex",flexDirection:"column",gap:10}}>
-      <div><label style={LBL}>Client Name *</label><input style={INP} value={form.client} onChange={e=>setForm({...form,client:e.target.value})} placeholder="Client name…"/></div>
+      <div><label style={LBL}>Client Name *</label><input style={INP} value={form.client} onChange={e=>setForm({...form,client:e.target.value})} placeholder="Client name…" autoFocus/></div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-        <div><label style={LBL}>Month *</label><select style={{...INP,appearance:"none"}} value={form.month} onChange={e=>setForm({...form,month:e.target.value})}>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div>
-        <div><label style={LBL}>Assign To</label><select style={{...INP,appearance:"none"}} value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}</select></div>
+        <div><label style={LBL}>Month</label><select style={{...INP,appearance:"none"}} value={form.month} onChange={e=>setForm({...form,month:e.target.value})}>{MONTHS.map(m=><option key={m}>{m}</option>)}</select></div>
+        <div><label style={LBL}>Assign To</label><select style={{...INP,appearance:"none"}} value={form.assignee} onChange={e=>setForm({...form,assignee:e.target.value})}><option value="">— None —</option>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}</select></div>
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         <div><label style={LBL}>Total Balance ₹ *</label><input type="number" style={INP} value={form.totalBal} onChange={e=>setForm({...form,totalBal:e.target.value})} placeholder="0"/></div>
@@ -1554,181 +1525,125 @@ function Payment(){
       </div>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
         <div><label style={LBL}>Follow-up Date</label><input type="date" style={INP} value={form.followUpDate} onChange={e=>setForm({...form,followUpDate:e.target.value})}/></div>
-        <div><label style={LBL}>Follow-up Type</label><select style={{...INP,appearance:"none"}} value={form.followUpType} onChange={e=>setForm({...form,followUpType:e.target.value})}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select></div>
+        <div><label style={LBL}>Follow-up Via</label><select style={{...INP,appearance:"none"}} value={form.followUpType} onChange={e=>setForm({...form,followUpType:e.target.value})}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select></div>
       </div>
       <div><label style={LBL}>Notes</label><input style={INP} value={form.notes} onChange={e=>setForm({...form,notes:e.target.value})} placeholder="Any remarks…"/></div>
       <div style={{display:"flex",gap:8,marginTop:4}}>
         <button onClick={()=>{setShowAdd(false);setForm(BLANK);}} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:10,padding:12,fontWeight:700,cursor:"pointer"}}>Cancel</button>
-        <button onClick={addEntry} style={{flex:2,background:C.red,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Add Entry ✓</button>
+        <button onClick={addEntry} style={{flex:2,background:C.acc,border:"none",color:"#fff",borderRadius:10,padding:12,fontWeight:800,cursor:"pointer"}}>Add ✓</button>
       </div>
     </div>
   </Mod>}
 
-  {/* ── Client Detail Modal ── */}
-  {sel&&<Mod onClose={()=>{setSel(null);setShowFU(false);setShowLog(false);setPa("");}} title={sel.client} sub={`${sel.month} · ${sel.status}`}>
-    {/* badges */}
-    <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap"}}>
-      <Bdg label={sel.month} color={mc(sel.month)} bg={mc(sel.month)+"22"} border={mc(sel.month)+"44"}/>
-      <Bdg label={sel.status} color={sel.status==="Paid"?C.green:sel.status==="Partial"?C.teal:C.red} bg={(sel.status==="Paid"?C.green:sel.status==="Partial"?C.teal:C.red)+"22"} border={(sel.status==="Paid"?C.green:sel.status==="Partial"?C.teal:C.red)+"44"}/>
-      {sel.assignee&&<Bdg label={sel.assignee} color={C.purple} bg={C.purple+"22"} border={C.purple+"44"}/>}
-      {sel.followUpDate&&<Bdg label={`${FT[sel.followUpType]||"📅"} ${sel.followUpDate.slice(5).replace("-",".")}`} color={isOD(sel)?C.orange:C.blue} bg={(isOD(sel)?C.orange:C.blue)+"22"} border={(isOD(sel)?C.orange:C.blue)+"44"}/>}
-    </div>
-    {/* balance overview */}
-    <div style={{background:C.bg,borderRadius:11,padding:"12px 14px",marginBottom:12,border:`1px solid ${C.cb}`}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
-        <div><div style={{fontSize:9,color:C.muted,fontWeight:700,textTransform:"uppercase"}}>Current Balance</div><div style={{fontSize:20,fontWeight:800,color:sel.currBal===0?C.green:C.red,marginTop:1}}>{fmt(sel.currBal)}</div></div>
-        <div style={{textAlign:"right"}}><div style={{fontSize:9,color:C.muted,fontWeight:700,textTransform:"uppercase"}}>Total Invoice</div><div style={{fontSize:14,fontWeight:700,color:C.text,marginTop:1}}>{fmt(sel.totalBal)}</div><div style={{fontSize:10,color:C.green,fontWeight:700}}>{pct(sel)}% collected</div></div>
+  {/* ── Detail Modal ── */}
+  {sel&&<Mod onClose={()=>{setSel(null);setPa("");setShowDel(false);}} title={sel.client} sub={`${sel.month} · ${sel.status}`}>
+    {/* Balances */}
+    <div style={{display:"flex",gap:10,marginBottom:14}}>
+      <div style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,borderRadius:10,padding:"10px 13px",textAlign:"center"}}>
+        <div style={{fontSize:9,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:3}}>Current Balance</div>
+        <div style={{fontSize:20,fontWeight:800,color:sel.currBal===0?C.green:C.red}}>{fmt(sel.currBal)}</div>
       </div>
-      <div style={{background:C.cb,borderRadius:4,height:6,overflow:"hidden"}}>
-        <div style={{height:"100%",background:sel.currBal===0?C.green:C.teal,width:`${pct(sel)}%`,borderRadius:4,transition:"width .3s"}}/>
+      <div style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,borderRadius:10,padding:"10px 13px",textAlign:"center"}}>
+        <div style={{fontSize:9,color:C.muted,fontWeight:700,textTransform:"uppercase",marginBottom:3}}>Total Invoice</div>
+        <div style={{fontSize:20,fontWeight:800,color:C.text}}>{fmt(sel.totalBal)}</div>
       </div>
     </div>
-    {/* assign + follow-up quick edit */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:12}}>
-      <div><div style={{fontSize:10,color:C.muted,fontWeight:700,marginBottom:4}}>ASSIGNED TO</div>
-        <select style={{...INP,fontSize:11,padding:"6px 8px"}} value={sel.assignee||""} onChange={e=>updateSel({assignee:e.target.value})}>
-          <option value="">— None —</option>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}
-        </select>
+    {/* Record payment */}
+    {sel.status!=="Paid"&&<div style={{marginBottom:12}}>
+      <label style={LBL}>Record Payment</label>
+      <div style={{display:"flex",gap:7}}>
+        <input type="number" style={{...INP,flex:1}} placeholder="Amount received…" value={pa} onChange={e=>setPa(e.target.value)}/>
+        <button onClick={recP} style={{background:C.green,border:"none",color:"#fff",borderRadius:8,padding:"0 14px",fontWeight:700,cursor:"pointer"}}>Save</button>
       </div>
-      <div><div style={{fontSize:10,color:C.muted,fontWeight:700,marginBottom:4}}>NOTES</div>
-        <input style={{...INP,fontSize:11,padding:"6px 8px"}} value={sel.notes||""} onChange={e=>updateSel({notes:e.target.value})} placeholder="Quick note…"/>
-      </div>
-    </div>
-    {/* record payment */}
-    {sel.status!=="Paid"&&<div style={{background:C.green+"0D",border:`1px solid ${C.green}33`,borderRadius:11,padding:12,marginBottom:10}}>
-      <div style={{color:C.green,fontWeight:700,fontSize:12,marginBottom:8}}>💳 Record Payment</div>
-      <div style={{display:"flex",gap:7,marginBottom:7}}>
-        <input type="number" style={{...INP,flex:1,fontSize:12}} placeholder="Amount received…" value={pa} onChange={e=>setPa(e.target.value)}/>
-        <button onClick={recP} style={{background:C.green,border:"none",color:"#fff",borderRadius:8,padding:"0 14px",fontWeight:700,cursor:"pointer",whiteSpace:"nowrap"}}>Save ✓</button>
-      </div>
-      {parseFloat(pa)>0&&<div style={{display:"flex",justifyContent:"space-between",background:C.card,borderRadius:6,padding:"5px 10px"}}>
-        <span style={{color:C.muted,fontSize:11}}>Balance after payment:</span>
-        <span style={{color:C.green,fontWeight:800,fontSize:12}}>{fmt(Math.max(0,sel.currBal-parseFloat(pa)))}</span>
-      </div>}
-      <button onClick={markPaid} style={{background:"transparent",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"8px",fontWeight:700,cursor:"pointer",width:"100%",marginTop:8,fontSize:12}}>✅ Mark Fully Cleared ({fmt(sel.currBal)})</button>
+      <button onClick={markPaid} style={{background:"transparent",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"8px",fontWeight:700,cursor:"pointer",width:"100%",marginTop:7,fontSize:12}}>✅ Mark Fully Cleared</button>
     </div>}
-    {/* follow-up */}
-    <div style={{marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <span style={{fontSize:11,fontWeight:700,color:C.text}}>📅 Follow-up</span>
-        <button onClick={()=>setShowFU(p=>!p)} style={{background:C.blue+"22",border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:6,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{showFU?"Cancel":"Reschedule"}</button>
+    {/* Follow-up row */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+      <div><label style={LBL}>Follow-up Date</label>
+        <input type="date" style={{...INP,fontSize:11,padding:"7px 8px"}} value={sel.followUpDate||""} onChange={e=>updateSel({followUpDate:e.target.value})}/>
       </div>
-      {sel.followUpDate&&!showFU&&<div style={{background:isOD(sel)?C.orange+"15":C.blue+"10",border:`1px solid ${isOD(sel)?C.orange:C.blue}33`,borderRadius:8,padding:"7px 10px",fontSize:11}}>
-        <span style={{fontWeight:700,color:isOD(sel)?C.orange:C.blue}}>{FT[sel.followUpType]||"📅"} {sel.followUpType}</span>
-        <span style={{color:C.muted,marginLeft:6}}>{sel.followUpDate}{isOD(sel)&&" — OVERDUE"}</span>
-      </div>}
-      {showFU&&<div style={{display:"grid",gridTemplateColumns:"1fr 1fr auto",gap:7,marginTop:6}}>
-        <input type="date" style={{...INP,fontSize:11,padding:"6px 8px"}} value={fuDate} onChange={e=>setFuDate(e.target.value)}/>
-        <select style={{...INP,fontSize:11,padding:"6px 8px",appearance:"none"}} value={fuType} onChange={e=>setFuType(e.target.value)}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select>
-        <button onClick={reschedule} style={{background:C.blue,border:"none",color:"#fff",borderRadius:8,padding:"0 12px",fontWeight:700,cursor:"pointer",fontSize:12}}>✓</button>
-      </div>}
-    </div>
-    {/* log */}
-    <div style={{marginBottom:10}}>
-      <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
-        <span style={{fontSize:11,fontWeight:700,color:C.text}}>📋 Activity Log ({(sel.log||[]).length})</span>
-        <button onClick={()=>setShowLog(p=>!p)} style={{background:C.teal+"22",border:`1px solid ${C.teal}44`,color:C.teal,borderRadius:6,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{showLog?"Cancel":"+ Add Note"}</button>
+      <div><label style={LBL}>Via</label>
+        <select style={{...INP,fontSize:11,padding:"7px 8px",appearance:"none"}} value={sel.followUpType||"WA"} onChange={e=>updateSel({followUpType:e.target.value})}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select>
       </div>
-      {showLog&&<div style={{marginBottom:8}}>
-        <div style={{display:"flex",gap:6,marginBottom:6}}>
-          {Object.entries(FT).map(([k,v])=><button key={k} onClick={()=>setLogType(k)} style={{flex:1,background:logType===k?C.teal+"33":"transparent",border:`1px solid ${logType===k?C.teal:C.cb}`,borderRadius:7,padding:"5px 4px",cursor:"pointer",fontSize:10,color:logType===k?C.teal:C.muted,fontWeight:700}}>{v}{k}</button>)}
-        </div>
-        <div style={{display:"flex",gap:6}}>
-          <input style={{...INP,flex:1,fontSize:11}} value={logNote} onChange={e=>setLogNote(e.target.value)} placeholder="What happened? e.g. Called, said will pay by 15.7…"/>
-          <button onClick={addLog} style={{background:C.teal,border:"none",color:"#fff",borderRadius:8,padding:"0 12px",fontWeight:700,cursor:"pointer"}}>✓</button>
-        </div>
-      </div>}
-      {(sel.log||[]).length>0&&<div style={{display:"flex",flexDirection:"column",gap:5,maxHeight:160,overflowY:"auto"}}>
-        {[...(sel.log||[])].reverse().map(l=><div key={l.id} style={{background:C.bg,borderRadius:7,padding:"6px 10px",border:`1px solid ${C.cb}`}}>
-          <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
-            <span style={{fontSize:10,fontWeight:700,color:l.type==="Payment"?C.green:l.type==="Reschedule"?C.blue:C.teal}}>{FT[l.type]||"📋"} {l.type}</span>
-            <span style={{fontSize:9,color:C.dim}}>{l.date}</span>
-          </div>
-          <div style={{fontSize:11,color:C.text}}>{l.note}</div>
-        </div>)}
-      </div>}
     </div>
-    {/* delete */}
-    {!showDel?<button onClick={()=>setShowDel(true)} style={{background:"transparent",border:`1px solid ${C.red}33`,color:C.red,borderRadius:8,padding:"7px",fontWeight:700,cursor:"pointer",width:"100%",fontSize:11}}>🗑 Delete Entry</button>
-    :<div style={{display:"flex",gap:8}}><button onClick={()=>setShowDel(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:9,fontWeight:700,cursor:"pointer",fontSize:11}}>Cancel</button><button onClick={()=>{setEntries(p=>p.filter(e=>e.id!==sel.id));setSel(null);setShowDel(false);}} style={{flex:2,background:C.red,border:"none",color:"#fff",borderRadius:8,padding:9,fontWeight:800,cursor:"pointer",fontSize:11}}>Confirm Delete</button></div>}
+    {/* Assign + Notes */}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+      <div><label style={LBL}>Assigned To</label>
+        <select style={{...INP,fontSize:11,padding:"7px 8px",appearance:"none"}} value={sel.assignee||""} onChange={e=>updateSel({assignee:e.target.value})}><option value="">— None —</option>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}</select>
+      </div>
+      <div><label style={LBL}>Notes</label>
+        <input style={{...INP,fontSize:11,padding:"7px 8px"}} value={sel.notes||""} onChange={e=>updateSel({notes:e.target.value})} placeholder="Remarks…"/>
+      </div>
+    </div>
+    {/* Delete */}
+    {!showDel
+      ?<button onClick={()=>setShowDel(true)} style={{background:"transparent",border:`1px solid ${C.red}33`,color:C.red,borderRadius:8,padding:8,fontWeight:700,cursor:"pointer",width:"100%",fontSize:11}}>🗑 Delete Entry</button>
+      :<div style={{display:"flex",gap:8}}>
+        <button onClick={()=>setShowDel(false)} style={{flex:1,background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:8,padding:9,fontWeight:700,cursor:"pointer",fontSize:11}}>Cancel</button>
+        <button onClick={()=>{setEntries(p=>p.filter(e=>e.id!==sel.id));setSel(null);setShowDel(false);}} style={{flex:2,background:C.red,border:"none",color:"#fff",borderRadius:8,padding:9,fontWeight:800,cursor:"pointer",fontSize:11}}>Confirm Delete</button>
+      </div>}
   </Mod>}
 
-  {/* ── Header ── */}
-  {(od>0||dueToday>0)&&<div style={{background:C.card,border:`1px solid ${C.orange}44`,borderLeft:`3px solid ${C.orange}`,borderRadius:9,padding:"9px 13px",marginBottom:11,display:"flex",gap:9,alignItems:"center"}}>
-    <span style={{fontSize:16}}>⏰</span>
-    <div style={{flex:1}}><span style={{color:C.orange,fontWeight:700,fontSize:12}}>{od} overdue{dueToday>0?`, ${dueToday} due today`:""}</span></div>
-  </div>}
-  <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap"}}>
-    <Pill label="Grand Outstanding" value={fmt(tot)} color={C.red}/>
+  {/* ── Top bar ── */}
+  <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}>
+    <Pill label="Outstanding" value={fmt(tot)} color={C.red}/>
     <Pill label="Pending" value={entries.filter(e=>e.status!=="Paid").length} color={C.orange}/>
     <Pill label="Cleared" value={entries.filter(e=>e.status==="Paid").length} color={C.green}/>
-    <button onClick={()=>setShowAdd(true)} style={{marginLeft:"auto",background:C.red,border:"none",color:"#fff",borderRadius:8,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Add</button>
+    <button onClick={()=>setShowAdd(true)} style={{marginLeft:"auto",background:C.acc,border:"none",color:"#fff",borderRadius:8,padding:"7px 14px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Add</button>
   </div>
 
   {/* ── Month tabs ── */}
-  <div style={{overflowX:"auto",marginBottom:11,paddingBottom:3}}><div style={{display:"flex",gap:5,minWidth:"max-content"}}>
-    <button onClick={()=>setAm("All")} style={{background:am==="All"?C.teal+"33":"transparent",border:`1px solid ${am==="All"?C.teal+"55":C.cb}`,borderRadius:9,padding:"6px 13px",cursor:"pointer"}}><span style={{color:am==="All"?C.teal:C.muted,fontWeight:700,fontSize:11}}>All</span></button>
-    {months.map(m=>{const c=mc(m);const mp=entries.filter(e=>e.month===m&&e.status!=="Paid");return<button key={m} onClick={()=>setAm(m)} style={{background:am===m?c+"33":"transparent",border:`1px solid ${am===m?c+"55":C.cb}`,borderRadius:9,padding:"6px 11px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}><span style={{color:am===m?c:C.muted,fontWeight:700,fontSize:11}}>{m}</span><span style={{color:am===m?c:C.dim,fontSize:9}}>{mp.length} · {fmt(mp.reduce((s,e)=>s+e.currBal,0))}</span></button>;})}
+  <div style={{overflowX:"auto",marginBottom:12,paddingBottom:3}}><div style={{display:"flex",gap:5,minWidth:"max-content"}}>
+    {["All",...months].map(m=>{
+      const c=m==="All"?C.teal:mc(m);
+      const active=am===m;
+      const cnt=m==="All"?entries.filter(e=>e.status!=="Paid").length:entries.filter(e=>e.month===m&&e.status!=="Paid").length;
+      return<button key={m} onClick={()=>setAm(m)} style={{background:active?c+"33":"transparent",border:`1px solid ${active?c+"55":C.cb}`,borderRadius:9,padding:"6px 13px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:1}}>
+        <span style={{color:active?c:C.muted,fontWeight:700,fontSize:11}}>{m}</span>
+        <span style={{color:active?c:C.dim,fontSize:9}}>{cnt} pending</span>
+      </button>;
+    })}
   </div></div>
 
-  {/* ── All view: month summary ── */}
-  {am==="All"&&<div style={{marginBottom:14}}>
-    <SL text="Outstanding by Month"/>
-    {months.map(m=>{const c=mc(m);const mp=entries.filter(e=>e.month===m&&e.status!=="Paid");const mt=mp.reduce((s,e)=>s+e.currBal,0);const clr=entries.filter(e=>e.month===m&&e.status==="Paid").length;const odm=mp.filter(e=>isOD(e)).length;return<div key={m} onClick={()=>setAm(m)} style={{background:C.card,border:`1px solid ${odm?C.orange+"44":c+"33"}`,borderLeft:`3px solid ${odm?C.orange:c}`,borderRadius:11,padding:"11px 14px",marginBottom:7,cursor:"pointer",display:"flex",alignItems:"center",gap:11}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
-      <div style={{width:38,height:38,borderRadius:9,background:c+"22",border:`1px solid ${c}44`,display:"flex",alignItems:"center",justifyContent:"center",color:c,fontWeight:800,fontSize:13,flexShrink:0}}>{m}</div>
-      <div style={{flex:1,minWidth:0}}>
-        <div style={{display:"flex",justifyContent:"space-between"}}><span style={{color:C.text,fontWeight:700,fontSize:12}}>{m} Outstanding</span><span style={{color:C.red,fontWeight:800,fontSize:15}}>{fmt(mt)}</span></div>
-        <div style={{display:"flex",gap:9,marginTop:3}}>
-          <span style={{color:C.muted,fontSize:10}}>{mp.length} pending</span>
-          {clr>0&&<span style={{color:C.green,fontSize:10}}>✅ {clr} cleared</span>}
-          {odm>0&&<span style={{color:C.orange,fontSize:10}}>⏰ {odm} overdue</span>}
-        </div>
-      </div>
-      <span style={{color:C.dim}}>›</span>
-    </div>;})}
-    <div style={{background:C.card,border:`1px solid ${C.red}33`,borderLeft:`3px solid ${C.red}`,borderRadius:11,padding:"12px 14px"}}>
-      <div style={{display:"flex",justifyContent:"space-between",marginBottom:3}}><span style={{color:C.text,fontWeight:800,fontSize:14}}>Grand Total Outstanding</span><span style={{color:C.red,fontWeight:800,fontSize:18}}>{fmt(tot)}</span></div>
-      <div style={{display:"flex",gap:11}}><span style={{color:C.muted,fontSize:10}}>{entries.filter(e=>e.status!=="Paid").length} pending</span><span style={{color:C.green,fontSize:10}}>✅ {entries.filter(e=>e.status==="Paid").length} cleared</span></div>
-    </div>
-  </div>}
-
-  {/* ── Month view: client list ── */}
-  {am!=="All"&&<>
-    <div style={{display:"flex",gap:6,marginBottom:10,alignItems:"center"}}>
-      <span style={{fontSize:11,color:C.muted,fontWeight:700}}>Sort:</span>
-      {[["bal","💰 Balance"],["date","📅 Follow-up"],["assignee","👤 Assignee"]].map(([v,l])=><button key={v} onClick={()=>setSort(v)} style={{background:sort===v?C.acc+"22":"transparent",border:`1px solid ${sort===v?C.acc+"55":C.cb}`,color:sort===v?C.acc:C.muted,borderRadius:7,padding:"4px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{l}</button>)}
-    </div>
-    <div style={{display:"flex",flexDirection:"column",gap:8,marginBottom:14}}>
-      {pend.map((e,i)=>{const od2=isOD(e);const c=mc(e.month);const p=pct(e);return<div key={e.id} onClick={()=>{setSel(e);setShowFU(false);setShowLog(false);setShowDel(false);setPa("");}} style={{background:C.card,border:`1px solid ${od2?C.orange+"55":C.cb}`,borderLeft:`3px solid ${od2?C.orange:e.status==="Partial"?C.teal:C.red}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={ex=>ex.currentTarget.style.opacity=".85"} onMouseLeave={ex=>ex.currentTarget.style.opacity="1"}>
-        <div style={{display:"flex",justifyContent:"space-between",gap:9,marginBottom:6}}>
+  {/* ── Client list ── */}
+  <div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:12}}>
+    {pend.map(e=>{
+      const od2=isOD(e);
+      return<div key={e.id} onClick={()=>{setSel(e);setPa("");setShowDel(false);}} style={{background:C.card,border:`1px solid ${od2?C.orange+"55":C.cb}`,borderLeft:`3px solid ${od2?C.orange:e.status==="Partial"?C.teal:C.acc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={x=>x.currentTarget.style.opacity=".85"} onMouseLeave={x=>x.currentTarget.style.opacity="1"}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
           <div style={{flex:1,minWidth:0}}>
-            <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
-              <div style={{width:17,height:17,borderRadius:4,background:C.red+"22",display:"flex",alignItems:"center",justifyContent:"center",color:C.red,fontWeight:800,fontSize:9,flexShrink:0}}>{i+1}</div>
-              <div style={{color:C.text,fontWeight:700,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.client}</div>
-            </div>
-            <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-              {e.assignee&&<Bdg label={e.assignee} color={C.purple} bg={C.purple+"22"} border={C.purple+"44"}/>}
-              {e.followUpDate&&<Bdg label={`${FT[e.followUpType]||"📅"} ${e.followUpDate.slice(5).replace("-",".")}`} color={od2?C.orange:C.blue} bg={(od2?C.orange:C.blue)+"1A"} border={(od2?C.orange:C.blue)+"44"}/>}
+            <div style={{color:C.text,fontWeight:700,fontSize:13,marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{e.client}</div>
+            <div style={{display:"flex",gap:5,flexWrap:"wrap",alignItems:"center"}}>
+              <Bdg label={e.month} color={mc(e.month)} bg={mc(e.month)+"22"} border={mc(e.month)+"44"}/>
               {e.status==="Partial"&&<Bdg label="Part Paid" color={C.teal} bg={C.teal+"22"} border={C.teal+"44"}/>}
               {od2&&<Bdg label="⏰ Overdue" color={C.orange} bg={C.orange+"22"} border={C.orange+"44"}/>}
+              {e.assignee&&<Bdg label={e.assignee} color={C.purple} bg={C.purple+"22"} border={C.purple+"44"}/>}
+              {e.followUpDate&&<Bdg label={`${FT[e.followUpType]||"📅"} ${e.followUpDate.slice(5).replace("-",".")}`} color={od2?C.orange:C.blue} bg={(od2?C.orange:C.blue)+"1A"} border={(od2?C.orange:C.blue)+"44"}/>}
             </div>
-            {e.notes&&<div style={{color:C.dim,fontSize:10,marginTop:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>📝 {e.notes}</div>}
+            {e.notes&&<div style={{color:C.dim,fontSize:10,marginTop:5,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>📝 {e.notes}</div>}
           </div>
           <div style={{textAlign:"right",flexShrink:0}}>
-            <div style={{color:C.red,fontWeight:800,fontSize:15}}>{fmt(e.currBal)}</div>
-            {e.totalBal!==e.currBal&&<div style={{color:C.muted,fontSize:9}}>of {fmt(e.totalBal)}</div>}
+            <div style={{color:C.red,fontWeight:800,fontSize:16}}>{fmt(e.currBal)}</div>
+            {e.totalBal!==e.currBal&&<div style={{color:C.muted,fontSize:9,marginTop:1}}>of {fmt(e.totalBal)}</div>}
           </div>
         </div>
-        {e.status==="Partial"&&<div style={{background:C.cb,borderRadius:3,height:4,overflow:"hidden"}}>
-          <div style={{height:"100%",background:C.teal,width:`${p}%`,borderRadius:3}}/>
+        {e.status==="Partial"&&<div style={{background:C.cb,borderRadius:3,height:3,overflow:"hidden",marginTop:8}}>
+          <div style={{height:"100%",background:C.teal,width:`${Math.round((1-e.currBal/e.totalBal)*100)}%`,borderRadius:3}}/>
         </div>}
-      </div>;})}
-      {!pend.length&&<div style={{textAlign:"center",padding:32,color:C.dim,fontSize:13}}>🎉 All cleared for {am}!</div>}
-    </div>
-    <button onClick={()=>setSp(!sp)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:"9px",fontWeight:700,cursor:"pointer",width:"100%",marginBottom:7}}>✅ Cleared ({paid.length}) {sp?"▲":"▼"}</button>
-    {sp&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
-      {paid.map(e=><div key={e.id} onClick={()=>{setSel(e);setShowFU(false);setShowLog(false);setShowDel(false);setPa("");}} style={{background:C.green+"08",border:`1px solid ${C.green}22`,borderRadius:9,padding:"9px 13px",display:"flex",justifyContent:"space-between",cursor:"pointer"}}>
-        <div><div style={{color:C.muted,fontSize:11,textDecoration:"line-through"}}>{e.client}</div>{e.notes&&<div style={{color:C.dim,fontSize:10}}>{e.notes}</div>}</div>
+      </div>;
+    })}
+    {!pend.length&&<div style={{textAlign:"center",padding:36,color:C.dim,fontSize:13}}>🎉 All cleared{am!=="All"?` for ${am}`:""}!</div>}
+  </div>
+
+  {/* ── Cleared toggle ── */}
+  {paid.length>0&&<>
+    <button onClick={()=>setShowPaid(p=>!p)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:9,padding:9,fontWeight:700,cursor:"pointer",width:"100%",marginBottom:6,fontSize:12}}>✅ Cleared ({paid.length}) {showPaid?"▲":"▼"}</button>
+    {showPaid&&<div style={{display:"flex",flexDirection:"column",gap:5}}>
+      {paid.map(e=><div key={e.id} onClick={()=>{setSel(e);setPa("");setShowDel(false);}} style={{background:C.green+"08",border:`1px solid ${C.green}22`,borderRadius:9,padding:"9px 13px",display:"flex",justifyContent:"space-between",alignItems:"center",cursor:"pointer"}}>
+        <div>
+          <div style={{color:C.muted,fontSize:11,textDecoration:"line-through"}}>{e.client}</div>
+          {e.notes&&<div style={{color:C.dim,fontSize:10}}>{e.notes}</div>}
+        </div>
         <span style={{color:C.green,fontWeight:700,fontSize:12}}>{fmt(e.totalBal)}</span>
       </div>)}
     </div>}
