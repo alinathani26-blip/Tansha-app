@@ -2060,16 +2060,19 @@ const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
 const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
 
+const AUTH_DOMAIN="@tansha.app";
+function toAuthEmail(uid){return uid.includes("@")?uid:uid.toLowerCase()+AUTH_DOMAIN;}
+
 function LoginScreen(){
-  const [email,setEmail]=useState("");
+  const [uid,setUid]=useState("");
   const [pass,setPass]=useState("");
   const [err,setErr]=useState("");
   const [busy,setBusy]=useState(false);
   const [showP,setShowP]=useState(false);
   async function attempt(){
-    if(!email.trim()||!pass)return;
+    if(!uid.trim()||!pass)return;
     setBusy(true);setErr("");
-    const r=await login(email.trim(),pass);
+    const r=await login(toAuthEmail(uid.trim()),pass);
     if(r.error){setErr(r.error);setBusy(false);}
   }
   const inp={width:"100%",background:"#0F172A",border:"1px solid #334155",borderRadius:9,padding:"11px 13px",color:"#F1F5F9",fontSize:13,outline:"none",boxSizing:"border-box"};
@@ -2082,8 +2085,8 @@ function LoginScreen(){
         </div>
         <div style={{display:"flex",flexDirection:"column",gap:13}}>
           <div>
-            <label style={{display:"block",color:"#64748B",fontSize:10,fontWeight:700,marginBottom:5,textTransform:"uppercase",letterSpacing:".8px"}}>Email</label>
-            <input type="email" autoFocus value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} style={inp} placeholder="you@example.com"/>
+            <label style={{display:"block",color:"#64748B",fontSize:10,fontWeight:700,marginBottom:5,textTransform:"uppercase",letterSpacing:".8px"}}>User ID</label>
+            <input type="text" autoFocus autoCapitalize="none" autoCorrect="off" value={uid} onChange={e=>setUid(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} style={inp} placeholder="e.g. saud"/>
           </div>
           <div>
             <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
@@ -2093,7 +2096,7 @@ function LoginScreen(){
             <input type={showP?"text":"password"} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} style={inp} placeholder="••••••••"/>
           </div>
           {err&&<div style={{background:"#7F1D1D22",border:"1px solid #EF444444",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontSize:12,textAlign:"center"}}>{err}</div>}
-          <button onClick={attempt} disabled={busy||!email||!pass} style={{background:busy||!email||!pass?"#312E81":"#6366F1",border:"none",color:"#fff",borderRadius:9,padding:13,fontWeight:700,fontSize:13,cursor:busy||!email||!pass?"not-allowed":"pointer",marginTop:4,transition:"background .15s"}}>
+          <button onClick={attempt} disabled={busy||!uid||!pass} style={{background:busy||!uid||!pass?"#312E81":"#6366F1",border:"none",color:"#fff",borderRadius:9,padding:13,fontWeight:700,fontSize:13,cursor:busy||!uid||!pass?"not-allowed":"pointer",marginTop:4,transition:"background .15s"}}>
             {busy?"Signing in…":"Sign In →"}
           </button>
         </div>
@@ -2164,7 +2167,7 @@ export default function App(){
         <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
         <div style={{padding:"10px 10px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5,paddingLeft:2}}>{authUser?.email}</div>
+          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5,paddingLeft:2}}>{authUser?.email?.replace(AUTH_DOMAIN,"")}</div>
           <button onClick={logout} style={{width:"100%",background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#F87171",borderRadius:8,padding:"8px 10px",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left"}}>Sign Out</button>
         </div>
       </div>
@@ -2180,7 +2183,7 @@ export default function App(){
       </div>
       <div style={{flex:1,padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
       <div style={{padding:"10px 12px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
-        <div style={{color:"#475569",fontSize:9,fontWeight:700,marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{authUser?.email}</div>
+        <div style={{color:"#475569",fontSize:9,fontWeight:700,marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{authUser?.email?.replace(AUTH_DOMAIN,"")}</div>
         <button onClick={logout} style={{width:"100%",background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#F87171",borderRadius:8,padding:"8px 10px",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left"}}>Sign Out</button>
       </div>
     </div>}
