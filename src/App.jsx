@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
+import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush, auth, login, logout, onAuthStateChanged } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -2060,10 +2060,64 @@ const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
 const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
 
+function LoginScreen(){
+  const [email,setEmail]=useState("");
+  const [pass,setPass]=useState("");
+  const [err,setErr]=useState("");
+  const [busy,setBusy]=useState(false);
+  const [showP,setShowP]=useState(false);
+  async function attempt(){
+    if(!email.trim()||!pass)return;
+    setBusy(true);setErr("");
+    const r=await login(email.trim(),pass);
+    if(r.error){setErr(r.error);setBusy(false);}
+  }
+  const inp={width:"100%",background:"#0F172A",border:"1px solid #334155",borderRadius:9,padding:"11px 13px",color:"#F1F5F9",fontSize:13,outline:"none",boxSizing:"border-box"};
+  return(
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0F172A",padding:20,fontFamily:"'Inter',-apple-system,sans-serif"}}>
+      <div style={{background:"#1E293B",borderRadius:18,padding:"36px 32px",width:"100%",maxWidth:360,boxShadow:"0 32px 64px rgba(0,0,0,0.5)"}}>
+        <div style={{textAlign:"center",marginBottom:30}}>
+          <div style={{color:"#fff",fontWeight:800,fontSize:24,letterSpacing:-.5,marginBottom:4}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:14,letterSpacing:0}}>Hospitality</span></div>
+          <div style={{color:"#475569",fontSize:12}}>Sign in to access your workspace</div>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:13}}>
+          <div>
+            <label style={{display:"block",color:"#64748B",fontSize:10,fontWeight:700,marginBottom:5,textTransform:"uppercase",letterSpacing:".8px"}}>Email</label>
+            <input type="email" autoFocus value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} style={inp} placeholder="you@example.com"/>
+          </div>
+          <div>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:5}}>
+              <label style={{color:"#64748B",fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:".8px"}}>Password</label>
+              <button onClick={()=>setShowP(p=>!p)} style={{background:"none",border:"none",color:"#64748B",fontSize:10,cursor:"pointer",padding:0}}>{showP?"Hide":"Show"}</button>
+            </div>
+            <input type={showP?"text":"password"} value={pass} onChange={e=>setPass(e.target.value)} onKeyDown={e=>e.key==="Enter"&&attempt()} style={inp} placeholder="••••••••"/>
+          </div>
+          {err&&<div style={{background:"#7F1D1D22",border:"1px solid #EF444444",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontSize:12,textAlign:"center"}}>{err}</div>}
+          <button onClick={attempt} disabled={busy||!email||!pass} style={{background:busy||!email||!pass?"#312E81":"#6366F1",border:"none",color:"#fff",borderRadius:9,padding:13,fontWeight:700,fontSize:13,cursor:busy||!email||!pass?"not-allowed":"pointer",marginTop:4,transition:"background .15s"}}>
+            {busy?"Signing in…":"Sign In →"}
+          </button>
+        </div>
+        <div style={{textAlign:"center",color:"#334155",fontSize:10,marginTop:24}}>Contact your admin if you need access</div>
+      </div>
+    </div>
+  );
+}
+
 export default function App(){
+  const [authUser,setAuthUser]=useState(undefined); // undefined=loading, null=not logged in
+  useEffect(()=>{
+    return onAuthStateChanged(auth,(u)=>{
+      setAuthUser(u||null);
+      if(u?.displayName&&TEAM.includes(u.displayName))setRole(u.displayName);
+    });
+  },[]);
+
   const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
   const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
+
+  if(authUser===undefined)return(<div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#0F172A"}}><span style={{display:"inline-block",width:28,height:28,border:"3px solid #334155",borderTopColor:"#6366F1",borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style></div>);
+  if(!authUser)return<LoginScreen/>;
   const [pushPerm,setPushPerm]=useState(typeof window!=="undefined"&&"Notification"in window?Notification.permission:"unsupported");
   useEffect(()=>{
     initMessaging((payload)=>{
@@ -2109,18 +2163,26 @@ export default function App(){
         </div>
         <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
+        <div style={{padding:"10px 10px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:5,paddingLeft:2}}>{authUser?.email}</div>
+          <button onClick={logout} style={{width:"100%",background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#F87171",borderRadius:8,padding:"8px 10px",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left"}}>Sign Out</button>
+        </div>
       </div>
     </div>}
 
     {/* Desktop sidebar */}
-    {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.nav,overflowY:"auto",zIndex:200}}>
+    {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.nav,overflowY:"auto",zIndex:200,display:"flex",flexDirection:"column"}}>
       <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
         <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
         <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
         <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
         <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
       </div>
-      <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
+      <div style={{flex:1,padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
+      <div style={{padding:"10px 12px",borderTop:"1px solid rgba(255,255,255,0.06)"}}>
+        <div style={{color:"#475569",fontSize:9,fontWeight:700,marginBottom:5,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{authUser?.email}</div>
+        <button onClick={logout} style={{width:"100%",background:"transparent",border:"1px solid rgba(239,68,68,0.3)",color:"#F87171",borderRadius:8,padding:"8px 10px",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"left"}}>Sign Out</button>
+      </div>
     </div>}
 
     {/* Topbar */}
