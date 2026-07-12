@@ -1207,7 +1207,16 @@ function Quotation(){
     doc.setFontSize(8);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");
     doc.text("Thank you for your business  ·  Tansha Hospitality  ·  Mumbai",105,y,{align:"center"});
     const safeName=client.replace(/[^a-zA-Z0-9\s]/g,"").trim().replace(/\s+/g,"_");
-    doc.save(safeName+"_"+qNo+".pdf");
+    const fileName=safeName+"_"+qNo+".pdf";
+    const blob=doc.output("blob");
+    if(navigator.share&&navigator.canShare){
+      const file=new File([blob],fileName,{type:"application/pdf"});
+      if(navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:fileName}).catch(()=>doc.save(fileName));
+        return;
+      }
+    }
+    doc.save(fileName);
   }
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
