@@ -1156,6 +1156,8 @@ function Quotation(){
   function generatePDF(){
     if(!client||!items.length)return;
     const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
+    // jsPDF default font doesn't support Rs. symbol — use "Rs." prefix
+    const rs=n=>"Rs."+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
     const doc=new jsPDF();
     // Header
     doc.setFontSize(20);doc.setTextColor(79,70,229);doc.setFont(undefined,"bold");
@@ -1164,9 +1166,9 @@ function Quotation(){
     doc.text("Mumbai  |  "+team+" Division",14,25);
     // Quote number & date (right aligned)
     doc.setFontSize(16);doc.setTextColor(15,23,42);doc.setFont(undefined,"bold");
-    doc.text(qNo,196,18,{align:"right"});
+    doc.text(qNo,194,18,{align:"right"});
     doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont(undefined,"normal");
-    doc.text("Date: "+date,196,25,{align:"right"});
+    doc.text("Date: "+date,194,25,{align:"right"});
     // Divider
     doc.setDrawColor(79,70,229);doc.setLineWidth(0.5);doc.line(14,29,196,29);
     // Client block
@@ -1179,7 +1181,7 @@ function Quotation(){
     autoTable(doc,{
       startY:57,
       head:[["Product","Code","Qty","Unit Price","Amount"]],
-      body:items.map(it=>[it.n,it.a||"—",String(it.qty),"₹"+fmtN(it.p),"₹"+fmtN(it.qty*it.p)]),
+      body:items.map(it=>[it.n,it.a||"—",String(it.qty),rs(it.p),rs(it.qty*it.p)]),
       headStyles:{fillColor:[15,23,42],textColor:255,fontSize:9,fontStyle:"bold"},
       bodyStyles:{fontSize:8,textColor:[15,23,42]},
       columnStyles:{2:{halign:"center"},3:{halign:"right"},4:{halign:"right",fontStyle:"bold"}},
@@ -1187,25 +1189,31 @@ function Quotation(){
       alternateRowStyles:{fillColor:[248,250,252]},
     });
     let y=doc.lastAutoTable.finalY+10;
-    // Totals
-    const tx=116;
+    // GST breakdown per rate (handles mixed 5%/12%/18%)
+    const gstMap={};
+    items.forEach(it=>{const base=it.qty*it.p*(1-disc/100);gstMap[it.g]=(gstMap[it.g]||0)+base*it.g/100;});
+    const gstRates=Object.keys(gstMap).map(Number).sort((a,b)=>a-b);
+    // Totals block
+    const tx=108;
     doc.setFontSize(9);doc.setFont(undefined,"normal");
     if(disc>0){
       doc.setTextColor(100,116,139);
-      doc.text("Subtotal:",tx,y);doc.text("₹"+fmtN(sub),196,y,{align:"right"});y+=7;
+      doc.text("Subtotal:",tx,y);doc.text(rs(sub),193,y,{align:"right"});y+=7;
       doc.setTextColor(220,38,38);
-      doc.text("Discount ("+disc+"%):",tx,y);doc.text("−₹"+fmtN(sub*disc/100),196,y,{align:"right"});y+=7;
+      doc.text("Discount ("+disc+"%):",tx,y);doc.text("-"+rs(sub*disc/100),193,y,{align:"right"});y+=7;
     }
     doc.setTextColor(100,116,139);
-    doc.text("GST @18%:",tx,y);doc.text("₹"+fmtN(gst),196,y,{align:"right"});y+=4;
-    doc.setDrawColor(200,200,200);doc.setLineWidth(0.3);doc.line(tx,y,196,y);y+=6;
-    doc.setFillColor(15,23,42);doc.rect(tx-4,y-5,184-tx+4,11,"F");
+    gstRates.forEach(rate=>{
+      doc.text("GST @"+rate+"%:",tx,y);doc.text(rs(gstMap[rate]),193,y,{align:"right"});y+=7;
+    });
+    doc.setDrawColor(200,200,200);doc.setLineWidth(0.3);doc.line(tx,y,194,y);y+=6;
+    doc.setFillColor(15,23,42);doc.rect(tx-2,y-5,194-tx+2,13,"F");
     doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont(undefined,"bold");
-    doc.text("Grand Total:",tx,y+2);doc.text("₹"+fmtN(grand),196,y+2,{align:"right"});
-    y+=14;
+    doc.text("Grand Total:",tx+2,y+4);doc.text(rs(grand),191,y+4,{align:"right"});
+    y+=16;
     // Footer
     doc.setFontSize(8);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");
-    doc.text("Thank you for your business  ·  Tansha Hospitality  ·  Mumbai",105,y,{align:"center"});
+    doc.text("Thank you for your business  -  Tansha Hospitality  -  Mumbai",105,y,{align:"center"});
     const safeName=client.replace(/[^a-zA-Z0-9\s]/g,"").trim().replace(/\s+/g,"_");
     const fileName=safeName+"_"+qNo+".pdf";
     const blob=doc.output("blob");
