@@ -1,11 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getMessaging, getToken, onMessage, isSupported } from "firebase/messaging";
-import {
-  getAuth,
-  signInWithEmailAndPassword,
-  signOut as fbSignOut,
-  onAuthStateChanged,
-} from "firebase/auth";
+import { getAuth, signInAnonymously, onAuthStateChanged } from "firebase/auth";
 import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -23,40 +18,21 @@ const VAPID_KEY =
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export { onAuthStateChanged };
 
 let authPromise = null;
-let authUnsub = null;
-
 export function ensureAuth() {
   if (!authPromise) {
     authPromise = new Promise((resolve) => {
-      authUnsub = onAuthStateChanged(auth, (user) => {
-        if (user) resolve(user);
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          resolve(user);
+        } else {
+          signInAnonymously(auth).catch((err) => console.error("Anonymous sign-in failed:", err));
+        }
       });
     });
   }
   return authPromise;
-}
-
-export async function login(email, password) {
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-    return {};
-  } catch (err) {
-    let msg = "Sign in failed. Check your email and password.";
-    if (["auth/wrong-password","auth/user-not-found","auth/invalid-credential"].includes(err.code))
-      msg = "Wrong email or password.";
-    else if (err.code === "auth/too-many-requests")
-      msg = "Too many attempts. Try again later.";
-    return { error: msg };
-  }
-}
-
-export async function logout() {
-  if (authUnsub) { authUnsub(); authUnsub = null; }
-  authPromise = null;
-  await fbSignOut(auth);
 }
 
 export async function initMessaging(onForegroundMessage) {
