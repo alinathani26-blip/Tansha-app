@@ -1156,13 +1156,58 @@ function Quotation(){
   function generatePDF(){
     if(!client||!items.length)return;
     const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
-    const rows=items.map(it=>`<tr><td>${it.n}</td><td style="color:#64748B">${it.a}</td><td style="text-align:center">${it.qty}</td><td style="text-align:right">₹${fmtN(it.p)}</td><td style="text-align:right;font-weight:600">₹${fmtN(it.qty*it.p)}</td></tr>`).join("");
-    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${client} - ${qNo}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;padding:32px;color:#0F172A;font-size:13px}.hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid #4F46E5}.co{font-size:22px;font-weight:800;color:#4F46E5;letter-spacing:-.5px}.cosub{color:#64748B;font-size:11px;margin-top:4px}.qno{font-size:20px;font-weight:700;text-align:right}.qdate{color:#64748B;font-size:11px;margin-top:4px;text-align:right}.to{margin-bottom:20px;padding:14px 16px;background:#F8FAFC;border-radius:8px;border-left:3px solid #4F46E5}.tolbl{color:#64748B;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px}.toname{font-size:16px;font-weight:700}table{width:100%;border-collapse:collapse;margin-bottom:20px}th{background:#0F172A;color:#fff;padding:9px 10px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.3px}td{padding:8px 10px;border-bottom:1px solid #F1F5F9;font-size:12px}tr:hover td{background:#F8FAFC}.totals{margin-left:auto;width:260px;border:1px solid #E2E8F0;border-radius:8px;overflow:hidden}.totals td{padding:8px 14px;border-bottom:1px solid #F1F5F9}.grand td{background:#0F172A;color:#fff;font-weight:800;font-size:15px;border-bottom:none}.footer{margin-top:28px;text-align:center;color:#94A3B8;font-size:11px;border-top:1px solid #E2E8F0;padding-top:14px}@media print{body{padding:16px}}</style></head><body><div class="hdr"><div><div class="co">TANSHA HOSPITALITY</div><div class="cosub">Mumbai &nbsp;|&nbsp; Ocean Division</div></div><div><div class="qno">${qNo}</div><div class="qdate">Date: ${date}</div></div></div><div class="to"><div class="tolbl">Quotation For</div><div class="toname">${client}</div></div><table><thead><tr><th>Product</th><th>Code</th><th style="text-align:center">Qty</th><th style="text-align:right">Unit Price</th><th style="text-align:right">Amount</th></tr></thead><tbody>${rows}</tbody></table><table class="totals"><tbody><tr><td>Subtotal</td><td style="text-align:right">₹${fmtN(sub)}</td></tr>${disc>0?`<tr><td>Discount (${disc}%)</td><td style="text-align:right;color:#DC2626">−₹${fmtN(sub*disc/100)}</td></tr>`:""}<tr><td>GST @18%</td><td style="text-align:right">₹${fmtN(gst)}</td></tr></tbody><tfoot><tr class="grand"><td>Grand Total</td><td style="text-align:right">₹${fmtN(grand)}</td></tr></tfoot></table><div class="footer">Thank you for your business &nbsp;·&nbsp; Tansha Hospitality &nbsp;·&nbsp; Mumbai</div><script>window.onload=()=>window.print();<\/script></body></html>`;
-    const blob=new Blob([html],{type:"text/html;charset=utf-8"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;a.target="_blank";a.rel="noopener";
-    document.body.appendChild(a);a.click();document.body.removeChild(a);
-    setTimeout(()=>URL.revokeObjectURL(url),15000);
+    const doc=new jsPDF();
+    // Header
+    doc.setFontSize(20);doc.setTextColor(79,70,229);doc.setFont(undefined,"bold");
+    doc.text("TANSHA HOSPITALITY",14,18);
+    doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont(undefined,"normal");
+    doc.text("Mumbai  |  "+team+" Division",14,25);
+    // Quote number & date (right aligned)
+    doc.setFontSize(16);doc.setTextColor(15,23,42);doc.setFont(undefined,"bold");
+    doc.text(qNo,196,18,{align:"right"});
+    doc.setFontSize(9);doc.setTextColor(100,116,139);doc.setFont(undefined,"normal");
+    doc.text("Date: "+date,196,25,{align:"right"});
+    // Divider
+    doc.setDrawColor(79,70,229);doc.setLineWidth(0.5);doc.line(14,29,196,29);
+    // Client block
+    doc.setFillColor(248,250,252);doc.rect(14,33,182,18,"F");
+    doc.setDrawColor(79,70,229);doc.setLineWidth(1);doc.line(14,33,14,51);
+    doc.setFontSize(8);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+    doc.text("QUOTATION FOR",17,40);
+    doc.setFontSize(13);doc.setTextColor(15,23,42);doc.text(client,17,48);
+    // Items table
+    autoTable(doc,{
+      startY:57,
+      head:[["Product","Code","Qty","Unit Price","Amount"]],
+      body:items.map(it=>[it.n,it.a||"—",String(it.qty),"₹"+fmtN(it.p),"₹"+fmtN(it.qty*it.p)]),
+      headStyles:{fillColor:[15,23,42],textColor:255,fontSize:9,fontStyle:"bold"},
+      bodyStyles:{fontSize:8,textColor:[15,23,42]},
+      columnStyles:{2:{halign:"center"},3:{halign:"right"},4:{halign:"right",fontStyle:"bold"}},
+      styles:{cellPadding:4},
+      alternateRowStyles:{fillColor:[248,250,252]},
+    });
+    let y=doc.lastAutoTable.finalY+10;
+    // Totals
+    const tx=116;
+    doc.setFontSize(9);doc.setFont(undefined,"normal");
+    if(disc>0){
+      doc.setTextColor(100,116,139);
+      doc.text("Subtotal:",tx,y);doc.text("₹"+fmtN(sub),196,y,{align:"right"});y+=7;
+      doc.setTextColor(220,38,38);
+      doc.text("Discount ("+disc+"%):",tx,y);doc.text("−₹"+fmtN(sub*disc/100),196,y,{align:"right"});y+=7;
+    }
+    doc.setTextColor(100,116,139);
+    doc.text("GST @18%:",tx,y);doc.text("₹"+fmtN(gst),196,y,{align:"right"});y+=4;
+    doc.setDrawColor(200,200,200);doc.setLineWidth(0.3);doc.line(tx,y,196,y);y+=6;
+    doc.setFillColor(15,23,42);doc.rect(tx-4,y-5,184-tx+4,11,"F");
+    doc.setTextColor(255,255,255);doc.setFontSize(11);doc.setFont(undefined,"bold");
+    doc.text("Grand Total:",tx,y+2);doc.text("₹"+fmtN(grand),196,y+2,{align:"right"});
+    y+=14;
+    // Footer
+    doc.setFontSize(8);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");
+    doc.text("Thank you for your business  ·  Tansha Hospitality  ·  Mumbai",105,y,{align:"center"});
+    const safeName=client.replace(/[^a-zA-Z0-9\s]/g,"").trim().replace(/\s+/g,"_");
+    doc.save(safeName+"_"+qNo+".pdf");
   }
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
