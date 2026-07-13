@@ -1853,7 +1853,7 @@ function Payment({setNotifs}){
             <td style={{padding:"10px 7px",textAlign:"center"}}>
               <span style={{background:mc(e.month)+"22",color:mc(e.month),border:`1px solid ${mc(e.month)}44`,borderRadius:5,padding:"2px 7px",fontWeight:700,fontSize:10,whiteSpace:"nowrap"}}>{e.month}</span>
             </td>
-            <td style={{padding:"10px 10px",textAlign:"right",color:C.muted,fontSize:11}}>{fmt(e.totalBal)}</td>
+            <td style={{padding:"10px 10px",textAlign:"right",color:C.text,fontSize:11,fontWeight:700}}>{fmt(e.totalBal)}</td>
             <td style={{padding:"10px 10px",textAlign:"right"}}>
               <div style={{fontWeight:800,fontSize:12,color:od2?C.orange:C.red}}>{fmt(e.currBal)}</div>
               {e.status==="Partial"&&<div style={{height:3,background:C.cb,borderRadius:2,marginTop:4,overflow:"hidden"}}><div style={{height:"100%",background:C.teal,width:`${Math.round((1-e.currBal/e.totalBal)*100)}%`}}/></div>}
