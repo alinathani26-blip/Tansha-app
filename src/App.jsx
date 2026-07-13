@@ -1647,6 +1647,15 @@ function Payment({setNotifs}){
     setEntries(p=>[...importPreview,...p.filter(e=>!importPreview.find(x=>x.client===e.client&&x.month===importMonth))]);
     setShowImport(false);setImportText("");setImportPreview(null);
   }
+  const [colW,setColW]=useState({num:28,client:160,mth:46,total:92,curr:98,fu:102,asgn:90,notes:130});
+  function startResize(col,e){
+    e.preventDefault();e.stopPropagation();
+    const sx=e.touches?e.touches[0].clientX:e.clientX;
+    const sw=colW[col];
+    const mv=ev=>{const x=ev.touches?ev.touches[0].clientX:ev.clientX;setColW(p=>({...p,[col]:Math.max(32,Math.round(sw+(x-sx)))}));};
+    const up=()=>{document.removeEventListener("mousemove",mv);document.removeEventListener("mouseup",up);document.removeEventListener("touchmove",mv);document.removeEventListener("touchend",up);};
+    document.addEventListener("mousemove",mv);document.addEventListener("mouseup",up);document.addEventListener("touchmove",mv,{passive:false});document.addEventListener("touchend",up);
+  }
   function seedJun(){
     const existing=entries.filter(e=>e.month==="Jun");
     const toAdd=JUN26.filter(r=>!existing.some(e=>e.client===r[0]));
@@ -1810,17 +1819,24 @@ function Payment({setNotifs}){
 
   {/* ── Table ── */}
   <div style={{overflowX:"auto",marginBottom:12,borderRadius:11,border:`1px solid ${C.cb}`,background:C.card}}>
-    <table style={{width:"100%",borderCollapse:"collapse",fontSize:12,minWidth:560}}>
+    <table style={{borderCollapse:"collapse",fontSize:12,tableLayout:"fixed",width:Object.values(colW).reduce((s,v)=>s+v,0)}}>
+      <colgroup>
+        {Object.values(colW).map((w,i)=><col key={i} style={{width:w}}/>)}
+      </colgroup>
       <thead>
         <tr style={{background:C.bg,borderBottom:`2px solid ${C.cb}`}}>
-          <th style={{padding:"9px 7px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:26,userSelect:"none"}}>#</th>
-          <th style={{padding:"9px 10px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10,userSelect:"none"}}>CLIENT</th>
-          <th style={{padding:"9px 7px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:44,userSelect:"none"}}>MTH</th>
-          <th style={{padding:"9px 10px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:90,userSelect:"none"}}>TOTAL ₹</th>
-          <th style={{padding:"9px 10px",textAlign:"right",color:C.dim,fontWeight:700,fontSize:10,width:95,userSelect:"none"}}>CURR BAL ₹</th>
-          <th style={{padding:"9px 10px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:88,userSelect:"none"}}>FOLLOW UP</th>
-          <th style={{padding:"9px 10px",textAlign:"center",color:C.dim,fontWeight:700,fontSize:10,width:80,userSelect:"none"}}>ASSIGNED</th>
-          <th style={{padding:"9px 10px",textAlign:"left",color:C.dim,fontWeight:700,fontSize:10,userSelect:"none"}}>NOTES</th>
+          {[["num","#","right"],["client","CLIENT","left"],["mth","MTH","center"],["total","TOTAL ₹","right"],["curr","CURR BAL ₹","right"],["fu","FOLLOW UP","center"],["asgn","ASSIGNED","center"],["notes","NOTES","left"]].map(([col,label,align])=>(
+            <th key={col} style={{padding:"9px 8px",textAlign:align,color:C.dim,fontWeight:700,fontSize:10,userSelect:"none",position:"relative",overflow:"hidden",whiteSpace:"nowrap"}}>
+              {label}
+              <div
+                onMouseDown={e=>startResize(col,e)}
+                onTouchStart={e=>startResize(col,e)}
+                style={{position:"absolute",right:0,top:0,bottom:0,width:6,cursor:"col-resize",zIndex:2}}
+                onMouseEnter={e=>e.currentTarget.style.background="rgba(99,102,241,0.35)"}
+                onMouseLeave={e=>e.currentTarget.style.background="transparent"}
+              />
+            </th>
+          ))}
         </tr>
       </thead>
       <tbody>
