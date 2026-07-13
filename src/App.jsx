@@ -1555,7 +1555,7 @@ const JUN26=[
 ["JAYLEELA CORPORATION PRIVATE LIMITED",3640,3640],["SHREE MUMBAI STEEL",3006,3006],["VIMAL TRADING",2925,2925],["HUNS GLASS AND METAL MART-CAMP",2657,2657],["A K AGENCIES (NAGPUR)",2654,2654],["LOVELY STEEL CENTRE",2439,2439],
 ["WARDEN COLLECTION",2425,0],["KHUZEMA ENTERPRISES",1906,1906],["SUNDER SINGH AJIT SINGH",1735,1735],["PAREKH CROCKERY CENTRE",1624,1624],["BARSOLUTIONS LLP",903,903],
 ];
-function Payment(){
+function Payment({setNotifs}){
   const [entries,setEntries,loading]=useFirestoreState("payments",PAY0);
   const [am,setAm]=useState("All");
   const [sel,setSel]=useState(null);
@@ -1570,6 +1570,20 @@ function Payment(){
   const today=TODAY;
   const BLANK={client:"",month:MONTHS[new Date().getMonth()]||"Jul",totalBal:"",currBal:"",assignee:"",followUpDate:"",followUpType:"WA",notes:""};
   const [form,setForm]=useState(BLANK);
+  const notifiedRef=useRef(new Set());
+  useEffect(()=>{
+    if(loading)return;
+    const due=entries.filter(e=>e.followUpDate===today&&e.status!=="Paid"&&!notifiedRef.current.has(e.id));
+    if(!due.length)return;
+    due.forEach(e=>notifiedRef.current.add(e.id));
+    const byPerson={};
+    due.forEach(e=>{const p=e.assignee||"Ali Bhai (Owner)";(byPerson[p]=byPerson[p]||[]).push(e.client);});
+    Object.entries(byPerson).forEach(([person,clients])=>{
+      const body=clients.length===1?`Follow up: ${clients[0]}`:`${clients.length} follow-ups: ${clients.slice(0,3).join(", ")}${clients.length>3?"…":""}`;
+      sendPush([person],"📞 Payment Follow-Up Today",body);
+      if(setNotifs)setNotifs(p=>[{id:Date.now()+Math.random(),icon:"📞",title:"Payment Follow-Up Today",body,time:"Now",read:false,color:C.orange},...p]);
+    });
+  },[entries,loading]);
 
   const months=[...new Set(entries.map(e=>e.month))].sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b));
   const fil=am==="All"?entries:entries.filter(e=>e.month===am);
@@ -1743,21 +1757,21 @@ function Payment(){
       <button onClick={markPaid} style={{background:"transparent",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"8px",fontWeight:700,cursor:"pointer",width:"100%",marginTop:7,fontSize:12}}>✅ Mark Fully Cleared</button>
     </div>}
     {/* Follow-up row */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:10}}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
       <div><label style={LBL}>Follow-up Date</label>
-        <input type="date" style={{...INP,fontSize:11,padding:"7px 8px"}} value={sel.followUpDate||""} onChange={e=>updateSel({followUpDate:e.target.value})}/>
+        <input type="date" style={INP} value={sel.followUpDate||""} onChange={e=>updateSel({followUpDate:e.target.value})}/>
       </div>
       <div><label style={LBL}>Via</label>
-        <select style={{...INP,fontSize:11,padding:"7px 8px",appearance:"none"}} value={sel.followUpType||"WA"} onChange={e=>updateSel({followUpType:e.target.value})}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select>
+        <select style={{...INP,appearance:"none"}} value={sel.followUpType||"WA"} onChange={e=>updateSel({followUpType:e.target.value})}>{Object.entries(FT).map(([k,v])=><option key={k} value={k}>{v} {k}</option>)}</select>
       </div>
     </div>
     {/* Assign + Notes */}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:14}}>
       <div><label style={LBL}>Assigned To</label>
-        <select style={{...INP,fontSize:11,padding:"7px 8px",appearance:"none"}} value={sel.assignee||""} onChange={e=>updateSel({assignee:e.target.value})}><option value="">— None —</option>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}</select>
+        <select style={{...INP,appearance:"none"}} value={sel.assignee||""} onChange={e=>updateSel({assignee:e.target.value})}><option value="">— None —</option>{PAY_STAFF.map(s=><option key={s}>{s}</option>)}</select>
       </div>
       <div><label style={LBL}>Notes</label>
-        <input style={{...INP,fontSize:11,padding:"7px 8px"}} value={sel.notes||""} onChange={e=>updateSel({notes:e.target.value})} placeholder="Remarks…"/>
+        <textarea style={{...INP,minHeight:44,resize:"vertical"}} value={sel.notes||""} onChange={e=>updateSel({notes:e.target.value})} placeholder="Remarks…"/>
       </div>
     </div>
     {/* Delete */}
@@ -1830,15 +1844,15 @@ function Payment(){
             </td>
             <td style={{padding:"10px 10px",textAlign:"center",whiteSpace:"nowrap"}}>
               {e.followUpDate
-                ?<span style={{fontSize:11,color:od2?C.orange:C.blue,fontWeight:700}}>{FT[e.followUpType]||"📅"} {e.followUpDate.slice(5).replace("-",".")}</span>
-                :<span style={{color:C.dim,fontSize:11}}>—</span>}
+                ?<span style={{display:"inline-flex",alignItems:"center",gap:4,background:od2?C.orange+"18":C.blue+"18",color:od2?C.orange:C.blue,border:`1px solid ${od2?C.orange:C.blue}33`,borderRadius:6,padding:"3px 8px",fontWeight:700,fontSize:12}}>{FT[e.followUpType]||"📅"} {e.followUpDate.slice(5).replace("-",".")}</span>
+                :<span style={{color:C.dim,fontSize:12}}>—</span>}
             </td>
             <td style={{padding:"10px 10px",textAlign:"center"}}>
               {e.assignee
-                ?<span style={{fontSize:10,color:C.purple,fontWeight:700,whiteSpace:"nowrap",textTransform:"uppercase"}}>{e.assignee.split(" ")[0]}</span>
-                :<span style={{color:C.dim,fontSize:11}}>—</span>}
+                ?<span style={{display:"inline-block",background:C.purple+"18",color:C.purple,border:`1px solid ${C.purple}33`,borderRadius:6,padding:"3px 8px",fontWeight:700,fontSize:12,whiteSpace:"nowrap",textTransform:"uppercase"}}>{e.assignee.split(" ")[0]}</span>
+                :<span style={{color:C.dim,fontSize:12}}>—</span>}
             </td>
-            <td style={{padding:"10px 10px",color:C.dim,fontSize:10,maxWidth:120,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textTransform:"uppercase"}}>{e.notes||"—"}</td>
+            <td style={{padding:"10px 10px",color:C.text,fontSize:12,maxWidth:140,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textTransform:"uppercase",opacity:.8}}>{e.notes||<span style={{color:C.dim}}>—</span>}</td>
           </tr>;
         })}
         {!pend.length&&<tr><td colSpan={8} style={{padding:32,textAlign:"center",color:C.dim,fontSize:13}}>🎉 All cleared{am!=="All"?` for ${am}`:""}!</td></tr>}
@@ -2254,7 +2268,7 @@ export default function App(){
       {active==="quote"&&<Quotation/>}
       {active==="stocks"&&<Stocks/>}
       {active==="sales"&&<Sales/>}
-      {active==="payment"&&<Payment/>}
+      {active==="payment"&&<Payment setNotifs={setNotifs}/>}
       {active==="ops"&&<Operations role={role} currentUser={cu}/>}
       {active==="chat"&&<Chat currentUser={cu}/>}
     </div>
