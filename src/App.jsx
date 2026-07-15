@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { initMessaging, requestNotificationPermission, registerDeviceToken, sendPush } from "./firebase";
 import { useFirestoreState } from "./useFirestoreState";
-import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+// jsPDF and jspdf-autotable are loaded on demand (dynamic import) to keep
+// the initial bundle smaller — only fetched when the user actually exports a PDF.
 
 const C={
   bg:"#F1F5F9",
@@ -447,7 +447,8 @@ function Dispatch({role}){
     setDisps(p=>({...p,[loc]:[...p[loc],...newItems]}));
     setShowCopy(false);
   }
-  function exportDispatchPDF(){
+  async function exportDispatchPDF(){
+    const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const doc=new jsPDF();
     const rows=arr=>arr.map(d=>[d.client,d.qty?`${d.qty} ${d.unit}`:"—",d.transport,d.date,d.lr?"Y":"—"]);
     const head=[["Client","Qty","Transport","Date","LR"]];
@@ -615,7 +616,8 @@ function Stocks(){
     setAddForm({code:"",name:"",cmrp:"",boxCtn:""});
     setShowAdd(false);
   }
-  function exportStockPDF(){
+  async function exportStockPDF(){
+    const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const doc=new jsPDF();
     doc.setFontSize(14);doc.text("Tansha Hospitality — Stock Sheet",14,15);
     doc.setFontSize(10);doc.setTextColor(120);doc.text(`${tab} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
@@ -1153,8 +1155,9 @@ function Quotation(){
     setClient("");setItems([]);setDisc(0);setSearch("");
   }
   const fmtN=n=>Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
-  function generatePDF(){
+  async function generatePDF(){
     if(!client||!items.length)return;
+    const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const date=new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"});
     // jsPDF default font doesn't support Rs. symbol — use "Rs." prefix
     const rs=n=>"Rs."+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
@@ -1585,11 +1588,11 @@ function Payment({setNotifs}){
     });
   },[entries,loading]);
 
-  const months=[...new Set(entries.map(e=>e.month))].sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b));
-  const fil=am==="All"?entries:entries.filter(e=>e.month===am);
-  const pend=fil.filter(e=>e.status!=="Paid").sort((a,b)=>b.currBal-a.currBal);
-  const paid=fil.filter(e=>e.status==="Paid");
-  const tot=entries.filter(e=>e.status!=="Paid").reduce((s,e)=>s+e.currBal,0);
+  const months=useMemo(()=>[...new Set(entries.map(e=>e.month))].sort((a,b)=>MONTHS.indexOf(a)-MONTHS.indexOf(b)),[entries]);
+  const fil=useMemo(()=>am==="All"?entries:entries.filter(e=>e.month===am),[entries,am]);
+  const pend=useMemo(()=>fil.filter(e=>e.status!=="Paid").sort((a,b)=>b.currBal-a.currBal),[fil]);
+  const paid=useMemo(()=>fil.filter(e=>e.status==="Paid"),[fil]);
+  const tot=useMemo(()=>entries.filter(e=>e.status!=="Paid").reduce((s,e)=>s+e.currBal,0),[entries]);
   const isOD=e=>e.followUpDate&&e.followUpDate<today;
   const mc=m=>MC[m]||C.acc;
 
@@ -1930,7 +1933,8 @@ function SalaryReport({attLog,salaries,setSalaries,onClose}){
     const net=salary+travel-advance;
     return{name,present,half,absent,advance,travel,salary,net};
   });
-  function exportPDF(){
+  async function exportPDF(){
+    const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const doc=new jsPDF();
     doc.setFontSize(14);doc.text("Tansha Hospitality — Salary Report",14,15);
     doc.setFontSize(10);doc.setTextColor(120);doc.text(`Month: ${month} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
