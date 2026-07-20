@@ -2185,12 +2185,152 @@ function SaeedRoute(){
   </div>);
 }
 
+// ── Pending Orders ──
+const PO_BRANDS=["Cartini","Signora","Other Generic"];
+const PO_STATUS=["Waiting","In Stock","Dispatched"];
+const PO_STATUS_STYLE={
+  Waiting:{bg:"#F59E0B18",color:"#B45309",border:"#F59E0B44",icon:"⏳"},
+  "In Stock":{bg:"#10B98118",color:"#059669",border:"#10B98144",icon:"✅"},
+  Dispatched:{bg:"#3B82F618",color:"#1D4ED8",border:"#3B82F644",icon:"🚚"},
+};
+function brandItems(brand){
+  if(brand==="Cartini")return UP.filter(p=>p.n.startsWith("CARTINI"));
+  if(brand==="Signora")return UP.filter(p=>p.n.startsWith("SIGNORA"));
+  return UP.filter(p=>!p.n.startsWith("CARTINI")&&!p.n.startsWith("SIGNORA"));
+}
+const PO0=[];
+function PendingOrders(){
+  const [orders,setOrders,loading]=useFirestoreState("pendingOrders",PO0);
+  const [showAdd,setShowAdd]=useState(false);
+  const [sel,setSel]=useState(null);
+  const [search,setSearch]=useState("");
+  const [filterStatus,setFilterStatus]=useState("All");
+  const BLANK={client:"",brand:"Cartini",items:[],notes:""};
+  const [form,setForm]=useState(BLANK);
+  const [itemSearch,setItemSearch]=useState("");
+  const [selItemSearch,setSelItemSearch]=useState("");
+
+  const prodList=useMemo(()=>brandItems(form.brand),[form.brand]);
+  const itemResults=useMemo(()=>itemSearch.length>1?prodList.filter(p=>p.n.toLowerCase().includes(itemSearch.toLowerCase())):[],[itemSearch,prodList]);
+  const selProdList=useMemo(()=>sel?brandItems(sel.brand):[],[sel]);
+  const selItemResults=useMemo(()=>selItemSearch.length>1?selProdList.filter(p=>p.n.toLowerCase().includes(selItemSearch.toLowerCase())):[],[selItemSearch,selProdList]);
+
+  const visible=useMemo(()=>{
+    let o=filterStatus==="All"?orders:orders.filter(x=>x.status===filterStatus);
+    return [...o].sort((a,b)=>{const rank={Waiting:0,"In Stock":1,Dispatched:2};return rank[a.status]-rank[b.status];});
+  },[orders,filterStatus]);
+
+  function add(){
+    if(!form.client||!form.items.length)return;
+    setOrders(p=>[{...form,id:Date.now(),status:"Waiting",date:TODAY},...p]);
+    setForm(BLANK);setItemSearch("");setShowAdd(false);
+  }
+  function addItem(p){
+    if(form.items.find(x=>x.n===p.n))return;
+    setForm(f=>({...f,items:[...f.items,{n:p.n,a:p.a}]}));
+    setItemSearch("");
+  }
+  function removeItem(n){setForm(f=>({...f,items:f.items.filter(x=>x.n!==n)}));}
+  function updateOrder(id,u){setOrders(p=>p.map(o=>o.id===id?{...o,...u}:o));setSel(s=>s&&s.id===id?{...s,...u}:s);}
+  function addItemToSel(p){if(sel.items.find(x=>x.n===p.n))return;updateOrder(sel.id,{items:[...sel.items,{n:p.n,a:p.a}]});setSelItemSearch("");}
+  function removeItemFromSel(n){updateOrder(sel.id,{items:sel.items.filter(x=>x.n!==n)});}
+
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
+  return(<div>
+    {/* Add modal */}
+    {showAdd&&<Mod onClose={()=>{setShowAdd(false);setForm(BLANK);setItemSearch("");}} title="+ New Pending Order">
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div><label style={LBL}>Client Name *</label><input style={INP} placeholder="e.g. Taj Hotels" value={form.client} onChange={e=>setForm(f=>({...f,client:e.target.value}))}/></div>
+        <div><label style={LBL}>Brand</label>
+          <div style={{display:"flex",gap:7}}>
+            {PO_BRANDS.map(b=><button key={b} onClick={()=>setForm(f=>({...f,brand:b,items:[]}))} style={{flex:1,background:form.brand===b?C.teal+"22":"transparent",border:`1.5px solid ${form.brand===b?C.teal:C.cb}`,color:form.brand===b?C.teal:C.muted,borderRadius:8,padding:"8px 4px",fontWeight:700,fontSize:11,cursor:"pointer"}}>{b}</button>)}
+          </div>
+        </div>
+        <div>
+          <label style={LBL}>Add Items *</label>
+          <input style={INP} placeholder={`Search ${form.brand} items…`} value={itemSearch} onChange={e=>setItemSearch(e.target.value)}/>
+          {itemResults.length>0&&<div style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,marginTop:3,maxHeight:160,overflowY:"auto",boxShadow:"0 8px 22px #00000055"}}>
+            {itemResults.map((p,i)=><div key={i} onClick={()=>addItem(p)} style={{padding:"8px 12px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,fontSize:12,color:C.text,fontWeight:500}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{p.n}{p.a&&<span style={{color:C.dim,marginLeft:6,fontSize:10}}>{p.a}</span>}</div>)}
+          </div>}
+          {form.items.length>0&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5}}>
+            {form.items.map(it=><div key={it.n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.teal+"11",border:`1px solid ${C.teal}33`,borderRadius:7,padding:"7px 10px"}}>
+              <span style={{fontSize:12,color:C.text,fontWeight:600,flex:1}}>{it.n}</span>
+              <button onClick={()=>removeItem(it.n)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,lineHeight:1}}>×</button>
+            </div>)}
+          </div>}
+        </div>
+        <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:56,resize:"vertical"}} placeholder="Any remarks…" value={form.notes} onChange={e=>setForm(f=>({...f,notes:e.target.value}))}/></div>
+        <button onClick={add} style={{background:C.teal,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer",fontSize:14}}>Save Pending Order ✓</button>
+      </div>
+    </Mod>}
+
+    {/* Detail modal */}
+    {sel&&<Mod onClose={()=>{setSel(null);setSelItemSearch("");}} title={sel.client.toUpperCase()} sub={`${sel.brand} · Added ${sel.date}`}>
+      <div style={{display:"flex",flexDirection:"column",gap:12}}>
+        <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+          {PO_STATUS.map(s=>{const st=PO_STATUS_STYLE[s];return<button key={s} onClick={()=>updateOrder(sel.id,{status:s})} style={{flex:1,background:sel.status===s?st.bg:"transparent",border:`1.5px solid ${sel.status===s?st.border:C.cb}`,color:sel.status===s?st.color:C.muted,borderRadius:8,padding:"8px 4px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{st.icon} {s}</button>;})}
+        </div>
+        <div>
+          <label style={LBL}>Items</label>
+          <input style={INP} placeholder={`Search ${sel.brand} items to add…`} value={selItemSearch} onChange={e=>setSelItemSearch(e.target.value)}/>
+          {selItemResults.length>0&&<div style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,marginTop:3,maxHeight:140,overflowY:"auto",boxShadow:"0 8px 22px #00000055"}}>
+            {selItemResults.map((p,i)=><div key={i} onClick={()=>addItemToSel(p)} style={{padding:"8px 12px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,fontSize:12,color:C.text}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{p.n}{p.a&&<span style={{color:C.dim,marginLeft:6,fontSize:10}}>{p.a}</span>}</div>)}
+          </div>}
+          <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5}}>
+            {(sel.items||[]).map(it=><div key={it.n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.teal+"11",border:`1px solid ${C.teal}33`,borderRadius:7,padding:"7px 10px"}}>
+              <span style={{fontSize:12,color:C.text,fontWeight:600,flex:1}}>{it.n}</span>
+              <button onClick={()=>removeItemFromSel(it.n)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,lineHeight:1}}>×</button>
+            </div>)}
+          </div>
+        </div>
+        <div><label style={LBL}>Notes</label><textarea style={{...INP,minHeight:56,resize:"vertical"}} value={sel.notes||""} onChange={e=>updateOrder(sel.id,{notes:e.target.value})}/></div>
+        <button onClick={()=>{setOrders(p=>p.filter(o=>o.id!==sel.id));setSel(null);}} style={{background:"transparent",border:`1px solid ${C.red}44`,color:C.red,borderRadius:8,padding:"9px",fontWeight:700,fontSize:12,cursor:"pointer"}}>🗑 Delete Order</button>
+      </div>
+    </Mod>}
+
+    {/* Top bar */}
+    <div style={{display:"flex",gap:7,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+      {["All",...PO_STATUS].map(s=>{
+        const cnt=s==="All"?orders.length:orders.filter(o=>o.status===s).length;
+        const st=s==="All"?null:PO_STATUS_STYLE[s];
+        return<button key={s} onClick={()=>setFilterStatus(s)} style={{background:filterStatus===s?(st?st.bg:C.acc+"18"):"transparent",border:`1.5px solid ${filterStatus===s?(st?st.border:C.acc+"55"):C.cb}`,color:filterStatus===s?(st?st.color:C.acc):C.muted,borderRadius:8,padding:"6px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{s} <span style={{opacity:.7}}>({cnt})</span></button>;
+      })}
+      <button onClick={()=>setShowAdd(true)} style={{marginLeft:"auto",background:C.teal,border:"none",color:"#fff",borderRadius:8,padding:"7px 16px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Add Order</button>
+    </div>
+
+    {/* Order cards */}
+    {visible.length===0&&<div style={{textAlign:"center",padding:40,color:C.dim,fontSize:13}}>No pending orders{filterStatus!=="All"?` with status "${filterStatus}"`:""}.</div>}
+    <div style={{display:"flex",flexDirection:"column",gap:9}}>
+      {visible.map(o=>{
+        const st=PO_STATUS_STYLE[o.status];
+        return<div key={o.id} onClick={()=>setSel(o)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`4px solid ${st.border.replace("44","cc")}`,borderRadius:10,padding:"12px 14px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background=C.card}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:8}}>
+            <div>
+              <div style={{fontWeight:800,fontSize:14,color:C.text,textTransform:"uppercase",letterSpacing:".3px"}}>{o.client}</div>
+              <div style={{display:"flex",gap:7,marginTop:4,flexWrap:"wrap"}}>
+                <span style={{background:C.teal+"18",color:C.teal,border:`1px solid ${C.teal}33`,borderRadius:5,padding:"2px 8px",fontSize:10,fontWeight:700}}>{o.brand}</span>
+                <span style={{background:st.bg,color:st.color,border:`1px solid ${st.border}`,borderRadius:5,padding:"2px 8px",fontSize:10,fontWeight:700}}>{st.icon} {o.status}</span>
+                <span style={{color:C.dim,fontSize:10,alignSelf:"center"}}>{o.date}</span>
+              </div>
+            </div>
+            <span style={{color:C.dim,fontSize:11,fontWeight:600}}>{(o.items||[]).length} item{(o.items||[]).length!==1?"s":""}</span>
+          </div>
+          {(o.items||[]).length>0&&<div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:o.notes?8:0}}>
+            {(o.items||[]).map(it=><div key={it.n} style={{fontSize:11,color:C.muted,paddingLeft:4,borderLeft:`2px solid ${C.teal}44`}}>{it.n}</div>)}
+          </div>}
+          {o.notes&&<div style={{fontSize:11,color:C.dim,marginTop:4,fontStyle:"italic"}}>{o.notes}</div>}
+        </div>;
+      })}
+    </div>
+  </div>);
+}
+
 // ── App Shell ──
-const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"payment",i:"💰",l:"Payments"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
+const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"payment",i:"💰",l:"Payments"},{id:"pending",i:"📌",l:"Pending"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
 const _ALL=NAV.map(n=>n.id);
 const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
-const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",ops:"Operations",chat:"Team Chat"};
+const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",pending:"Pending Orders",ops:"Operations",chat:"Team Chat"};
 
 export default function App(){
   const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
@@ -2289,6 +2429,7 @@ export default function App(){
       {active==="stocks"&&<Stocks/>}
       {active==="sales"&&<Sales/>}
       {active==="payment"&&<Payment setNotifs={setNotifs}/>}
+      {active==="pending"&&<PendingOrders/>}
       {active==="ops"&&<Operations role={role} currentUser={cu}/>}
       {active==="chat"&&<Chat currentUser={cu}/>}
     </div>
