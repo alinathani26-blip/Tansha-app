@@ -2187,9 +2187,10 @@ function SaeedRoute(){
 
 // ── Pending Orders ──
 const PO_BRANDS=["Cartini","Signora","Other Generic"];
-const PO_STATUS=["Waiting","In Stock","Dispatched"];
+const PO_STATUS=["Waiting","Ordered in Factory","In Stock","Dispatched"];
 const PO_STATUS_STYLE={
   Waiting:{bg:"#F59E0B18",color:"#B45309",border:"#F59E0B44",icon:"⏳"},
+  "Ordered in Factory":{bg:"#8B5CF618",color:"#6D28D9",border:"#8B5CF644",icon:"🏭"},
   "In Stock":{bg:"#10B98118",color:"#059669",border:"#10B98144",icon:"✅"},
   Dispatched:{bg:"#3B82F618",color:"#1D4ED8",border:"#3B82F644",icon:"🚚"},
 };
@@ -2227,12 +2228,12 @@ function PendingOrders(){
   }
   function addItem(p){
     if(form.items.find(x=>x.n===p.n))return;
-    setForm(f=>({...f,items:[...f.items,{n:p.n,a:p.a}]}));
+    setForm(f=>({...f,items:[...f.items,{n:p.n,a:p.a,qty:1}]}));
     setItemSearch("");
   }
   function removeItem(n){setForm(f=>({...f,items:f.items.filter(x=>x.n!==n)}));}
   function updateOrder(id,u){setOrders(p=>p.map(o=>o.id===id?{...o,...u}:o));setSel(s=>s&&s.id===id?{...s,...u}:s);}
-  function addItemToSel(p){if(sel.items.find(x=>x.n===p.n))return;updateOrder(sel.id,{items:[...sel.items,{n:p.n,a:p.a}]});setSelItemSearch("");}
+  function addItemToSel(p){if(sel.items.find(x=>x.n===p.n))return;updateOrder(sel.id,{items:[...sel.items,{n:p.n,a:p.a,qty:1}]});setSelItemSearch("");}
   function removeItemFromSel(n){updateOrder(sel.id,{items:sel.items.filter(x=>x.n!==n)});}
 
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
@@ -2255,6 +2256,7 @@ function PendingOrders(){
           {form.items.length>0&&<div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5}}>
             {form.items.map(it=><div key={it.n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.teal+"11",border:`1px solid ${C.teal}33`,borderRadius:7,padding:"7px 10px"}}>
               <span style={{fontSize:12,color:C.text,fontWeight:600,flex:1}}>{it.n}</span>
+              <input type="number" min="1" value={it.qty||1} onChange={e=>setForm(f=>({...f,items:f.items.map(x=>x.n===it.n?{...x,qty:Math.max(1,Number(e.target.value))}:x)}))} onClick={ev=>ev.stopPropagation()} style={{width:44,textAlign:"center",border:`1px solid ${C.cb}`,borderRadius:5,background:C.bg,color:C.text,fontSize:12,fontWeight:700,padding:"2px 4px",marginRight:8}}/>
               <button onClick={()=>removeItem(it.n)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,lineHeight:1}}>×</button>
             </div>)}
           </div>}
@@ -2279,6 +2281,7 @@ function PendingOrders(){
           <div style={{marginTop:8,display:"flex",flexDirection:"column",gap:5}}>
             {(sel.items||[]).map(it=><div key={it.n} style={{display:"flex",justifyContent:"space-between",alignItems:"center",background:C.teal+"11",border:`1px solid ${C.teal}33`,borderRadius:7,padding:"7px 10px"}}>
               <span style={{fontSize:12,color:C.text,fontWeight:600,flex:1}}>{it.n}</span>
+              <input type="number" min="1" value={it.qty||1} onChange={e=>updateOrder(sel.id,{items:(sel.items||[]).map(x=>x.n===it.n?{...x,qty:Math.max(1,Number(e.target.value))}:x)})} onClick={ev=>ev.stopPropagation()} style={{width:44,textAlign:"center",border:`1px solid ${C.cb}`,borderRadius:5,background:C.bg,color:C.text,fontSize:12,fontWeight:700,padding:"2px 4px",marginRight:8}}/>
               <button onClick={()=>removeItemFromSel(it.n)} style={{background:"none",border:"none",color:C.red,cursor:"pointer",fontSize:16,lineHeight:1}}>×</button>
             </div>)}
           </div>
@@ -2316,7 +2319,7 @@ function PendingOrders(){
             <span style={{color:C.dim,fontSize:11,fontWeight:600}}>{(o.items||[]).length} item{(o.items||[]).length!==1?"s":""}</span>
           </div>
           {(o.items||[]).length>0&&<div style={{display:"flex",flexDirection:"column",gap:3,marginBottom:o.notes?8:0}}>
-            {(o.items||[]).map(it=><div key={it.n} style={{fontSize:11,color:C.muted,paddingLeft:4,borderLeft:`2px solid ${C.teal}44`}}>{it.n}</div>)}
+            {(o.items||[]).map(it=><div key={it.n} style={{fontSize:11,color:C.muted,paddingLeft:4,borderLeft:`2px solid ${C.teal}44`,display:"flex",gap:6,alignItems:"center"}}>{it.n}{it.qty>1&&<span style={{color:C.teal,fontWeight:700}}>×{it.qty}</span>}</div>)}
           </div>}
           {o.notes&&<div style={{fontSize:11,color:C.dim,marginTop:4,fontStyle:"italic"}}>{o.notes}</div>}
         </div>;
