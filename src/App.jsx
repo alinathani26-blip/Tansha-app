@@ -1984,7 +1984,6 @@ function Operations({role,currentUser}){
   const [editId,setEditId]=useState(null);const can=MANAGERS.includes(role);
   const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
   const DEF_REC={status:"Present",inTime:"",outTime:"",advance:0,travelExp:0,notes:""};
-  const nowTime=()=>{const d=new Date();return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;};
   function getRec(date,name){return (attLog[date]&&attLog[date][name])||DEF_REC;}
   function setRec(date,name,changes){setAttLog(p=>({...p,[date]:{...(p[date]||{}),[name]:{...getRec(date,name),...changes}}}));}
   const pr=TEAM.filter(n=>getRec(attDate,n).status==="Present").length;const ab=TEAM.filter(n=>getRec(attDate,n).status==="Absent").length;
@@ -2036,11 +2035,10 @@ function Operations({role,currentUser}){
         <div style={{display:"flex",alignItems:"center",gap:9}}>
           <Av name={name} size={28}/>
           <div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{name}</div>
-            <div style={{display:"flex",gap:4,marginTop:4,flexWrap:"wrap",alignItems:"center"}}>
-              <button onClick={e=>{e.stopPropagation();if(cE)setRec(attDate,name,{inTime:nowTime()});}} style={{background:a.inTime?C.green+"22":"transparent",border:`1px solid ${a.inTime?C.green+"55":C.cb}`,color:a.inTime?C.green:C.dim,borderRadius:5,padding:"2px 8px",fontSize:9,fontWeight:700,cursor:cE?"pointer":"default",lineHeight:1.4}}>🕐 In: {a.inTime||"--:--"}</button>
-              <button onClick={e=>{e.stopPropagation();if(cE)setRec(attDate,name,{outTime:nowTime()});}} style={{background:a.outTime?C.red+"22":"transparent",border:`1px solid ${a.outTime?C.red+"55":C.cb}`,color:a.outTime?C.red:C.dim,borderRadius:5,padding:"2px 8px",fontSize:9,fontWeight:700,cursor:cE?"pointer":"default",lineHeight:1.4}}>🚪 Out: {a.outTime||"--:--"}</button>
-              {a.advance>0&&<span style={{color:C.red,fontSize:9,fontWeight:600}}>Adv: {fmt(a.advance)}</span>}
-              {a.travelExp>0&&<span style={{color:C.blue,fontSize:9,fontWeight:600}}>Travel: {fmt(a.travelExp)}</span>}
+            <div style={{color:C.muted,fontSize:10,marginTop:1,display:"flex",gap:6,flexWrap:"wrap"}}>
+              {a.inTime&&<span>In: {a.inTime}{a.outTime?` · Out: ${a.outTime}`:""}</span>}
+              {a.advance>0&&<span style={{color:C.red}}>Advance: {fmt(a.advance)}</span>}
+              {a.travelExp>0&&<span style={{color:C.blue}}>Travel: {fmt(a.travelExp)}</span>}
             </div>
           </div>
           {cE?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1px solid ${sc}44`,color:sc,borderRadius:18,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{a.status}</button>:<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>}
