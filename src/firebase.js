@@ -93,4 +93,3 @@ export async function sendPush(persons, title, body) {
     console.error("sendPush failed:", err);
   }
 }
-
