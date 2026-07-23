@@ -1146,6 +1146,7 @@ function Quotation(){
   const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
   function loadForEdit(q){setTeam(q.team);setClient(q.client);setItems((q.items||[]).map(i=>({...i})));setDisc(q.disc||0);setEditingId(q.id);window.scrollTo(0,0);}
   function cancelEdit(){setEditingId(null);setClient("");setItems([]);setDisc(0);setSearch("");}
+  function deleteQuotation(id){if(window.confirm("Delete this quotation?"))setSaved(p=>p.filter(s=>s.id!==id));}
   function findByNumber(){const q=saved.find(s=>s.q.toLowerCase()===qSearch.trim().toLowerCase());if(q){loadForEdit(q);setQSearch("");}else alert(`Quote "${qSearch}" not found`);}
   function saveQuotation(){
     if(!client||!items.length)return;
@@ -1277,7 +1278,10 @@ function Quotation(){
           </div>
           <div style={{display:"flex",flexDirection:"column",alignItems:"flex-end",gap:6}}>
             <div style={{color:C.green,fontWeight:800,fontSize:14}}>{fmt(q.grand)}</div>
-            <button onClick={()=>loadForEdit(q)} style={{background:C.acc+"18",border:`1px solid ${C.acc}33`,color:C.acc,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏️ Edit</button>
+            <div style={{display:"flex",gap:5}}>
+              <button onClick={()=>loadForEdit(q)} style={{background:C.acc+"18",border:`1px solid ${C.acc}33`,color:C.acc,borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>✏️ Edit</button>
+              <button onClick={()=>deleteQuotation(q.id)} style={{background:"#EF444418",border:"1px solid #EF444433",color:"#EF4444",borderRadius:6,padding:"3px 10px",fontSize:11,fontWeight:700,cursor:"pointer"}}>🗑️</button>
+            </div>
           </div>
         </div>
       </div>)}
