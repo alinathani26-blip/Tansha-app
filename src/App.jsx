@@ -149,30 +149,30 @@ function NotifPanel({notifs,setNotifs,onClose}){
 
 // ── Dashboard ──
 function Dashboard({role,currentUser,onNav,notifs}){
-  const unreadT=notifs.filter(n=>n.type==="task"&&!n.read).length;
+  const hr=new Date().getHours();
+  const greet=hr<12?"Good morning":hr<17?"Good afternoon":hr<21?"Good evening":"Good night";
   const stats=[{l:"Outstanding",v:"₹1.2 Cr",c:C.red,i:"💰",m:"payment"},{l:"Dispatches Today",v:"7",c:C.green,i:"🚚",m:"dispatch"},{l:"Pending Tasks",v:"12",c:C.blue,i:"✅",m:"tasks"},{l:"Low Stock",v:"3",c:C.purple,i:"📦",m:"stocks"},{l:"Apr Sales",v:"₹48L",c:C.teal,i:"📈",m:"sales"},{l:"Support Tickets",v:"3",c:C.orange,i:"🎫",m:"ops"}];
   const activity=[{i:"💰",t:"Naresh Steel Centre paid ₹86,499",time:"10m",c:C.green},{i:"✅",t:"Hotel Leela follow-up due — Kaif Bhai",time:"30m",c:C.blue},{i:"🚚",t:"Metro Hospitality — 10 CTN dispatched",time:"1h",c:C.teal},{i:"⚠️",t:"Whisky Glass 300ml — Low stock",time:"2h",c:C.orange},{i:"💬",t:"Saud Bhai mentioned you in Payments",time:"3h",c:C.purple},{i:"🎫",t:"New ticket — Radisson Blu damaged boxes",time:"4h",c:C.red}];
   const ACCESS_ALL=["payment","dispatch","tasks","stocks","sales","ops"];
   return (<div>
-    <div style={{background:`linear-gradient(135deg,${C.nav} 0%,#1E293B 100%)`,borderRadius:16,padding:"20px 20px",marginBottom:18,boxShadow:C.sh2}}>
-      <div style={{color:"#F1F5F9",fontWeight:700,fontSize:20,marginBottom:3}}>Good morning, {currentUser.split(" ")[0]}! 👋</div>
-      <div style={{color:"#94A3B8",fontSize:12,marginBottom:12}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
-      <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
-        <span style={{background:"rgba(99,102,241,0.25)",border:"1px solid rgba(99,102,241,0.3)",borderRadius:6,padding:"3px 10px",color:"#A5B4FC",fontSize:11,fontWeight:600}}>TANSHA HOSPITALITY</span>
-        <span style={{background:"rgba(16,185,129,0.2)",border:"1px solid rgba(16,185,129,0.25)",borderRadius:6,padding:"3px 10px",color:"#6EE7B7",fontSize:11,fontWeight:600}}>17 Members</span>
-        <span style={{background:"rgba(255,255,255,0.1)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:6,padding:"3px 10px",color:"#E2E8F0",fontSize:11,fontWeight:600}}>{role}</span>
+    <div style={{background:`linear-gradient(135deg,${C.acc}12 0%,${C.teal}0C 100%)`,border:`1px solid ${C.acc}22`,borderRadius:16,padding:"20px",marginBottom:18,boxShadow:C.sh}}>
+      <div style={{color:C.text,fontWeight:800,fontSize:20,marginBottom:3}}>{greet}, {currentUser.split(" ")[0]}! 👋</div>
+      <div style={{color:C.muted,fontSize:12,marginBottom:14}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+      <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+        <span style={{background:C.acc+"18",border:`1px solid ${C.acc}30`,borderRadius:6,padding:"3px 10px",color:C.acc,fontSize:11,fontWeight:700}}>TANSHA HOSPITALITY</span>
+        <span style={{background:C.green+"18",border:`1px solid ${C.green}30`,borderRadius:6,padding:"3px 10px",color:C.green,fontSize:11,fontWeight:700}}>{TEAM.length} Members</span>
+        <span style={{background:C.cb,border:`1px solid ${C.cb}`,borderRadius:6,padding:"3px 10px",color:C.muted,fontSize:11,fontWeight:600}}>{role}</span>
       </div>
     </div>
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
-      {stats.filter(s=>ACCESS_ALL.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${s.c}`,borderRadius:12,padding:"16px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"box-shadow .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;}}>
-        <div style={{position:"absolute",top:-10,right:-10,fontSize:48,opacity:.04}}>{s.i}</div>
-        <div style={{width:36,height:36,borderRadius:10,background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,marginBottom:10}}>{s.i}</div>
-        <div style={{color:C.text,fontWeight:800,fontSize:22,lineHeight:1}}>{s.v}</div>
-        <div style={{color:C.muted,fontSize:11,fontWeight:500,marginTop:4}}>{s.l}</div>
+      {stats.filter(s=>ACCESS_ALL.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderTop:`3px solid ${s.c}`,borderRadius:12,padding:"14px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.transform="translateY(-1px)";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.transform="none";}}>
+        <div style={{width:34,height:34,borderRadius:10,background:s.c+"14",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,marginBottom:10}}>{s.i}</div>
+        <div style={{color:C.text,fontWeight:800,fontSize:21,lineHeight:1}}>{s.v}</div>
+        <div style={{color:C.muted,fontSize:11,fontWeight:500,marginTop:5}}>{s.l}</div>
       </div>)}
     </div>
     <Card><SL text="Recent Activity"/>
-      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"8px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:C.bg,borderLeft:`2px solid ${a.c}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time} ago</div></div></div>)}
+      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:a.c+"12",border:`1px solid ${a.c}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time} ago</div></div></div>)}
     </Card>
   </div>);
 }
