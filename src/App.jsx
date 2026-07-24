@@ -33,25 +33,19 @@ const MANAGERS=["Ali Bhai (Owner)","Saud Bhai"];
 const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
-const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Asif Bhai","Noor Bhai","Tayyab Bhai","Prakash Bhai","Kaif Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Javed Bhai","Sabajit Bhai","Ashfaq Bhai"];
+const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Asif Bhai","Noor Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2"];
 const CREDS={
   ali:{pass:"tansha123",name:"Ali Bhai (Owner)"},
   saud:{pass:"tansha123",name:"Saud Bhai"},
   zaid:{pass:"tansha123",name:"Zaid Bhai"},
   saeed:{pass:"tansha123",name:"Saeed Bhai"},
-  sufiyan:{pass:"tansha123",name:"Sufiyan Bhai"},
   asif:{pass:"tansha123",name:"Asif Bhai"},
   noor:{pass:"tansha123",name:"Noor Bhai"},
-  tayyab:{pass:"tansha123",name:"Tayyab Bhai"},
   prakash:{pass:"tansha123",name:"Prakash Bhai"},
-  kaif:{pass:"tansha123",name:"Kaif Bhai"},
   jitu:{pass:"tansha123",name:"Jitu Bhai"},
   akash:{pass:"tansha123",name:"Akash Bhai"},
   nafees:{pass:"tansha123",name:"Nafees Bhai"},
   faisal:{pass:"tansha123",name:"Faisal Bhai 2"},
-  javed:{pass:"tansha123",name:"Javed Bhai"},
-  sabajit:{pass:"tansha123",name:"Sabajit Bhai"},
-  ashfaq:{pass:"tansha123",name:"Ashfaq Bhai"},
 };
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
 const fmtL=n=>n>=1e7?"₹"+(n/1e7).toFixed(2)+"Cr":n>=1e5?"₹"+(n/1e5).toFixed(1)+"L":n>=1e3?"₹"+(n/1e3).toFixed(1)+"k":fmt(n);
@@ -198,10 +192,10 @@ function Dashboard({role,currentUser,onNav,notifs}){
 
 // ── Tasks ──
 const TASKS0=[
-  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
-  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
-  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
+  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Zaid Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
+  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Nafees Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
+  {id:4,title:"Collect payment Grand Hyatt",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
 function compressPhoto(file){
@@ -1554,7 +1548,7 @@ const PAY0=[
 ];
 const MC={Jan:"#3B82F6",Feb:"#8B5CF6",Mar:"#14B8A6",Apr:"#6366F1",May:"#10B981",Jun:"#F59E0B",Jul:"#EF4444",Aug:"#EC4899",Sep:"#06B6D4",Oct:"#84CC16",Nov:"#F97316",Dec:"#64748B"};
 const FT={WA:"📱",Call:"📞",Visit:"🚶",CHQ:"💵",NEFT:"🏦"};
-const PAY_STAFF=["Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
+const PAY_STAFF=["Saud Bhai","Zaid Bhai","Saeed Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
 const JUN26=[
 ["SHREE BALAJI TRADERS",167734,167734],["MAHA BALAJI HOTELWARE",164134,75779],["SHREE MADHAV CREATIONS",133301,133301],["SHIVAM TRADERS (KAILASH CROCKERY)",111612,111612],["KALA HOTEL SHOPPEE",129191,109191],["PRAKASH HOTEL WARE",89204,89204],
 ["BHAMBHANI BROTHERS SIGNORA DIST",262588,262588],["SAMEER HOTEL SUPPLIES",663569,269292],["VISHAL HOTELWARES",646102,641242],["JAYDEEP ENTERPRISES (NEW)",526009,258557],["BALAJI TRADERS (PIMP - PUNE)",347242,347242],["S L CROCKERIES",338007,338007],
@@ -2117,7 +2111,7 @@ function Operations({role,currentUser}){
 
 // ── Chat ──
 const CHS=[{id:"gen",name:"Tansha General",icon:"🏢",color:C.acc,unread:2},{id:"ocean",name:"Ocean Team",icon:"🥂",color:C.blue,unread:0},{id:"pay",name:"Payments",icon:"💰",color:C.red,unread:1}];
-const DMS=[{id:"dm-saud",name:"Saud Bhai",online:true,unread:1},{id:"dm-kaif",name:"Kaif Bhai",online:true,unread:0}];
+const DMS=[{id:"dm-saud",name:"Saud Bhai",online:true,unread:1},{id:"dm-akash",name:"Akash Bhai",online:true,unread:0}];
 const now=new Date();const tF=d=>new Date(d).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
 const MSGS0={gen:[{id:1,sender:"Saud Bhai",text:"Good morning team! All April dispatches by 5 PM.",time:tF(new Date(now-3600000*3)),type:"text",reads:["Kaif Bhai"]},{id:2,sender:"Kaif Bhai",text:"Will follow up with Hotel Leela today.",time:tF(new Date(now-3600000*2)),type:"text",reads:["Saud Bhai"]},{id:3,sender:"Nafees Bhai",text:"Purchase order for Ocean restock done.",time:tF(new Date(now-1800000)),type:"task",taskText:"Purchase order — Ocean Glassware",taskStatus:"Done",reads:["Ali Bhai (Owner)"]},{id:4,sender:"Saeed Bhai",text:"Collected payment from Naresh Steel ✅",time:tF(new Date(now-900000)),type:"payment",amount:86499,client:"Naresh Steel Centre",reads:["Saud Bhai"]}],"dm-saud":[{id:1,sender:"Saud Bhai",text:"Ali Bhai, Grand Hyatt rescheduling again. Escalate?",time:tF(new Date(now-3600000)),type:"text",reads:[]},{id:2,sender:"Ali Bhai (Owner)",text:"Give them till Friday. If not paid, stop credit.",time:tF(new Date(now-1800000)),type:"text",reads:["Saud Bhai"]}]};
 function CBubble({msg,isMe,onLong}){
