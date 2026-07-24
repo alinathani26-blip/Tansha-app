@@ -34,6 +34,25 @@ const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
 const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Asif Bhai","Noor Bhai","Tayyab Bhai","Prakash Bhai","Kaif Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Javed Bhai","Sabajit Bhai","Ashfaq Bhai"];
+const CREDS={
+  ali:{pass:"tansha123",name:"Ali Bhai (Owner)"},
+  saud:{pass:"tansha123",name:"Saud Bhai"},
+  zaid:{pass:"tansha123",name:"Zaid Bhai"},
+  saeed:{pass:"tansha123",name:"Saeed Bhai"},
+  sufiyan:{pass:"tansha123",name:"Sufiyan Bhai"},
+  asif:{pass:"tansha123",name:"Asif Bhai"},
+  noor:{pass:"tansha123",name:"Noor Bhai"},
+  tayyab:{pass:"tansha123",name:"Tayyab Bhai"},
+  prakash:{pass:"tansha123",name:"Prakash Bhai"},
+  kaif:{pass:"tansha123",name:"Kaif Bhai"},
+  jitu:{pass:"tansha123",name:"Jitu Bhai"},
+  akash:{pass:"tansha123",name:"Akash Bhai"},
+  nafees:{pass:"tansha123",name:"Nafees Bhai"},
+  faisal:{pass:"tansha123",name:"Faisal Bhai 2"},
+  javed:{pass:"tansha123",name:"Javed Bhai"},
+  sabajit:{pass:"tansha123",name:"Sabajit Bhai"},
+  ashfaq:{pass:"tansha123",name:"Ashfaq Bhai"},
+};
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
 const fmtL=n=>n>=1e7?"₹"+(n/1e7).toFixed(2)+"Cr":n>=1e5?"₹"+(n/1e5).toFixed(1)+"L":n>=1e3?"₹"+(n/1e3).toFixed(1)+"k":fmt(n);
 const INP={background:"#FFFFFF",border:`1.5px solid ${C.cb}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,width:"100%",outline:"none",boxSizing:"border-box",transition:"border-color .15s"};
@@ -2339,8 +2358,43 @@ const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
 const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",pending:"Pending Orders",ops:"Operations",chat:"Team Chat"};
 
+function LoginScreen({onLogin}){
+  const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
+  function login(){
+    const c=CREDS[u.trim().toLowerCase()];
+    if(!c||c.pass!==p){setErr("Incorrect username or password");return;}
+    onLogin(c.name);
+  }
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:C.card,borderRadius:20,padding:32,width:"100%",maxWidth:360,boxShadow:"0 8px 32px rgba(0,0,0,0.12)"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontWeight:900,fontSize:26,color:C.text,letterSpacing:-.5}}>TANSHA <span style={{color:C.acc,fontWeight:400,fontSize:15}}>Hospitality</span></div>
+          <div style={{color:C.muted,fontSize:13,marginTop:6}}>Sign in to continue</div>
+        </div>
+        <div style={{marginBottom:14}}>
+          <label style={LBL}>Username</label>
+          <input style={INP} placeholder="e.g. ali" value={u} onChange={e=>{setU(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()} autoCapitalize="none" autoCorrect="off" spellCheck={false}/>
+        </div>
+        <div style={{marginBottom:20}}>
+          <label style={LBL}>Password</label>
+          <div style={{position:"relative"}}>
+            <input type={show?"text":"password"} style={{...INP,paddingRight:42}} placeholder="Password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()}/>
+            <button onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,fontSize:15,padding:4,lineHeight:1}}>{show?"🙈":"👁️"}</button>
+          </div>
+        </div>
+        {err&&<div style={{background:"#FEE2E2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:C.red,fontSize:12,fontWeight:600,marginBottom:14,textAlign:"center"}}>{err}</div>}
+        <button onClick={login} style={{background:C.acc,color:"#fff",border:"none",borderRadius:10,padding:"13px 0",fontWeight:800,fontSize:15,cursor:"pointer",width:"100%",letterSpacing:.2}}>Sign In →</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App(){
-  const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
+  const [loggedIn,setLoggedIn]=useState(()=>{try{return localStorage.getItem("tansha_user");}catch{return null;}});
+  function handleLogin(name){try{localStorage.setItem("tansha_user",name);}catch{}setLoggedIn(name);setRole(name);}
+  function handleLogout(){try{localStorage.removeItem("tansha_user");}catch{}setLoggedIn(null);}
+  const [role,setRole]=useState(()=>{try{return localStorage.getItem("tansha_user")||"Ali Bhai (Owner)";}catch{return "Ali Bhai (Owner)";}});const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
   const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
@@ -2363,6 +2417,7 @@ export default function App(){
       setNotifs(p=>[{id:Date.now(),icon:"🔔",title:"Notifications Enabled",body:"You'll now get alerts for your tasks.",time:"Just now",read:false,color:C.green},...p]);
     }
   }
+  if(!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
   const SW=220;
@@ -2384,8 +2439,7 @@ export default function App(){
         <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{color:"#fff",fontWeight:800,fontSize:17,letterSpacing:-.3,marginBottom:14}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
           <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
-          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
-          <div style={{maxHeight:160,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");setShowNav(false);}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
+          <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center",marginTop:4}}>🚪 Sign Out</button>
         </div>
         <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
@@ -2397,8 +2451,7 @@ export default function App(){
       <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
         <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
         <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
-        <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
-        <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
+        <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center",marginTop:4}}>🚪 Sign Out</button>
       </div>
       <div style={{flex:1,padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
     </div>}
