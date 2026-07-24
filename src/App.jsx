@@ -33,7 +33,7 @@ const MANAGERS=["Ali Bhai (Owner)","Saud Bhai"];
 const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
-const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Asif Bhai","Noor Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2"];
+const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Asif Bhai","Noor Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Tanveer Bhai"];
 const CREDS={
   ali:{pass:"tansha123",name:"Ali Bhai (Owner)"},
   saud:{pass:"tansha123",name:"Saud Bhai"},
@@ -46,6 +46,7 @@ const CREDS={
   akash:{pass:"tansha123",name:"Akash Bhai"},
   nafees:{pass:"tansha123",name:"Nafees Bhai"},
   faisal:{pass:"tansha123",name:"Faisal Bhai 2"},
+  tanveer:{pass:"tansha123",name:"Tanveer Bhai"},
 };
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
 const fmtL=n=>n>=1e7?"₹"+(n/1e7).toFixed(2)+"Cr":n>=1e5?"₹"+(n/1e5).toFixed(1)+"L":n>=1e3?"₹"+(n/1e3).toFixed(1)+"k":fmt(n);
