@@ -2375,7 +2375,7 @@ function LoginScreen({onLogin}){
           <label style={LBL}>Password</label>
           <div style={{position:"relative"}}>
             <input type={show?"text":"password"} style={{...INP,paddingRight:42}} placeholder="Password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()}/>
-            <button onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,fontSize:15,padding:4,lineHeight:1}}>{show?"🙈":"👁️"}</button>
+            <button onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,fontSize:11,fontWeight:600,padding:"4px 6px",letterSpacing:.3}}>{show?"Hide":"Show"}</button>
           </div>
         </div>
         {err&&<div style={{background:"#FEE2E2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:C.red,fontSize:12,fontWeight:600,marginBottom:14,textAlign:"center"}}>{err}</div>}
