@@ -33,20 +33,23 @@ const MANAGERS=["Ali Bhai (Owner)","Saud Bhai"];
 const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
-const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Asif Bhai","Noor Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Tanveer Bhai"];
+const TEAM=["Ali Bhai (Owner)","Saud Bhai","Saeed Bhai","Asif Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Tanveer Bhai","Ekta","Aapa","Suraj","Niranjan","Akshay"];
 const CREDS={
   ali:{pass:"tansha123",name:"Ali Bhai (Owner)"},
   saud:{pass:"tansha123",name:"Saud Bhai"},
-  zaid:{pass:"tansha123",name:"Zaid Bhai"},
   saeed:{pass:"tansha123",name:"Saeed Bhai"},
   asif:{pass:"tansha123",name:"Asif Bhai"},
-  noor:{pass:"tansha123",name:"Noor Bhai"},
   prakash:{pass:"tansha123",name:"Prakash Bhai"},
   jitu:{pass:"tansha123",name:"Jitu Bhai"},
   akash:{pass:"tansha123",name:"Akash Bhai"},
   nafees:{pass:"tansha123",name:"Nafees Bhai"},
   faisal:{pass:"tansha123",name:"Faisal Bhai 2"},
   tanveer:{pass:"tansha123",name:"Tanveer Bhai"},
+  ekta:{pass:"tansha123",name:"Ekta"},
+  aapa:{pass:"tansha123",name:"Aapa"},
+  suraj:{pass:"tansha123",name:"Suraj"},
+  niranjan:{pass:"tansha123",name:"Niranjan"},
+  akshay:{pass:"tansha123",name:"Akshay"},
 };
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
 const fmtL=n=>n>=1e7?"₹"+(n/1e7).toFixed(2)+"Cr":n>=1e5?"₹"+(n/1e5).toFixed(1)+"L":n>=1e3?"₹"+(n/1e3).toFixed(1)+"k":fmt(n);
@@ -194,7 +197,7 @@ function Dashboard({role,currentUser,onNav,notifs}){
 // ── Tasks ──
 const TASKS0=[
   {id:1,title:"Follow up Hotel Leela — Quotation",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Zaid Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Saeed Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
   {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Nafees Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
   {id:4,title:"Collect payment Grand Hyatt",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
