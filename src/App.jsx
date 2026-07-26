@@ -33,7 +33,24 @@ const MANAGERS=["Ali Bhai (Owner)","Saud Bhai"];
 const TODAY=new Date().toISOString().split("T")[0];
 const MONTHS=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 const CM=new Date().getMonth();
-const TEAM=["Ali Bhai (Owner)","Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Asif Bhai","Noor Bhai","Tayyab Bhai","Prakash Bhai","Kaif Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Javed Bhai","Sabajit Bhai","Ashfaq Bhai"];
+const TEAM=["Ali Bhai (Owner)","Saud Bhai","Saeed Bhai","Asif Bhai","Prakash Bhai","Jitu Bhai","Akash Bhai","Nafees Bhai","Faisal Bhai 2","Tanveer Bhai","Ekta","Aapa","Suraj","Niranjan","Akshay"];
+const CREDS={
+  ali:{pass:"tansha123",name:"Ali Bhai (Owner)"},
+  saud:{pass:"tansha123",name:"Saud Bhai"},
+  saeed:{pass:"tansha123",name:"Saeed Bhai"},
+  asif:{pass:"tansha123",name:"Asif Bhai"},
+  prakash:{pass:"tansha123",name:"Prakash Bhai"},
+  jitu:{pass:"tansha123",name:"Jitu Bhai"},
+  akash:{pass:"tansha123",name:"Akash Bhai"},
+  nafees:{pass:"tansha123",name:"Nafees Bhai"},
+  faisal:{pass:"tansha123",name:"Faisal Bhai 2"},
+  tanveer:{pass:"tansha123",name:"Tanveer Bhai"},
+  ekta:{pass:"tansha123",name:"Ekta"},
+  aapa:{pass:"tansha123",name:"Aapa"},
+  suraj:{pass:"tansha123",name:"Suraj"},
+  niranjan:{pass:"tansha123",name:"Niranjan"},
+  akshay:{pass:"tansha123",name:"Akshay"},
+};
 const fmt=n=>"₹"+Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
 const fmtL=n=>n>=1e7?"₹"+(n/1e7).toFixed(2)+"Cr":n>=1e5?"₹"+(n/1e5).toFixed(1)+"L":n>=1e3?"₹"+(n/1e3).toFixed(1)+"k":fmt(n);
 const INP={background:"#FFFFFF",border:`1.5px solid ${C.cb}`,borderRadius:8,padding:"9px 12px",color:C.text,fontSize:13,width:"100%",outline:"none",boxSizing:"border-box",transition:"border-color .15s"};
@@ -179,10 +196,10 @@ function Dashboard({role,currentUser,onNav,notifs}){
 
 // ── Tasks ──
 const TASKS0=[
-  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
-  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
-  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
+  {id:1,title:"Follow up Hotel Leela — Quotation",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Saeed Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
+  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Nafees Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
+  {id:4,title:"Collect payment Grand Hyatt",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
 function compressPhoto(file){
@@ -1535,7 +1552,7 @@ const PAY0=[
 ];
 const MC={Jan:"#3B82F6",Feb:"#8B5CF6",Mar:"#14B8A6",Apr:"#6366F1",May:"#10B981",Jun:"#F59E0B",Jul:"#EF4444",Aug:"#EC4899",Sep:"#06B6D4",Oct:"#84CC16",Nov:"#F97316",Dec:"#64748B"};
 const FT={WA:"📱",Call:"📞",Visit:"🚶",CHQ:"💵",NEFT:"🏦"};
-const PAY_STAFF=["Saud Bhai","Zaid Bhai","Saeed Bhai","Sufiyan Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
+const PAY_STAFF=["Saud Bhai","Saeed Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
 const JUN26=[
 ["SHREE BALAJI TRADERS",167734,167734],["MAHA BALAJI HOTELWARE",164134,75779],["SHREE MADHAV CREATIONS",133301,133301],["SHIVAM TRADERS (KAILASH CROCKERY)",111612,111612],["KALA HOTEL SHOPPEE",129191,109191],["PRAKASH HOTEL WARE",89204,89204],
 ["BHAMBHANI BROTHERS SIGNORA DIST",262588,262588],["SAMEER HOTEL SUPPLIES",663569,269292],["VISHAL HOTELWARES",646102,641242],["JAYDEEP ENTERPRISES (NEW)",526009,258557],["BALAJI TRADERS (PIMP - PUNE)",347242,347242],["S L CROCKERIES",338007,338007],
@@ -2098,7 +2115,7 @@ function Operations({role,currentUser}){
 
 // ── Chat ──
 const CHS=[{id:"gen",name:"Tansha General",icon:"🏢",color:C.acc,unread:2},{id:"ocean",name:"Ocean Team",icon:"🥂",color:C.blue,unread:0},{id:"pay",name:"Payments",icon:"💰",color:C.red,unread:1}];
-const DMS=[{id:"dm-saud",name:"Saud Bhai",online:true,unread:1},{id:"dm-kaif",name:"Kaif Bhai",online:true,unread:0}];
+const DMS=[{id:"dm-saud",name:"Saud Bhai",online:true,unread:1},{id:"dm-akash",name:"Akash Bhai",online:true,unread:0}];
 const now=new Date();const tF=d=>new Date(d).toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",hour12:true});
 const MSGS0={gen:[{id:1,sender:"Saud Bhai",text:"Good morning team! All April dispatches by 5 PM.",time:tF(new Date(now-3600000*3)),type:"text",reads:["Kaif Bhai"]},{id:2,sender:"Kaif Bhai",text:"Will follow up with Hotel Leela today.",time:tF(new Date(now-3600000*2)),type:"text",reads:["Saud Bhai"]},{id:3,sender:"Nafees Bhai",text:"Purchase order for Ocean restock done.",time:tF(new Date(now-1800000)),type:"task",taskText:"Purchase order — Ocean Glassware",taskStatus:"Done",reads:["Ali Bhai (Owner)"]},{id:4,sender:"Saeed Bhai",text:"Collected payment from Naresh Steel ✅",time:tF(new Date(now-900000)),type:"payment",amount:86499,client:"Naresh Steel Centre",reads:["Saud Bhai"]}],"dm-saud":[{id:1,sender:"Saud Bhai",text:"Ali Bhai, Grand Hyatt rescheduling again. Escalate?",time:tF(new Date(now-3600000)),type:"text",reads:[]},{id:2,sender:"Ali Bhai (Owner)",text:"Give them till Friday. If not paid, stop credit.",time:tF(new Date(now-1800000)),type:"text",reads:["Saud Bhai"]}]};
 function CBubble({msg,isMe,onLong}){
@@ -2339,8 +2356,30 @@ const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
 const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",pending:"Pending Orders",ops:"Operations",chat:"Team Chat"};
 
+function LoginScreen({onLogin}){
+  const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
+  function login(){const c=CREDS[u.trim().toLowerCase()];if(!c||c.pass!==p){setErr("Incorrect username or password");return;}onLogin(c.name);}
+  return(
+    <div style={{minHeight:"100vh",background:C.bg,display:"flex",alignItems:"center",justifyContent:"center",padding:20}}>
+      <div style={{background:C.card,borderRadius:20,padding:32,width:"100%",maxWidth:360,boxShadow:"0 8px 32px rgba(0,0,0,0.12)"}}>
+        <div style={{textAlign:"center",marginBottom:28}}>
+          <div style={{fontWeight:900,fontSize:26,color:C.text,letterSpacing:-.5}}>TANSHA <span style={{color:C.acc,fontWeight:400,fontSize:15}}>Hospitality</span></div>
+          <div style={{color:C.muted,fontSize:13,marginTop:6}}>Sign in to continue</div>
+        </div>
+        <div style={{marginBottom:14}}><label style={LBL}>Username</label><input style={INP} placeholder="e.g. ali" value={u} onChange={e=>{setU(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()} autoCapitalize="none" autoCorrect="off" spellCheck={false}/></div>
+        <div style={{marginBottom:20}}><label style={LBL}>Password</label><div style={{position:"relative"}}><input type={show?"text":"password"} style={{...INP,paddingRight:52}} placeholder="Password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()}/><button onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,fontSize:11,fontWeight:600,padding:"4px 6px",letterSpacing:.3}}>{show?"Hide":"Show"}</button></div></div>
+        {err&&<div style={{background:"#FEE2E2",border:"1px solid #FECACA",borderRadius:8,padding:"8px 12px",color:C.red,fontSize:12,fontWeight:600,marginBottom:14,textAlign:"center"}}>{err}</div>}
+        <button onClick={login} style={{background:C.acc,color:"#fff",border:"none",borderRadius:10,padding:"13px 0",fontWeight:800,fontSize:15,cursor:"pointer",width:"100%",letterSpacing:.2}}>Sign In →</button>
+      </div>
+    </div>
+  );
+}
+
 export default function App(){
-  const [role,setRole]=useState("Ali Bhai (Owner)");const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
+  const [loggedIn,setLoggedIn]=useState(()=>{try{return localStorage.getItem("tansha_user");}catch{return null;}});
+  function handleLogin(name){try{localStorage.setItem("tansha_user",name);}catch{}setLoggedIn(name);setRole(name);}
+  function handleLogout(){try{localStorage.removeItem("tansha_user");}catch{}setLoggedIn(null);}
+  const [role,setRole]=useState(()=>{try{return localStorage.getItem("tansha_user")||"Ali Bhai (Owner)";}catch{return "Ali Bhai (Owner)";}});const [active,setActive]=useState("home");const [showN,setShowN]=useState(false);const [showNav,setShowNav]=useState(false);const [notifs,setNotifs]=useState(NOTIFS);
   const [isDesktop,setIsDesktop]=useState(typeof window!=="undefined"&&window.innerWidth>=768);
   useEffect(()=>{const h=()=>setIsDesktop(window.innerWidth>=768);window.addEventListener("resize",h);return()=>window.removeEventListener("resize",h);},[]);
 
@@ -2363,6 +2402,7 @@ export default function App(){
       setNotifs(p=>[{id:Date.now(),icon:"🔔",title:"Notifications Enabled",body:"You'll now get alerts for your tasks.",time:"Just now",read:false,color:C.green},...p]);
     }
   }
+  if(!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
   const SW=220;
@@ -2384,8 +2424,7 @@ export default function App(){
         <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
           <div style={{color:"#fff",fontWeight:800,fontSize:17,letterSpacing:-.3,marginBottom:14}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
           <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
-          <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
-          <div style={{maxHeight:160,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");setShowNav(false);}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
+          <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center",marginTop:4}}>🚪 Sign Out</button>
         </div>
         <div style={{padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left"}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span></button>)}
         </div>
@@ -2397,8 +2436,7 @@ export default function App(){
       <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
         <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
         <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
-        <div style={{color:"#475569",fontSize:9,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:6}}>Switch User</div>
-        <div style={{maxHeight:200,overflowY:"auto",display:"flex",flexDirection:"column",gap:2}}>{TEAM.map(n=><button key={n} onClick={()=>{setRole(n);setActive("home");}} style={{display:"flex",alignItems:"center",gap:8,background:role===n?"rgba(99,102,241,0.25)":"transparent",border:`1px solid ${role===n?"rgba(99,102,241,0.4)":"transparent"}`,borderRadius:7,padding:"5px 7px",cursor:"pointer",textAlign:"left",width:"100%"}}><Av name={n} size={22}/><span style={{color:role===n?"#A5B4FC":"#94A3B8",fontSize:11,fontWeight:role===n?700:400,lineHeight:1.2,flex:1}}>{n}</span>{role===n&&<span style={{color:"#6366F1",fontSize:10}}>✓</span>}</button>)}</div>
+        <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center",marginTop:4}}>🚪 Sign Out</button>
       </div>
       <div style={{flex:1,padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
     </div>}
