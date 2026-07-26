@@ -2414,7 +2414,7 @@ export default function App(){
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
   const SW=220;
   return (<div style={{fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",background:C.bg,minHeight:"100vh",color:C.text,position:"relative"}}>
-    <style>{`*{box-sizing:border-box;font-weight:700}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
+    <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
     {showN&&<NotifPanel notifs={notifs} setNotifs={setNotifs} onClose={()=>setShowN(false)}/>}
     {pushPerm==="default"&&<div style={{position:"fixed",left:12,right:12,bottom:12,zIndex:500,background:"#fff",border:`1px solid ${C.cb}`,borderRadius:12,padding:"12px 14px",boxShadow:"0 8px 24px rgba(0,0,0,0.12)",display:"flex",alignItems:"center",gap:10,maxWidth:420,margin:"0 auto"}}>
       <div style={{fontSize:22}}>🔔</div>
