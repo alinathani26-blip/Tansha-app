@@ -134,14 +134,7 @@ function Mod({onClose,title,sub,children}){
 }
 
 // ── Notifications ──
-const NOTIFS=[
-  {id:1,icon:"✅",title:"Task Due Today",body:"Follow up Hotel Leela — Kaif Bhai",time:"9:00 AM",read:false,color:C.blue},
-  {id:2,icon:"⚠️",title:"Task Overdue",body:"Collect payment Grand Hyatt — 2 days overdue",time:"Yesterday",read:false,color:C.red},
-  {id:3,icon:"💰",title:"Follow Up Due",body:"Ornate Glassware — ₹8,59,529 outstanding",time:"8:30 AM",read:false,color:C.orange},
-  {id:4,icon:"✅",title:"Task Assigned to You",body:"Stock count Ukiyo Bhiwandi — by Saud Bhai",time:"Yesterday",read:false,color:C.blue},
-  {id:5,icon:"📦",title:"Low Stock Alert",body:"Whisky Glass 300ml — only 25 CTN remaining",time:"Yesterday",read:true,color:C.purple},
-  {id:6,icon:"💬",title:"New Message",body:"Saud Bhai: Grand Hyatt is rescheduling...",time:"10 mins ago",read:false,color:C.teal},
-];
+const NOTIFS=[];
 function NotifPanel({notifs,setNotifs,onClose}){
   const unread=notifs.filter(n=>!n.read).length;
   return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:600}} onClick={onClose}>
@@ -151,6 +144,7 @@ function NotifPanel({notifs,setNotifs,onClose}){
         <div><div style={{color:C.text,fontWeight:800,fontSize:16}}>🔔 Notifications</div>{unread>0&&<div style={{color:C.muted,fontSize:12,marginTop:2}}>{unread} unread</div>}</div>
         <div style={{display:"flex",gap:8}}>
           {unread>0&&<button onClick={()=>setNotifs(p=>p.map(n=>({...n,read:true})))} style={{background:C.blue+"22",border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:7,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Mark all read</button>}
+          {notifs.length>0&&<button onClick={()=>setNotifs([])} style={{background:"#FEE2E2",border:"1px solid #FECACA",color:C.red,borderRadius:7,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Clear all</button>}
           <button onClick={onClose} style={{background:C.cb,border:"none",color:C.muted,borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14}}>✕</button>
         </div>
       </div>
