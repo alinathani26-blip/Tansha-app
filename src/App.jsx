@@ -308,14 +308,23 @@ function Tasks({role,currentUser,setNotifs}){
     const check=()=>{
       const now=Date.now();
       tasks.forEach(t=>{
-        if(t.status==="Done"||!t.due||!t.due.includes("T")||!t.reminder||t.reminder==="none"||t.reminded)return;
+        if(t.status==="Done"||!t.due||!t.due.includes("T"))return;
         const dueTime=new Date(t.due).getTime();
         if(isNaN(dueTime))return;
-        const remindAt=dueTime-Number(t.reminder)*60000;
-        if(now>=remindAt&&now<dueTime){
-          pushNotif("⏰","Task Reminder",`${t.title} — due ${fmtDue(t.due)}`,C.orange);
-          notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`${t.title} — due ${fmtDue(t.due)}`);
-          setTasks(p=>p.map(x=>x.id===t.id?{...x,reminded:true}:x));
+        // reminder before due time
+        if(!t.reminded&&t.reminder&&t.reminder!=="none"){
+          const remindAt=dueTime-Number(t.reminder)*60000;
+          if(now>=remindAt&&now<dueTime){
+            pushNotif("⏰","Task Reminder",`${t.title} — due ${fmtDue(t.due)}`,C.orange);
+            notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`${t.title} — due ${fmtDue(t.due)}`);
+            setTasks(p=>p.map(x=>x.id===t.id?{...x,reminded:true}:x));
+          }
+        }
+        // notification exactly when due time is reached
+        if(!t.dueFired&&now>=dueTime&&now<dueTime+120000){
+          pushNotif("🔴","Task Due Now",`${t.title} — assigned to ${t.to}`,C.red);
+          notify([t.to,t.by,...(t.loop||[])],"Task Due Now",`${t.title} — deadline reached`);
+          setTasks(p=>p.map(x=>x.id===t.id?{...x,dueFired:true}:x));
         }
       });
     };
