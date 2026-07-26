@@ -296,13 +296,13 @@ function Tasks({role,currentUser,setNotifs}){
     const targets=[...new Set(persons)].filter(p=>p&&p!==currentUser);
     if(targets.length)sendPush(targets,title,body);
   }
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,replies:[],reminded:false};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);notify([form.to,...(form.loop||[])],"New Task Assigned",`${form.title} — due ${fmtDue(t.due)}`);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});}
-  function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);notify([tsk.by,tsk.to,...(tsk.loop||[])],n==="Done"?"Task Completed":"Task In Progress",tsk.title);if(sel?.id===id)setSel(p=>({...p,status:n}));}
-  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);notify([sel.by,sel.to,...(sel.loop||[])],"Task Update",`${currentUser}: ${replyText.trim()||"sent a voice note"}`);setReplyText("");setReplyAudio(null);setShowReply(false);}
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,replies:[],reminded:false};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);notify([form.to,...(form.loop||[])],"New Task Assigned",`${form.title} · ${form.pri} priority · Due ${fmtDue(t.due)} · Assigned by ${currentUser}`);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});}
+  function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);notify([tsk.by,tsk.to,...(tsk.loop||[])],n==="Done"?"Task Completed":"Task In Progress",`${tsk.title} · ${tsk.pri} priority · Marked by ${currentUser}`);if(sel?.id===id)setSel(p=>({...p,status:n}));}
+  function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);notify([sel.by,sel.to,...(sel.loop||[])],"Task Update",`${sel.title}\n${currentUser}: ${replyText.trim()||"sent a voice note"}`);setReplyText("");setReplyAudio(null);setShowReply(false);}
   function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);setShowDel(false);}
   function delTask(id){setTasks(p=>p.filter(t=>t.id!==id));setSel(null);setShowDel(false);}
   function startEdit(){setEditForm({...sel});setEditLoopOpen(false);}
-  function saveEdit(){if(!editForm.title||!editForm.to)return;const updated={...editForm,reminded:false};setTasks(p=>p.map(t=>t.id===editForm.id?updated:t));setSel(updated);pushNotif("✏️","Task Updated",editForm.title,C.acc);notify([editForm.to,editForm.by,...(editForm.loop||[])],"Task Updated",editForm.title);setEditForm(null);}
+  function saveEdit(){if(!editForm.title||!editForm.to)return;const updated={...editForm,reminded:false};setTasks(p=>p.map(t=>t.id===editForm.id?updated:t));setSel(updated);pushNotif("✏️","Task Updated",editForm.title,C.acc);notify([editForm.to,editForm.by,...(editForm.loop||[])],"Task Updated",`${editForm.title} · ${editForm.pri} priority · Due ${fmtDue(editForm.due)} · By ${currentUser}`);setEditForm(null);}
   function togLoop(name,isEd){if(isEd){setEditForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}else{setForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}}
   useEffect(()=>{
     const check=()=>{
@@ -316,14 +316,14 @@ function Tasks({role,currentUser,setNotifs}){
           const remindAt=dueTime-Number(t.reminder)*60000;
           if(now>=remindAt&&now<dueTime){
             pushNotif("⏰","Task Reminder",`${t.title} — due ${fmtDue(t.due)}`,C.orange);
-            notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`${t.title} — due ${fmtDue(t.due)}`);
+            notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`${t.title} · ${t.pri} priority · Assigned to ${t.to} · Due ${fmtDue(t.due)}`);
             setTasks(p=>p.map(x=>x.id===t.id?{...x,reminded:true}:x));
           }
         }
         // notification exactly when due time is reached
         if(!t.dueFired&&now>=dueTime&&now<dueTime+120000){
           pushNotif("🔴","Task Due Now",`${t.title} — assigned to ${t.to}`,C.red);
-          notify([t.to,t.by,...(t.loop||[])],"Task Due Now",`${t.title} — deadline reached`);
+          notify([t.to,t.by,...(t.loop||[])],"Task Due Now",`${t.title} · ${t.pri} priority · Assigned to ${t.to} by ${t.by}`);
           setTasks(p=>p.map(x=>x.id===t.id?{...x,dueFired:true}:x));
         }
       });
