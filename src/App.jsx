@@ -134,14 +134,7 @@ function Mod({onClose,title,sub,children}){
 }
 
 // ── Notifications ──
-const NOTIFS=[
-  {id:1,icon:"✅",title:"Task Due Today",body:"Follow up Hotel Leela — Kaif Bhai",time:"9:00 AM",read:false,color:C.blue},
-  {id:2,icon:"⚠️",title:"Task Overdue",body:"Collect payment Grand Hyatt — 2 days overdue",time:"Yesterday",read:false,color:C.red},
-  {id:3,icon:"💰",title:"Follow Up Due",body:"Ornate Glassware — ₹8,59,529 outstanding",time:"8:30 AM",read:false,color:C.orange},
-  {id:4,icon:"✅",title:"Task Assigned to You",body:"Stock count Ukiyo Bhiwandi — by Saud Bhai",time:"Yesterday",read:false,color:C.blue},
-  {id:5,icon:"📦",title:"Low Stock Alert",body:"Whisky Glass 300ml — only 25 CTN remaining",time:"Yesterday",read:true,color:C.purple},
-  {id:6,icon:"💬",title:"New Message",body:"Saud Bhai: Grand Hyatt is rescheduling...",time:"10 mins ago",read:false,color:C.teal},
-];
+const NOTIFS=[];
 function NotifPanel({notifs,setNotifs,onClose}){
   const unread=notifs.filter(n=>!n.read).length;
   return (<div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.35)",zIndex:600}} onClick={onClose}>
