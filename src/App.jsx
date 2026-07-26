@@ -162,8 +162,39 @@ function NotifPanel({notifs,setNotifs,onClose}){
 function Dashboard({role,currentUser,onNav,notifs}){
   const hr=new Date().getHours();
   const greet=hr<12?"Good morning":hr<17?"Good afternoon":hr<21?"Good evening":"Good night";
-  const stats=[{l:"Outstanding",v:"₹1.2 Cr",c:C.red,i:"💰",m:"payment"},{l:"Dispatches Today",v:"7",c:C.green,i:"🚚",m:"dispatch"},{l:"Pending Tasks",v:"12",c:C.blue,i:"✅",m:"tasks"},{l:"Low Stock",v:"3",c:C.purple,i:"📦",m:"stocks"},{l:"Apr Sales",v:"₹48L",c:C.teal,i:"📈",m:"sales"},{l:"Support Tickets",v:"3",c:C.orange,i:"🎫",m:"ops"}];
-  const activity=[{i:"💰",t:"Naresh Steel Centre paid ₹86,499",time:"10m",c:C.green},{i:"✅",t:"Hotel Leela follow-up due — Kaif Bhai",time:"30m",c:C.blue},{i:"🚚",t:"Metro Hospitality — 10 CTN dispatched",time:"1h",c:C.teal},{i:"⚠️",t:"Whisky Glass 300ml — Low stock",time:"2h",c:C.orange},{i:"💬",t:"Saud Bhai mentioned you in Payments",time:"3h",c:C.purple},{i:"🎫",t:"New ticket — Radisson Blu damaged boxes",time:"4h",c:C.red}];
+  const [_tasks]=useFirestoreState("tasks",TASKS0);
+  const [_disp]=useFirestoreState("dispatch",DISP0);
+  const [_stocks]=useFirestoreState("stocks",ST0);
+  const [_sales]=useFirestoreState("sales",SD0);
+  const [_kaiSales]=useFirestoreState("salesKai",KAI0);
+  const [_payments]=useFirestoreState("payments",PAY0);
+  const [_sup]=useFirestoreState("support",SUP0);
+  const outstanding=useMemo(()=>(_payments||[]).filter(e=>e.status!=="Paid").reduce((s,e)=>s+(e.currBal||0),0),[_payments]);
+  const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
+  const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
+  const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[])],[_stocks]);
+  const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
+  const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
+  const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
+  function fmtStat(n){if(n>=10000000)return"₹"+(n/10000000).toFixed(1)+"Cr";if(n>=100000)return"₹"+Math.round(n/100000)+"L";if(n>=1000)return"₹"+(n/1000).toFixed(0)+"k";return"₹"+n;}
+  const stats=[
+    {l:"Outstanding",v:fmtStat(outstanding),c:C.red,i:"💰",m:"payment"},
+    {l:"Dispatches Today",v:String(todayDispCount),c:C.green,i:"🚚",m:"dispatch"},
+    {l:"Pending Tasks",v:String(pendingCount),c:C.blue,i:"✅",m:"tasks"},
+    {l:"Low Stock",v:String(lowStockCount),c:C.purple,i:"📦",m:"stocks"},
+    {l:`${MONTHS[CM]} Sales`,v:fmtStat(monthSales),c:C.teal,i:"📈",m:"sales"},
+    {l:"Support Tickets",v:String(openTickets),c:C.orange,i:"🎫",m:"ops"},
+  ];
+  const activity=useMemo(()=>{
+    const feed=[];
+    (_tasks||[]).filter(t=>t.status!=="Done").sort((a,b)=>b.id-a.id).slice(0,3).forEach(t=>feed.push({i:t.status==="In Progress"?"🔄":"✅",t:`${t.title} — ${t.to}`,time:`Due ${t.due}`,c:t.pri==="High"?C.red:C.blue}));
+    allDisp.filter(d=>d.date===TODAY&&d.status==="Dispatched").slice(0,2).forEach(d=>feed.push({i:"🚚",t:`${d.client} — ${d.qty||"??"} ${d.unit||"CTN"} dispatched`,time:"Today",c:C.green}));
+    allStockItems.filter(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0;}).slice(0,2).forEach(it=>feed.push({i:"⚠️",t:`${it.name} — Zero stock`,time:"Alert",c:C.red}));
+    (_payments||[]).filter(e=>e.status!=="Paid"&&(e.currBal||0)>0).sort((a,b)=>(b.currBal||0)-(a.currBal||0)).slice(0,2).forEach(e=>feed.push({i:"💰",t:`${e.client} — ${fmtStat(e.currBal)} outstanding`,time:e.month||"",c:C.orange}));
+    (_sup||[]).filter(s=>s.status!=="Resolved").slice(0,1).forEach(s=>feed.push({i:"🎫",t:`${s.client} — ${s.reason.slice(0,45)}`,time:s.status,c:C.purple}));
+    return feed;
+  },[_tasks,allDisp,allStockItems,_payments,_sup]);
   const ACCESS_ALL=["payment","dispatch","tasks","stocks","sales","ops"];
   return (<div>
     <div style={{background:`linear-gradient(135deg,${C.acc}12 0%,${C.teal}0C 100%)`,border:`1px solid ${C.acc}22`,borderRadius:16,padding:"20px",marginBottom:18,boxShadow:C.sh}}>
@@ -183,7 +214,7 @@ function Dashboard({role,currentUser,onNav,notifs}){
       </div>)}
     </div>
     <Card><SL text="Recent Activity"/>
-      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:a.c+"12",border:`1px solid ${a.c}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time} ago</div></div></div>)}
+      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:a.c+"12",border:`1px solid ${a.c}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time}</div></div></div>)}
     </Card>
   </div>);
 }
