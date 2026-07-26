@@ -82,9 +82,12 @@ export async function registerDeviceToken(person, token) {
   }
 }
 
+const SEND_PUSH_URL =
+  "https://us-central1-tansha-hospitality.cloudfunctions.net/sendPush";
+
 export async function sendPush(persons, title, body) {
   try {
-    await fetch("/api/send-push", {
+    await fetch(SEND_PUSH_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ persons, title, body }),
