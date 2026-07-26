@@ -697,15 +697,16 @@ function Stocks(){
         <button onClick={exportStockPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
       </div>
     </div>
+    {tab==="Ukiyo"&&<div style={{background:C.teal+"15",border:`1px solid ${C.teal}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🛏️</div><div style={{fontWeight:800,fontSize:15,color:C.teal,letterSpacing:1}}>TABLE MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — All items are table mats</div></div>}
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
-      <thead><tr style={{background:C.card}}>{["C.MRP","Code","Item","Tot CTN","Ground","1st Flr","2nd Flr","Value","Box/CTN","Tot Box","Container",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+      <thead><tr style={{background:C.card}}>{["C.MRP","Code","Item","Tot CTN",...(tab!=="Ukiyo"?["Ground"]:[]),"1st Flr","2nd Flr","Value","Box/CTN","Tot Box","Container",""].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
       <tbody>{shown.map((it,i)=><tr key={it.id} style={{background:it.isZ?C.red+"11":it.isL?C.acc+"11":i%2===0?C.card:"#F9FAFB",borderBottom:`1px solid ${C.cb}22`}}>
         <td style={{padding:"6px 7px",textAlign:"center",color:C.muted,fontSize:10}}>{fmt(it.cmrp)}</td>
         <td style={{padding:"6px 7px",textAlign:"center",color:ac,fontFamily:"monospace",fontSize:10,fontWeight:700}}>{it.code}</td>
         <td style={{padding:"6px 7px",color:C.text,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.name}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:it.isZ?C.red:it.isL?C.acc:ac,fontWeight:800,fontSize:12}}>{it.tot}</td>
-        {LKs.map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
+        {(tab==="Ukiyo"?LKs.filter(k=>k!=="k2d"):LKs).map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
         <td style={{padding:"5px 3px",textAlign:"center",color:C.green,fontWeight:700,fontSize:10}}>{fmt(it.val)}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:C.muted}}>{it.boxCtn||"—"}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:C.muted,fontWeight:700}}>{it.totBox||"—"}</td>
