@@ -36,4 +36,4 @@ jobs:
       - name: Deploy Cloud Functions
         run: |
           echo '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > /tmp/sa.json
-          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools deploy --only functions --project tansha-hospitality
+          GOOGLE_APPLICATION_CREDENTIALS=/tmp/sa.json npx firebase-tools deploy --only functions --force --project tansha-hospitality
