@@ -197,9 +197,9 @@ function Dashboard({role,currentUser,onNav,notifs}){
 // ── Tasks ──
 const TASKS0=[
   {id:1,title:"Follow up Hotel Leela — Quotation",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"26 Apr",pri:"High",status:"Pending",type:"Follow Up",notes:"Check pricing",audio:null,replies:[],loop:[]},
-  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Saeed Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
-  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Nafees Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
-  {id:4,title:"Collect payment Grand Hyatt",to:"Akash Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
+  {id:2,title:"Dispatch Ocean order to Kaizen",to:"Tayyab Bhai",by:"Ali Bhai (Owner)",due:"25 Apr",pri:"High",status:"In Progress",type:"Dispatch",notes:"",audio:null,replies:[],loop:[]},
+  {id:3,title:"Stock count Ukiyo Bhiwandi",to:"Sufiyan Bhai",by:"Saud Bhai",due:"27 Apr",pri:"Medium",status:"Pending",type:"Stock Check",notes:"",audio:null,replies:[],loop:[]},
+  {id:4,title:"Collect payment Grand Hyatt",to:"Kaif Bhai",by:"Ali Bhai (Owner)",due:"28 Apr",pri:"High",status:"Pending",type:"Collection",notes:"₹2,15,600 outstanding",audio:null,replies:[],loop:[]},
   {id:5,title:"Purchase order Ocean restock",to:"Nafees Bhai",by:"Saud Bhai",due:"30 Apr",pri:"Medium",status:"Done",type:"Purchase",notes:"",audio:null,replies:[],loop:[]},
 ];
 function compressPhoto(file){
@@ -1552,7 +1552,7 @@ const PAY0=[
 ];
 const MC={Jan:"#3B82F6",Feb:"#8B5CF6",Mar:"#14B8A6",Apr:"#6366F1",May:"#10B981",Jun:"#F59E0B",Jul:"#EF4444",Aug:"#EC4899",Sep:"#06B6D4",Oct:"#84CC16",Nov:"#F97316",Dec:"#64748B"};
 const FT={WA:"📱",Call:"📞",Visit:"🚶",CHQ:"💵",NEFT:"🏦"};
-const PAY_STAFF=["Saud Bhai","Zaid Bhai","Saeed Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
+const PAY_STAFF=["Saud Bhai","Saeed Bhai","Akash Bhai","Accountant","Ali Bhai (Owner)"];
 const JUN26=[
 ["SHREE BALAJI TRADERS",167734,167734],["MAHA BALAJI HOTELWARE",164134,75779],["SHREE MADHAV CREATIONS",133301,133301],["SHIVAM TRADERS (KAILASH CROCKERY)",111612,111612],["KALA HOTEL SHOPPEE",129191,109191],["PRAKASH HOTEL WARE",89204,89204],
 ["BHAMBHANI BROTHERS SIGNORA DIST",262588,262588],["SAMEER HOTEL SUPPLIES",663569,269292],["VISHAL HOTELWARES",646102,641242],["JAYDEEP ENTERPRISES (NEW)",526009,258557],["BALAJI TRADERS (PIMP - PUNE)",347242,347242],["S L CROCKERIES",338007,338007],
@@ -2377,7 +2377,7 @@ function LoginScreen({onLogin}){
         <div style={{marginBottom:20}}>
           <label style={LBL}>Password</label>
           <div style={{position:"relative"}}>
-            <input type={show?"text":"password"} style={{...INP,paddingRight:42}} placeholder="Password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()}/>
+            <input type={show?"text":"password"} style={{...INP,paddingRight:52}} placeholder="Password" value={p} onChange={e=>{setP(e.target.value);setErr("");}} onKeyDown={e=>e.key==="Enter"&&login()}/>
             <button onClick={()=>setShow(s=>!s)} style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",cursor:"pointer",color:C.muted,fontSize:11,fontWeight:600,padding:"4px 6px",letterSpacing:.3}}>{show?"Hide":"Show"}</button>
           </div>
         </div>
