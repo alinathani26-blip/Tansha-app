@@ -144,6 +144,7 @@ function NotifPanel({notifs,setNotifs,onClose}){
         <div><div style={{color:C.text,fontWeight:800,fontSize:16}}>🔔 Notifications</div>{unread>0&&<div style={{color:C.muted,fontSize:12,marginTop:2}}>{unread} unread</div>}</div>
         <div style={{display:"flex",gap:8}}>
           {unread>0&&<button onClick={()=>setNotifs(p=>p.map(n=>({...n,read:true})))} style={{background:C.blue+"22",border:`1px solid ${C.blue}44`,color:C.blue,borderRadius:7,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Mark all read</button>}
+          {notifs.length>0&&<button onClick={()=>setNotifs([])} style={{background:"#FEE2E2",border:"1px solid #FECACA",color:C.red,borderRadius:7,padding:"4px 10px",fontSize:11,fontWeight:600,cursor:"pointer"}}>Clear all</button>}
           <button onClick={onClose} style={{background:C.cb,border:"none",color:C.muted,borderRadius:7,width:28,height:28,cursor:"pointer",fontSize:14}}>✕</button>
         </div>
       </div>
