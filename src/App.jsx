@@ -173,7 +173,7 @@ function Dashboard({role,currentUser,onNav,notifs}){
   const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
   const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
   const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
-  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
   const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=it.qtyCtn!=null?it.qtyCtn:(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
   const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
   const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
@@ -707,6 +707,18 @@ Awk:[
   {id:13,brand:"DELTON",name:"TABLE SER SPOON",qtyCtn:2,dozCtn:12,rate:0},
   {id:14,brand:"DELTON",name:"TABLE SER FORK",qtyCtn:2,dozCtn:12,rate:0},
   {id:15,brand:"DELTON",name:"BUTTER KNIFE",qtyCtn:2,dozCtn:12,rate:0}
+],
+Tray:[
+  {id:1,code:"2500",name:"UKIYO A.SKID TRAY BLACK-OVAL 25\"",mrp:0,cmrp:3672,k2d:0,k1f:9,k2f:0,re:2,boxCtn:6,cont:""},
+  {id:2,code:"2700",name:"UKIYO A.SKID TRAY BLACK-OVAL 27\"",mrp:0,cmrp:3936,k2d:0,k1f:0,k2f:0,re:2,boxCtn:6,cont:""},
+  {id:3,code:"2900",name:"UKIYO A.SKID TRAY BLACK-OVAL 29\"",mrp:0,cmrp:4920,k2d:0,k1f:14,k2f:0,re:2,boxCtn:6,cont:""},
+  {id:4,code:"1100-1",name:"UKIYO A.SKID TRAY BROWN-RD 11\"",mrp:0,cmrp:1680,k2d:0,k1f:0,k2f:0,re:2,boxCtn:14,cont:""},
+  {id:5,code:"1400-1",name:"UKIYO A.SKID TRAY BROWN-RD 14\"",mrp:0,cmrp:1792,k2d:0,k1f:20,k2f:0,re:2,boxCtn:14,cont:""},
+  {id:6,code:"PE6909",name:"UKIYO A.SKID TRAY BROWN-RD 14\" PE",mrp:0,cmrp:1536,k2d:0,k1f:85,k2f:0,re:2,boxCtn:12,cont:""},
+  {id:7,code:"PE6910",name:"UKIYO A.SKID TRAY BROWN-RD 16\" PE",mrp:0,cmrp:2100,k2d:0,k1f:0,k2f:0,re:2,boxCtn:12,cont:""},
+  {id:8,code:"2500-1",name:"UKIYO A.SKID TRAY BROWN-OVAL 25\"",mrp:0,cmrp:3672,k2d:0,k1f:12,k2f:0,re:2,boxCtn:6,cont:""},
+  {id:9,code:"2700-1",name:"UKIYO A.SKID TRAY BROWN-OVAL 27\"",mrp:0,cmrp:3936,k2d:0,k1f:15,k2f:0,re:2,boxCtn:6,cont:""},
+  {id:10,code:"2900-1",name:"UKIYO A.SKID TRAY BROWN-OVAL 29\"",mrp:0,cmrp:4920,k2d:0,k1f:11,k2f:0,re:2,boxCtn:6,cont:""}
 ]};
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
@@ -716,9 +728,10 @@ function Stocks(){
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
   const isSilver=tab==="Solo"||tab==="Awk";
+  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray";
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
@@ -773,10 +786,10 @@ function Stocks(){
           <div><label style={LBL}>C.MRP (Carton)</label><input type="number" style={INP} value={editIt.cmrp} onChange={e=>setEditIt(p=>({...p,cmrp:parseInt(e.target.value)||0}))}/></div>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10}}>
-          <div><label style={LBL}>{tab==="Ukiyo"?"PCS / CTN":"Box in CTN"}</label><input type="number" style={INP} value={editIt.boxCtn||0} onChange={e=>setEditIt(p=>({...p,boxCtn:parseInt(e.target.value)||0}))}/></div>
-          {tab!=="Ukiyo"&&<div><label style={LBL}>Container Note</label><input style={INP} value={editIt.cont||""} onChange={e=>setEditIt(p=>({...p,cont:e.target.value}))}/></div>}
+          <div><label style={LBL}>{isUkiyoLike?"PCS / CTN":"Box in CTN"}</label><input type="number" style={INP} value={editIt.boxCtn||0} onChange={e=>setEditIt(p=>({...p,boxCtn:parseInt(e.target.value)||0}))}/></div>
+          {!isUkiyoLike&&<div><label style={LBL}>Container Note</label><input style={INP} value={editIt.cont||""} onChange={e=>setEditIt(p=>({...p,cont:e.target.value}))}/></div>}
         </div>
-        <div style={{display:"flex",flexDirection:"column",gap:9}}>{(tab==="Ukiyo"?[["CTN Qty","k1f",C.teal]]:[["Ground","k2d",C.blue],["1st Flr","k1f",C.purple],["2nd Flr","k2f",C.teal]]).map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
+        <div style={{display:"flex",flexDirection:"column",gap:9}}>{(isUkiyoLike?[["CTN Qty","k1f",ac]]:[["Ground","k2d",C.blue],["1st Flr","k1f",C.purple],["2nd Flr","k2f",C.teal]]).map(([l,k,lc])=><div key={k} style={{background:"#F9FAFB",border:`1px solid ${lc}44`,borderRadius:9,padding:"9px 12px",display:"flex",alignItems:"center",gap:11}}><span style={{color:lc,fontWeight:700,fontSize:13,flex:1}}>{l}</span><div style={{display:"flex",gap:7,alignItems:"center"}}><button onClick={()=>setEditIt(p=>({...p,[k]:Math.max(0,(p[k]||0)-1)}))} style={{background:C.cb,border:"none",color:C.text,borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>−</button><input type="number" min="0" value={editIt[k]} onChange={e=>setEditIt(p=>({...p,[k]:parseInt(e.target.value)||0}))} style={{...INP,width:55,padding:"4px 6px",textAlign:"center",borderColor:lc+"44"}}/><button onClick={()=>setEditIt(p=>({...p,[k]:(p[k]||0)+1}))} style={{background:lc,border:"none",color:"#fff",borderRadius:5,width:26,height:26,cursor:"pointer",fontSize:16}}>+</button></div></div>)}</div>
         <div style={{background:C.bg,borderRadius:7,padding:"7px 11px",display:"flex",justifyContent:"space-between"}}><span style={{color:C.muted,fontSize:13}}>Total: <b style={{color:C.text}}>{(editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0)} CTN · {((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*(editIt.boxCtn||0)} Boxes</b></span><span style={{color:C.green,fontWeight:700}}>{fmt(((editIt.k2d||0)+(editIt.k1f||0)+(editIt.k2f||0))*editIt.cmrp)}</span></div>
       </div>)}
       <div style={{display:"flex",gap:8}}>
@@ -795,7 +808,7 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -804,10 +817,11 @@ function Stocks(){
       </div>
     </div>
     {tab==="Ukiyo"&&<div style={{background:C.teal+"15",border:`1px solid ${C.teal}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🛏️</div><div style={{fontWeight:800,fontSize:15,color:C.teal,letterSpacing:1}}>TABLE MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — All items are table mats</div></div>}
+    {tab==="Tray"&&<div style={{background:C.purple+"15",border:`1px solid ${C.purple}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🫙</div><div style={{fontWeight:800,fontSize:15,color:C.purple,letterSpacing:1}}>ANTI-SKID TRAYS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Black &amp; Brown oval and round trays</div></div>}
     {isSilver&&<div style={{background:ac+"15",border:`1px solid ${ac}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>{tab==="Solo"?"🥄":"🍴"}</div><div style={{fontWeight:800,fontSize:15,color:ac,letterSpacing:1}}>{tab==="Solo"?"SOLO SILVERWARE":"AWK SILVERWARE"}</div><div style={{fontSize:11,color:C.muted}}>{tab==="Solo"?"Standard Collection — Impress · Murphy · Safari":"AWK Collection — Delton Range"}</div></div>}
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
-      <thead><tr style={{background:C.card}}>{(isSilver?["Brand","Item","CTN Qty","DOZ/CTN","Total DOZ","Rate/DOZ","Value",""]:["C.MRP","Code","Item","Tot CTN",...(tab!=="Ukiyo"?["Ground","1st Flr","2nd Flr"]:[]),"Value","Box/CTN",tab==="Ukiyo"?"Total Qty":"Tot Box",...(tab!=="Ukiyo"?["Container"]:[]),""]).map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"||h==="Brand"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+      <thead><tr style={{background:C.card}}>{(isSilver?["Brand","Item","CTN Qty","DOZ/CTN","Total DOZ","Rate/DOZ","Value",""]:["C.MRP","Code","Item","Tot CTN",...(!isUkiyoLike?["Ground","1st Flr","2nd Flr"]:[]),"Value","Box/CTN",isUkiyoLike?"Total Qty":"Tot Box",...(!isUkiyoLike?["Container"]:[]),""]).map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"||h==="Brand"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
       <tbody>{isSilver?shown.reduce((acc,it,i)=>{
         if(i===0||it.brand!==shown[i-1].brand)acc.push(<tr key={`hdr-${it.brand}`} style={{background:ac+"22"}}><td colSpan={8} style={{padding:"6px 10px",fontWeight:800,fontSize:10,color:ac,letterSpacing:1}}>STANDARD — {it.brand}{tab==="Awk"?` (AWK)`:""}</td></tr>);
         acc.push(<tr key={it.id} style={{background:it.isZ?C.red+"11":i%2===0?C.card:"#F9FAFB",borderBottom:`1px solid ${C.cb}22`}}>
@@ -826,11 +840,11 @@ function Stocks(){
         <td style={{padding:"6px 7px",textAlign:"center",color:ac,fontFamily:"monospace",fontSize:10,fontWeight:700}}>{it.code}</td>
         <td style={{padding:"6px 7px",color:C.text,maxWidth:130,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{it.name}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:it.isZ?C.red:it.isL?C.acc:ac,fontWeight:800,fontSize:12}}>{it.tot}</td>
-        {(tab==="Ukiyo"?[]:LKs).map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
+        {(isUkiyoLike?[]:LKs).map((k,ki)=><td key={k} style={{padding:"5px 3px",textAlign:"center",color:it[k]>0?LC2[ki]:C.dim,fontWeight:it[k]>0?700:400}}>{it[k]||"—"}</td>)}
         <td style={{padding:"5px 3px",textAlign:"center",color:C.green,fontWeight:700,fontSize:10}}>{fmt(it.val)}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:C.muted}}>{it.boxCtn||"—"}</td>
         <td style={{padding:"5px 3px",textAlign:"center",color:C.muted,fontWeight:700}}>{it.totBox||"—"}</td>
-        {tab!=="Ukiyo"&&<td style={{padding:"3px 5px"}}><input value={it.cont||""} placeholder="—" onChange={e=>setItem(it.id,{cont:e.target.value})} style={{...INP,width:80,padding:"3px 6px",fontSize:10}}/></td>}
+        {!isUkiyoLike&&<td style={{padding:"3px 5px"}}><input value={it.cont||""} placeholder="—" onChange={e=>setItem(it.id,{cont:e.target.value})} style={{...INP,width:80,padding:"3px 6px",fontSize:10}}/></td>}
         <td style={{padding:"3px 5px",textAlign:"center"}}><button onClick={()=>setEditIt({...it})} style={{background:C.cb,border:"none",color:C.muted,borderRadius:4,width:20,height:20,cursor:"pointer",fontSize:10}}>✏</button></td>
       </tr>)}</tbody>
     </table></div>
