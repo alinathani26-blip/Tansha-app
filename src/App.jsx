@@ -173,7 +173,7 @@ function Dashboard({role,currentUser,onNav,notifs,isDesktop:isD}){
   const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
   const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
   const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
-  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Knife||[]),...(_stocks?.Misc||[]),...(_stocks?.Wok||[]),...(_stocks?.GN||[]),...(_stocks?.Dim||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Knife||[]),...(_stocks?.Misc||[]),...(_stocks?.Wok||[]),...(_stocks?.GN||[]),...(_stocks?.Dim||[]),...(_stocks?.Solo||[])],[_stocks]);
   const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=it.qtyCtn!=null?it.qtyCtn:(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
   const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
   const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
@@ -869,7 +869,7 @@ function Stocks(){
   const [editIt,setEditIt]=useState(null);
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
-  const isSilver=tab==="Solo"||tab==="Awk";
+  const isSilver=tab==="Solo";
   const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Knife"||tab==="Misc"||tab==="Wok"||tab==="GN"||tab==="Dim";
   useEffect(()=>{
     if(loading)return;
@@ -885,17 +885,23 @@ function Stocks(){
       const reNum=basket.map((i,idx)=>({...i,id:maxId+idx+1}));
       setStocks(p=>({...p,Knife:[...(p.Knife||[]),...reNum],Basket:[]}));
     }
+    const awk=stocks.Awk||[];
+    if(awk.length>0){
+      const maxId=(stocks.Solo||[]).reduce((m,i)=>Math.max(m,i.id||0),0);
+      const reNum=awk.map((i,idx)=>({...i,id:maxId+idx+1}));
+      setStocks(p=>({...p,Solo:[...(p.Solo||[]),...reNum],Awk:[]}));
+    }
   },[loading]);
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Knife"?"#ca8a04":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Tray"?C.purple:tab==="Knife"?"#ca8a04":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
   function reloadCatalog(){
-    const catalog=tab==="Tray"?[...ST0.Tray,...ST0.Bar.map((i,idx)=>({...i,id:ST0.Tray.length+idx+1}))]:tab==="Knife"?[...ST0.Knife,...ST0.Basket.map((i,idx)=>({...i,id:ST0.Knife.length+idx+1}))]:ST0[tab];
+    const catalog=tab==="Tray"?[...ST0.Tray,...ST0.Bar.map((i,idx)=>({...i,id:ST0.Tray.length+idx+1}))]:tab==="Knife"?[...ST0.Knife,...ST0.Basket.map((i,idx)=>({...i,id:ST0.Knife.length+idx+1}))]:tab==="Solo"?[...ST0.Solo,...ST0.Awk.map((i,idx)=>({...i,id:ST0.Solo.length+idx+1}))]:ST0[tab];
     if(!window.confirm(`Replace ${tab} stock list with the full ${catalog.length}-item catalog from the warehouse sheet? Any custom items/edits you added beyond the catalog will be lost.`))return;
-    setStocks(p=>({...p,[tab]:catalog,...(tab==="Tray"?{Bar:[]}:tab==="Knife"?{Basket:[]}:{})}));
+    setStocks(p=>({...p,[tab]:catalog,...(tab==="Tray"?{Bar:[]}:tab==="Knife"?{Basket:[]}:tab==="Solo"?{Awk:[]}:{})}));
   }
   function addItem(){
     if(!addForm.code.trim()||!addForm.name.trim())return;
@@ -966,7 +972,7 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{overflowX:"auto",marginBottom:12}}><div style={{display:"flex",gap:5,background:C.card,borderRadius:11,padding:4,minWidth:"max-content"}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal,l:"T.Mat"},{k:"Tray",i:"🫙",c:C.purple,l:"Bar Mat +\nAnti.S Tray"},{k:"Knife",i:"🔪",c:"#ca8a04",l:"Knife &\nBasket"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:"0 0 auto",background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46}}><span style={{color:tab===t.k?t.c:C.muted,fontSize:10,fontWeight:700,whiteSpace:"pre-line",textAlign:"center",lineHeight:1.2}}>{t.l||t.k}</span></button>)}</div></div>
+    <div style={{overflowX:"auto",marginBottom:12}}><div style={{display:"flex",gap:5,background:C.card,borderRadius:11,padding:4,minWidth:"max-content"}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal,l:"T.Mat"},{k:"Tray",i:"🫙",c:C.purple,l:"Bar Mat +\nAnti.S Tray"},{k:"Knife",i:"🔪",c:"#ca8a04",l:"Knife &\nBasket"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Solo",i:"🥄",c:C.orange,l:"Solo &\nAwk"}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:"0 0 auto",background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46}}><span style={{color:tab===t.k?t.c:C.muted,fontSize:10,fontWeight:700,whiteSpace:"pre-line",textAlign:"center",lineHeight:1.2}}>{t.l||t.k}</span></button>)}</div></div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -974,7 +980,7 @@ function Stocks(){
         <button onClick={exportStockPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
       </div>
     </div>
-    {(isUkiyoLike||isSilver)&&<div style={{background:ac+"15",border:`1px solid ${ac}33`,borderRadius:7,padding:"5px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:800,fontSize:11,color:ac,flexShrink:0}}>{tab==="Ukiyo"?"TABLE MATS":tab==="Tray"?"ANTI-SKID TRAYS & BAR MATS":tab==="Knife"?"UTILITY KNIVES & BREAD BASKETS":tab==="Misc"?"MISC ACCESSORIES":tab==="Wok"?"WOK & JHARA":tab==="GN"?"GN PANS & COVERS":tab==="Dim"?"DIMSUM BASKETS":tab==="Solo"?"SOLO SILVERWARE":"AWK SILVERWARE"}</span><span style={{fontSize:10,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tab==="Ukiyo"?"Ukiyo Collection":tab==="Tray"?"Trays · Bar Mats":tab==="Knife"?"Knives · Baskets":tab==="Misc"?"Pourers · Trays · Bottles":tab==="Wok"?"Woks · Jharas · Silicon":tab==="GN"?"PC GN Pans · Acrylic Covers":tab==="Dim"?"Round & Square · Yellow · S.S. · Bamboo":tab==="Solo"?"Impress · Murphy · Safari":"Delton Range"}</span></div>}
+    {(isUkiyoLike||isSilver)&&<div style={{background:ac+"15",border:`1px solid ${ac}33`,borderRadius:7,padding:"5px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:800,fontSize:11,color:ac,flexShrink:0}}>{tab==="Ukiyo"?"TABLE MATS":tab==="Tray"?"ANTI-SKID TRAYS & BAR MATS":tab==="Knife"?"UTILITY KNIVES & BREAD BASKETS":tab==="Misc"?"MISC ACCESSORIES":tab==="Wok"?"WOK & JHARA":tab==="GN"?"GN PANS & COVERS":tab==="Dim"?"DIMSUM BASKETS":"SOLO & AWK SILVERWARE"}</span><span style={{fontSize:10,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{tab==="Ukiyo"?"Ukiyo Collection":tab==="Tray"?"Trays · Bar Mats":tab==="Knife"?"Knives · Baskets":tab==="Misc"?"Pourers · Trays · Bottles":tab==="Wok"?"Woks · Jharas · Silicon":tab==="GN"?"PC GN Pans · Acrylic Covers":tab==="Dim"?"Round & Square · Yellow · S.S. · Bamboo":"Impress · Murphy · Safari · Delton (AWK)"}</span></div>}
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
       <thead><tr style={{background:C.card}}>{(isSilver?["Brand","Item","CTN Qty","DOZ/CTN","Total DOZ","Rate/DOZ","Value",""]:["C.MRP","Code","Item","Tot CTN",...(!isUkiyoLike?["Ground","1st Flr","2nd Flr"]:[]),"Value","Box/CTN",isUkiyoLike?"Total Qty":"Tot Box",...(!isUkiyoLike?["Container"]:[]),""]).map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Container"||h==="Brand"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
