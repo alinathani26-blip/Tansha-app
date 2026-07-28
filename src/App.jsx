@@ -173,7 +173,7 @@ function Dashboard({role,currentUser,onNav,notifs,isDesktop:isD}){
   const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
   const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
   const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
-  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Bar||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Bar||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Misc||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
   const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=it.qtyCtn!=null?it.qtyCtn:(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
   const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
   const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
@@ -763,6 +763,27 @@ Basket:[
   {id:13,code:"CR SQ BIG",name:"UKIYO B.BASKET CREAM SQUARE BIG",mrp:0,cmrp:14160,k2d:0,k1f:2,k2f:0,re:1,boxCtn:120,cont:""},
   {id:14,code:"CUTLERY-HOLD",name:"UKIYO CUTLERY HOLDER (BASKET) 4 SECTION",mrp:0,cmrp:14640,k2d:0,k1f:2,k2f:0,re:1,boxCtn:48,cont:""},
   {id:15,code:"CUTLERY-TRAY",name:"UKIYO CUTLERY TRAY (BASKET) 4 SECTION",mrp:0,cmrp:16500,k2d:0,k1f:1,k2f:0,re:1,boxCtn:60,cont:""}
+],
+Misc:[
+  {id:1,code:"UKIYO-2",name:"UKIYO WINE POURER (UKIYO-2)",mrp:0,cmrp:11000,k2d:0,k1f:5,k2f:0,re:1,boxCtn:500,cont:""},
+  {id:2,code:"F-8",name:"CONDIMENT TRAY 4 SECTION",mrp:0,cmrp:7080,k2d:0,k1f:4,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:3,code:"F-9",name:"CONDIMENT TRAY 6 SECTION",mrp:0,cmrp:7080,k2d:0,k1f:6,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:4,code:"F-10",name:"CONDIMENT TRAY 3 SECTION+HOLDER",mrp:0,cmrp:9900,k2d:0,k1f:2,k2f:0,re:1,boxCtn:9,cont:""},
+  {id:5,code:"F-11",name:"CONDIMENT TRAY 6 SECTION+HOLDER",mrp:0,cmrp:9900,k2d:0,k1f:5,k2f:0,re:1,boxCtn:9,cont:""},
+  {id:6,code:"F-12",name:"CONDIMENT TRAY SET (4+6 SECTION)",mrp:0,cmrp:9800,k2d:0,k1f:5,k2f:0,re:1,boxCtn:4,cont:""},
+  {id:7,code:"QH-CH0002",name:"UKIYO CUTLERY TRAY 4 SECTION (PLASTIC)",mrp:0,cmrp:3420,k2d:0,k1f:0,k2f:0,re:1,boxCtn:18,cont:""},
+  {id:8,code:"GZH-2.5",name:"STORE & POUR BOTTLE 2.5LTR (5 COLOUR)",mrp:0,cmrp:5700,k2d:0,k1f:2,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:9,code:"CP-600",name:"COFFEE PLUNGER 600ML (HETAI)",mrp:0,cmrp:7344,k2d:0,k1f:0,k2f:0,re:1,boxCtn:24,cont:""},
+  {id:10,code:"CP-800",name:"COFFEE PLUNGER 800ML (HETAI)",mrp:0,cmrp:9360,k2d:0,k1f:1,k2f:0,re:1,boxCtn:24,cont:""},
+  {id:11,code:"CP-1000",name:"COFFEE PLUNGER 1000ML (HETAI)",mrp:0,cmrp:10080,k2d:0,k1f:1,k2f:0,re:1,boxCtn:24,cont:""},
+  {id:12,code:"GZH-0.5",name:"STORE & POUR BOTTLE 0.5LTR (5 COLOUR)",mrp:0,cmrp:3180,k2d:0,k1f:2,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:13,code:"GZH-1",name:"STORE & POUR BOTTLE 1LTR (5 COLOUR)",mrp:0,cmrp:3360,k2d:0,k1f:0,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:14,code:"GZH-1.5",name:"STORE & POUR BOTTLE 1.5LTR (5 COLOUR)",mrp:0,cmrp:4020,k2d:0,k1f:2,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:15,code:"9758",name:"CUTLERY WASHING BASKET",mrp:0,cmrp:4280,k2d:0,k1f:4,k2f:0,re:1,boxCtn:10,cont:""},
+  {id:16,code:"PIZZA-CUT",name:"PIZZA CUTTER 3.5\" BLACK",mrp:0,cmrp:11400,k2d:0,k1f:1,k2f:0,re:1,boxCtn:120,cont:""},
+  {id:17,code:"49YC",name:"MAGNETIC KNIFE BAR 48CM",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:50,cont:""},
+  {id:18,code:"XF-8888",name:"RICE CONTAINER 100L (XF-8888)",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:1,cont:""},
+  {id:19,code:"QH-IB81",name:"RICE CONTAINER 81L (QH-IB81)",mrp:0,cmrp:0,k2d:0,k1f:9,k2f:0,re:1,boxCtn:1,cont:""}
 ]};
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
@@ -772,10 +793,10 @@ function Stocks(){
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
   const isSilver=tab==="Solo"||tab==="Awk";
-  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Bar"||tab==="Knife"||tab==="Basket";
+  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Bar"||tab==="Knife"||tab==="Basket"||tab==="Misc";
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Bar"?C.green:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Bar"?C.green:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":tab==="Misc"?C.acc:C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
@@ -852,7 +873,7 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Bar",i:"🍺",c:C.green},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Bar",i:"🍺",c:C.green},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Misc",i:"📦",c:C.acc},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -865,6 +886,7 @@ function Stocks(){
     {tab==="Bar"&&<div style={{background:C.green+"15",border:`1px solid ${C.green}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🍺</div><div style={{fontWeight:800,fontSize:15,color:C.green,letterSpacing:1}}>BAR MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Yellow &amp; Red rubber bar mats</div></div>}
     {tab==="Knife"&&<div style={{background:"#ca8a0415",border:"1px solid #ca8a0433",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🔪</div><div style={{fontWeight:800,fontSize:15,color:"#ca8a04",letterSpacing:1}}>UTILITY KNIVES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — 6&quot;, 8&quot; &amp; 10&quot; in Yellow, Red, Green &amp; White</div></div>}
     {tab==="Basket"&&<div style={{background:"#92400e15",border:"1px solid #92400e33",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🧺</div><div style={{fontWeight:800,fontSize:15,color:"#92400e",letterSpacing:1}}>BREAD BASKETS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Brown, Dual Colour &amp; Cream baskets + Cutlery holders</div></div>}
+    {tab==="Misc"&&<div style={{background:C.acc+"15",border:`1px solid ${C.acc}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>📦</div><div style={{fontWeight:800,fontSize:15,color:C.acc,letterSpacing:1}}>MISC ACCESSORIES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Pourers, Condiment Trays, Bottles, Plungers &amp; More</div></div>}
     {isSilver&&<div style={{background:ac+"15",border:`1px solid ${ac}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>{tab==="Solo"?"🥄":"🍴"}</div><div style={{fontWeight:800,fontSize:15,color:ac,letterSpacing:1}}>{tab==="Solo"?"SOLO SILVERWARE":"AWK SILVERWARE"}</div><div style={{fontSize:11,color:C.muted}}>{tab==="Solo"?"Standard Collection — Impress · Murphy · Safari":"AWK Collection — Delton Range"}</div></div>}
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
