@@ -159,7 +159,7 @@ function NotifPanel({notifs,setNotifs,onClose}){
 }
 
 // ── Dashboard ──
-function Dashboard({role,currentUser,onNav,notifs}){
+function Dashboard({role,currentUser,onNav,notifs,isDesktop:isD}){
   const hr=new Date().getHours();
   const greet=hr<12?"Good morning":hr<17?"Good afternoon":hr<21?"Good evening":"Good night";
   const [_tasks]=useFirestoreState("tasks",TASKS0);
@@ -197,25 +197,31 @@ function Dashboard({role,currentUser,onNav,notifs}){
   },[_tasks,allDisp,allStockItems,_payments,_sup]);
   const ACCESS_ALL=["payment","dispatch","tasks","stocks","sales","ops"];
   return (<div>
-    <div style={{background:`linear-gradient(135deg,${C.acc}12 0%,${C.teal}0C 100%)`,border:`1px solid ${C.acc}22`,borderRadius:16,padding:"20px",marginBottom:18,boxShadow:C.sh}}>
-      <div style={{color:C.text,fontWeight:800,fontSize:20,marginBottom:3}}>{greet}, {currentUser.split(" ")[0]}! 👋</div>
-      <div style={{color:C.muted,fontSize:12,marginBottom:14}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
+    <div style={{background:`linear-gradient(135deg,${C.acc}12 0%,${C.teal}0C 100%)`,border:`1px solid ${C.acc}22`,borderRadius:16,padding:isD?"24px 28px":"20px",marginBottom:isD?22:18,boxShadow:C.sh}}>
+      <div style={{color:C.text,fontWeight:800,fontSize:isD?24:20,marginBottom:4}}>{greet}, {currentUser.split(" ")[0]}! 👋</div>
+      <div style={{color:C.muted,fontSize:isD?13:12,marginBottom:14}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}</div>
       <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
         <span style={{background:C.acc+"18",border:`1px solid ${C.acc}30`,borderRadius:6,padding:"3px 10px",color:C.acc,fontSize:11,fontWeight:700}}>TANSHA HOSPITALITY</span>
         <span style={{background:C.green+"18",border:`1px solid ${C.green}30`,borderRadius:6,padding:"3px 10px",color:C.green,fontSize:11,fontWeight:700}}>{TEAM.length} Members</span>
         <span style={{background:C.cb,border:`1px solid ${C.cb}`,borderRadius:6,padding:"3px 10px",color:C.muted,fontSize:11,fontWeight:600}}>{role}</span>
       </div>
     </div>
-    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:18}}>
-      {stats.filter(s=>ACCESS_ALL.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderTop:`3px solid ${s.c}`,borderRadius:12,padding:"14px 14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.transform="translateY(-1px)";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.transform="none";}}>
-        <div style={{width:34,height:34,borderRadius:10,background:s.c+"14",display:"flex",alignItems:"center",justifyContent:"center",fontSize:17,marginBottom:10}}>{s.i}</div>
-        <div style={{color:C.text,fontWeight:800,fontSize:21,lineHeight:1}}>{s.v}</div>
-        <div style={{color:C.muted,fontSize:11,fontWeight:500,marginTop:5}}>{s.l}</div>
-      </div>)}
+    <div style={{display:isD?"flex":"block",gap:isD?24:0,alignItems:"flex-start"}}>
+      <div style={{flex:isD?"1 1 0":undefined}}>
+        <div style={{display:"grid",gridTemplateColumns:isD?"repeat(3,1fr)":"1fr 1fr",gap:isD?14:10,marginBottom:isD?22:18}}>
+          {stats.filter(s=>ACCESS_ALL.includes(s.m)).map(s=><div key={s.l} onClick={()=>onNav(s.m)} style={{background:C.card,border:`1px solid ${C.cb}`,borderTop:`3px solid ${s.c}`,borderRadius:12,padding:isD?"18px 20px":"14px",cursor:"pointer",position:"relative",overflow:"hidden",boxShadow:C.sh,transition:"all .15s"}} onMouseEnter={e=>{e.currentTarget.style.boxShadow=C.sh2;e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.boxShadow=C.sh;e.currentTarget.style.transform="none";}}>
+            <div style={{width:isD?40:34,height:isD?40:34,borderRadius:11,background:s.c+"14",display:"flex",alignItems:"center",justifyContent:"center",fontSize:isD?20:17,marginBottom:isD?14:10}}>{s.i}</div>
+            <div style={{color:C.text,fontWeight:800,fontSize:isD?26:21,lineHeight:1}}>{s.v}</div>
+            <div style={{color:C.muted,fontSize:isD?12:11,fontWeight:500,marginTop:6}}>{s.l}</div>
+          </div>)}
+        </div>
+      </div>
+      <div style={{width:isD?320:undefined,flexShrink:0}}>
+        <Card><SL text="Recent Activity"/>
+          {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"10px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:isD?36:34,height:isD?36:34,borderRadius:9,background:a.c+"12",border:`1px solid ${a.c}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:isD?13:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time}</div></div></div>)}
+        </Card>
+      </div>
     </div>
-    <Card><SL text="Recent Activity"/>
-      {activity.map((a,i)=><div key={i} style={{display:"flex",gap:10,padding:"9px 0",borderBottom:i<activity.length-1?`1px solid ${C.bg}`:""}}><div style={{width:34,height:34,borderRadius:9,background:a.c+"12",border:`1px solid ${a.c}25`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,flexShrink:0}}>{a.i}</div><div style={{flex:1}}><div style={{color:C.text,fontSize:13,fontWeight:500}}>{a.t}</div><div style={{color:C.dim,fontSize:11,marginTop:2}}>{a.time}</div></div></div>)}
-    </Card>
   </div>);
 }
 
@@ -2588,7 +2594,7 @@ export default function App(){
   if(!loggedIn) return <LoginScreen onLogin={handleLogin}/>;
   const cu=UM[role];const unread=notifs.filter(n=>!n.read).length;const acc=RA[role];const bnav=NAV.filter(n=>acc.includes(n.id)).slice(0,5);
   function nav(m){if(acc.includes(m)){setActive(m);setShowNav(false);}}
-  const SW=220;
+  const SW=248;
   return (<div style={{fontFamily:"'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif",background:C.bg,minHeight:"100vh",color:C.text,position:"relative"}}>
     <style>{`*{box-sizing:border-box}::-webkit-scrollbar{width:3px;height:3px}::-webkit-scrollbar-thumb{background:${C.cb};border-radius:2px}`}</style>
     {showN&&<NotifPanel notifs={notifs} setNotifs={setNotifs} onClose={()=>setShowN(false)}/>}
@@ -2616,50 +2622,54 @@ export default function App(){
 
     {/* Desktop sidebar */}
     {isDesktop&&<div style={{position:"fixed",left:0,top:0,bottom:0,width:SW,background:C.nav,overflowY:"auto",zIndex:200,display:"flex",flexDirection:"column"}}>
-      <div style={{padding:"20px 16px 14px",borderBottom:"1px solid rgba(255,255,255,0.07)"}}>
-        <div style={{color:"#fff",fontWeight:800,fontSize:18,letterSpacing:-.5,marginBottom:16}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:12}}>Hospitality</span></div>
-        <div style={{display:"flex",alignItems:"center",gap:9,marginBottom:12}}><Av name={cu} size={36}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:12}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:4,padding:"2px 7px",fontSize:9,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
-        <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.15)",border:"1px solid rgba(220,38,38,0.3)",borderRadius:8,padding:"8px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center",marginTop:4}}>🚪 Sign Out</button>
+      <div style={{padding:"24px 20px 16px",borderBottom:"1px solid rgba(255,255,255,0.08)"}}>
+        <div style={{color:"#fff",fontWeight:900,fontSize:20,letterSpacing:-.7,marginBottom:18}}>TANSHA <span style={{color:"#6366F1",fontWeight:400,fontSize:13}}>Hospitality</span></div>
+        <div style={{display:"flex",alignItems:"center",gap:11,marginBottom:14}}><Av name={cu} size={40}/><div><div style={{color:"#F1F5F9",fontWeight:600,fontSize:13}}>{cu}</div><span style={{background:"rgba(99,102,241,0.25)",color:"#A5B4FC",border:"1px solid rgba(99,102,241,0.3)",borderRadius:5,padding:"3px 8px",fontSize:10,fontWeight:700}}>{(RC[role]||RC_DEF).label}</span></div></div>
+        <button onClick={handleLogout} style={{width:"100%",background:"rgba(220,38,38,0.12)",border:"1px solid rgba(220,38,38,0.25)",borderRadius:9,padding:"9px 12px",color:"#FCA5A5",fontWeight:700,fontSize:12,cursor:"pointer",textAlign:"center"}}>🚪 Sign Out</button>
       </div>
-      <div style={{flex:1,padding:"10px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:10,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.18)":"transparent",border:"none",borderRadius:8,padding:"9px 10px",cursor:"pointer",marginBottom:1,textAlign:"left",transition:"background .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:16}}>{n.i}</span><span style={{color:active===n.id?"#A5B4FC":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:17,height:17,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:800}}>{unread}</span>}</button>)}</div>
+      <div style={{flex:1,padding:"12px 10px"}}>{NAV.filter(n=>acc.includes(n.id)).map(n=><button key={n.id} onClick={()=>nav(n.id)} style={{width:"100%",display:"flex",gap:12,alignItems:"center",background:active===n.id?"rgba(99,102,241,0.2)":"transparent",border:"none",borderLeft:active===n.id?"3px solid #818CF8":"3px solid transparent",borderRadius:"0 9px 9px 0",padding:"10px 12px",cursor:"pointer",marginBottom:2,textAlign:"left",transition:"all .12s"}} onMouseEnter={e=>{if(active!==n.id)e.currentTarget.style.background="rgba(255,255,255,0.05)";}} onMouseLeave={e=>{if(active!==n.id)e.currentTarget.style.background="transparent";}}><span style={{fontSize:17}}>{n.i}</span><span style={{color:active===n.id?"#C7D2FE":"#94A3B8",fontWeight:active===n.id?600:400,fontSize:13.5}}>{TITLES[n.id]}</span>{n.id==="tasks"&&unread>0&&<span style={{marginLeft:"auto",background:C.red,color:"#fff",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,fontWeight:800}}>{unread}</span>}</button>)}</div>
     </div>}
 
     {/* Topbar */}
-    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:"0 18px",height:56,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 0 #E2E8F0",marginLeft:isDesktop?SW:0}}>
+    <div style={{background:C.card,borderBottom:`1px solid ${C.cb}`,padding:isDesktop?"0 36px":"0 18px",height:isDesktop?62:56,display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,zIndex:100,boxShadow:"0 1px 4px rgba(0,0,0,0.05)",marginLeft:isDesktop?SW:0}}>
       <div style={{display:"flex",alignItems:"center",gap:10}}>
         {!isDesktop&&<button onClick={()=>setShowNav(true)} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:18,padding:"0 4px 0 0",lineHeight:1}}>☰</button>}
         <div>
           {!isDesktop&&<span style={{color:C.acc,fontWeight:800,fontSize:15,letterSpacing:-.3}}>TANSHA </span>}
-          <span style={{color:C.muted,fontSize:13,fontWeight:500}}>{isDesktop?"":""}{TITLES[active]}</span>
+          <span style={{color:isDesktop?C.text:C.muted,fontSize:isDesktop?16:13,fontWeight:isDesktop?700:500}}>{TITLES[active]}</span>
         </div>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:8}}>
-        <button onClick={()=>setShowN(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,cursor:"pointer",position:"relative",padding:"6px 8px",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center"}}>
-          <span style={{fontSize:16}}>🔔</span>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        {isDesktop&&<span style={{color:C.muted,fontSize:12,fontWeight:500}}>{new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"})}</span>}
+        <button onClick={()=>setShowN(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,cursor:"pointer",position:"relative",padding:isDesktop?"7px 10px":"6px 8px",borderRadius:9,display:"flex",alignItems:"center",justifyContent:"center"}}>
+          <span style={{fontSize:17}}>🔔</span>
           {unread>0&&<div style={{position:"absolute",top:3,right:3,width:14,height:14,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:8,fontWeight:800}}>{unread}</div>}
         </button>
-        <Av name={cu} size={30}/>
+        <Av name={cu} size={isDesktop?34:30}/>
       </div>
     </div>
 
     {/* Content */}
-    <div style={{padding:active==="chat"?0:15,paddingBottom:active==="chat"?0:isDesktop?15:75,minHeight:"calc(100vh - 52px - 56px)",marginLeft:isDesktop?SW:0,maxWidth:isDesktop?"none":480,margin:isDesktop?`0 0 0 ${SW}px`:"0 auto"}}>
-      {active!=="chat"&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:18}}>
-        <div>
-          <h2 style={{margin:0,fontSize:18,fontWeight:700,color:C.text}}>{TITLES[active]}</h2>
-        </div>
-        <span style={{background:(RC[role]||RC_DEF).bg,color:(RC[role]||RC_DEF).text,border:`1px solid ${(RC[role]||RC_DEF).border}`,borderRadius:6,padding:"3px 10px",fontSize:10,fontWeight:600}}>{(RC[role]||RC_DEF).label}</span>
-      </div>}
-      {active==="home"&&<Dashboard role={role} currentUser={cu} onNav={nav} notifs={notifs}/>}
-      {active==="tasks"&&<Tasks role={role} currentUser={cu} setNotifs={setNotifs}/>}
-      {active==="dispatch"&&<Dispatch role={role}/>}
-      {active==="quote"&&<Quotation/>}
-      {active==="stocks"&&<Stocks/>}
-      {active==="sales"&&<Sales/>}
-      {active==="payment"&&<Payment setNotifs={setNotifs}/>}
-      {active==="pending"&&<PendingOrders/>}
-      {active==="ops"&&<Operations role={role} currentUser={cu}/>}
-      {active==="chat"&&<Chat currentUser={cu}/>}
+    <div style={{padding:active==="chat"?0:isDesktop?"30px 36px":15,paddingBottom:active==="chat"?0:isDesktop?30:75,minHeight:`calc(100vh - ${isDesktop?62:56}px)`,margin:isDesktop?`0 0 0 ${SW}px`:"0 auto",maxWidth:isDesktop?"none":480,background:C.bg}}>
+      <div style={{maxWidth:isDesktop?1300:"none",margin:"0 auto"}}>
+        {active!=="chat"&&<div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:isDesktop?26:18}}>
+          <div>
+            <h2 style={{margin:0,fontSize:isDesktop?22:18,fontWeight:700,color:C.text,letterSpacing:-.3}}>{TITLES[active]}</h2>
+            {isDesktop&&<div style={{color:C.muted,fontSize:12,marginTop:3,fontWeight:400}}>Tansha Hospitality — {new Date().toLocaleDateString("en-IN",{day:"numeric",month:"long",year:"numeric"})}</div>}
+          </div>
+          <span style={{background:(RC[role]||RC_DEF).bg,color:(RC[role]||RC_DEF).text,border:`1px solid ${(RC[role]||RC_DEF).border}`,borderRadius:6,padding:isDesktop?"4px 12px":"3px 10px",fontSize:isDesktop?11:10,fontWeight:600}}>{(RC[role]||RC_DEF).label}</span>
+        </div>}
+        {active==="home"&&<Dashboard role={role} currentUser={cu} onNav={nav} notifs={notifs} isDesktop={isDesktop}/>}
+        {active==="tasks"&&<Tasks role={role} currentUser={cu} setNotifs={setNotifs}/>}
+        {active==="dispatch"&&<Dispatch role={role}/>}
+        {active==="quote"&&<Quotation/>}
+        {active==="stocks"&&<Stocks/>}
+        {active==="sales"&&<Sales/>}
+        {active==="payment"&&<Payment setNotifs={setNotifs}/>}
+        {active==="pending"&&<PendingOrders/>}
+        {active==="ops"&&<Operations role={role} currentUser={cu}/>}
+        {active==="chat"&&<Chat currentUser={cu}/>}
+      </div>
     </div>
 
     {/* Bottom nav */}
