@@ -173,7 +173,7 @@ function Dashboard({role,currentUser,onNav,notifs,isDesktop:isD}){
   const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
   const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
   const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
-  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Bar||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Misc||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Bar||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Misc||[]),...(_stocks?.Wok||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
   const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=it.qtyCtn!=null?it.qtyCtn:(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
   const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
   const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
@@ -784,6 +784,39 @@ Misc:[
   {id:17,code:"49YC",name:"MAGNETIC KNIFE BAR 48CM",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:50,cont:""},
   {id:18,code:"XF-8888",name:"RICE CONTAINER 100L (XF-8888)",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:1,cont:""},
   {id:19,code:"QH-IB81",name:"RICE CONTAINER 81L (QH-IB81)",mrp:0,cmrp:0,k2d:0,k1f:9,k2f:0,re:1,boxCtn:1,cont:""}
+],
+Wok:[
+  {id:1,code:"PE0468",name:"SILICON SPATULA BLUE 27.5CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:360,cont:""},
+  {id:2,code:"PE0468",name:"SILICON SPATULA ORANGE 27.5CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:360,cont:""},
+  {id:3,code:"PE0467",name:"SILICON BRUSH BLUE 24.5CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:360,cont:""},
+  {id:4,code:"PE0467",name:"SILICON BRUSH ORANGE 24.5CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:360,cont:""},
+  {id:5,code:"PE0412",name:"UKIYO WOK BLACK WD HANDLE 38CM",mrp:0,cmrp:9150,k2d:0,k1f:0,k2f:0,re:1,boxCtn:15,cont:""},
+  {id:6,code:"PE0413",name:"UKIYO WOK BLACK WD HANDLE 40CM",mrp:0,cmrp:9750,k2d:0,k1f:0,k2f:0,re:1,boxCtn:15,cont:""},
+  {id:7,code:"PE0414",name:"UKIYO WOK BLACK WD HANDLE 42CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:15,cont:""},
+  {id:8,code:"1MM-34",name:"UKIYO WOK WOOD HANDLE 34CM",mrp:0,cmrp:6450,k2d:0,k1f:4,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:9,code:"1MM-36",name:"UKIYO WOK WOOD HANDLE 36CM",mrp:0,cmrp:6750,k2d:0,k1f:5,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:10,code:"1MM-38",name:"UKIYO WOK WOOD HANDLE 38CM",mrp:0,cmrp:6900,k2d:0,k1f:2,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:11,code:"1MM-40",name:"UKIYO WOK WOOD HANDLE 40CM",mrp:0,cmrp:7800,k2d:0,k1f:4,k2f:0,re:1,boxCtn:30,cont:""},
+  {id:12,code:"1.2MM-32",name:"UKIYO WOK RUBBER HANDLE 32CM",mrp:0,cmrp:7100,k2d:0,k1f:0,k2f:0,re:1,boxCtn:25,cont:""},
+  {id:13,code:"1.2MM-34",name:"UKIYO WOK RUBBER HANDLE 34CM",mrp:0,cmrp:7350,k2d:0,k1f:0,k2f:0,re:1,boxCtn:25,cont:""},
+  {id:14,code:"1.2MM-38",name:"UKIYO WOK RUBBER HANDLE 38CM",mrp:0,cmrp:8650,k2d:0,k1f:1,k2f:0,re:1,boxCtn:25,cont:""},
+  {id:15,code:"1.2MM-40",name:"UKIYO WOK RUBBER HANDLE 40CM",mrp:0,cmrp:9750,k2d:0,k1f:0,k2f:0,re:1,boxCtn:25,cont:""},
+  {id:16,code:"PE0418",name:"UKIYO WOK / KADAI BLACK 40CM",mrp:0,cmrp:5600,k2d:0,k1f:0,k2f:0,re:1,boxCtn:10,cont:""},
+  {id:17,code:"PE0420",name:"UKIYO WOK / KADAI BLACK 45CM",mrp:0,cmrp:6100,k2d:0,k1f:0,k2f:0,re:1,boxCtn:10,cont:""},
+  {id:18,code:"ECO NO.20",name:"UKIYO JHARA ECO WIRE NO.20",mrp:0,cmrp:10000,k2d:0,k1f:4,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:19,code:"ECO NO.22",name:"UKIYO JHARA ECO WIRE NO.22",mrp:0,cmrp:11600,k2d:0,k1f:4,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:20,code:"ECO NO.24",name:"UKIYO JHARA ECO WIRE NO.24",mrp:0,cmrp:13000,k2d:0,k1f:3,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:21,code:"ECO NO.26",name:"UKIYO JHARA ECO WIRE NO.26",mrp:0,cmrp:14700,k2d:0,k1f:0,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:22,code:"ECO NO.28",name:"UKIYO JHARA ECO WIRE NO.28",mrp:0,cmrp:16200,k2d:0,k1f:1,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:23,code:"ECO NO.30",name:"UKIYO JHARA ECO WIRE NO.30",mrp:0,cmrp:17800,k2d:0,k1f:2,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:24,code:"ECO NO.32",name:"UKIYO JHARA ECO WIRE NO.32",mrp:0,cmrp:19400,k2d:0,k1f:2,k2f:0,re:1,boxCtn:80,cont:""},
+  {id:25,code:"ECO-WD-26",name:"UKIYO JHARA ECO WOOD HANDLE NO.26 SHORT",mrp:0,cmrp:14700,k2d:0,k1f:2,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:26,code:"ECO-WD-28",name:"UKIYO JHARA ECO WOOD HANDLE NO.28 SHORT",mrp:0,cmrp:16200,k2d:0,k1f:2,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:27,code:"ECO-WD-30",name:"UKIYO JHARA ECO WOOD HANDLE NO.30 SHORT",mrp:0,cmrp:17800,k2d:0,k1f:2,k2f:0,re:1,boxCtn:100,cont:""},
+  {id:28,code:"PRM NO.26",name:"UKIYO JHARA PRM WIRE NO.26",mrp:0,cmrp:16200,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:29,code:"PRM NO.28",name:"UKIYO JHARA PRM WIRE NO.28",mrp:0,cmrp:17520,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:30,code:"PRM NO.30",name:"UKIYO JHARA PRM WIRE NO.30",mrp:0,cmrp:18840,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:31,code:"PRM NO.32",name:"UKIYO JHARA PRM WIRE NO.32",mrp:0,cmrp:20400,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""}
 ]};
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
@@ -793,10 +826,10 @@ function Stocks(){
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
   const isSilver=tab==="Solo"||tab==="Awk";
-  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Bar"||tab==="Knife"||tab==="Basket"||tab==="Misc";
+  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Bar"||tab==="Knife"||tab==="Basket"||tab==="Misc"||tab==="Wok";
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Bar"?C.green:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":tab==="Misc"?C.acc:C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Bar"?C.green:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
@@ -873,7 +906,7 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Bar",i:"🍺",c:C.green},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Misc",i:"📦",c:C.acc},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Bar",i:"🍺",c:C.green},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b"},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -887,6 +920,7 @@ function Stocks(){
     {tab==="Knife"&&<div style={{background:"#ca8a0415",border:"1px solid #ca8a0433",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🔪</div><div style={{fontWeight:800,fontSize:15,color:"#ca8a04",letterSpacing:1}}>UTILITY KNIVES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — 6&quot;, 8&quot; &amp; 10&quot; in Yellow, Red, Green &amp; White</div></div>}
     {tab==="Basket"&&<div style={{background:"#92400e15",border:"1px solid #92400e33",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🧺</div><div style={{fontWeight:800,fontSize:15,color:"#92400e",letterSpacing:1}}>BREAD BASKETS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Brown, Dual Colour &amp; Cream baskets + Cutlery holders</div></div>}
     {tab==="Misc"&&<div style={{background:C.acc+"15",border:`1px solid ${C.acc}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>📦</div><div style={{fontWeight:800,fontSize:15,color:C.acc,letterSpacing:1}}>MISC ACCESSORIES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Pourers, Condiment Trays, Bottles, Plungers &amp; More</div></div>}
+    {tab==="Wok"&&<div style={{background:"#64748b15",border:"1px solid #64748b33",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🥘</div><div style={{fontWeight:800,fontSize:15,color:"#64748b",letterSpacing:1}}>WOK &amp; JHARA</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Woks, Kadais, Jharas &amp; Silicon Tools</div></div>}
     {isSilver&&<div style={{background:ac+"15",border:`1px solid ${ac}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>{tab==="Solo"?"🥄":"🍴"}</div><div style={{fontWeight:800,fontSize:15,color:ac,letterSpacing:1}}>{tab==="Solo"?"SOLO SILVERWARE":"AWK SILVERWARE"}</div><div style={{fontSize:11,color:C.muted}}>{tab==="Solo"?"Standard Collection — Impress · Murphy · Safari":"AWK Collection — Delton Range"}</div></div>}
     <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search..." value={search} onChange={e=>setSearch(e.target.value)}/>
     <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:760}}>
