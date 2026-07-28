@@ -854,7 +854,13 @@ Dim:[
   {id:13,code:"LE-7",name:"WC DIMSUM SQ 24.5CM",mrp:0,cmrp:15500,k2d:0,k1f:1,k2f:0,re:1,boxCtn:25,cont:""},
   {id:14,code:"LE-8",name:"WC DIMSUM SQ 27CM",mrp:0,cmrp:14400,k2d:0,k1f:4,k2f:0,re:1,boxCtn:20,cont:""},
   {id:15,code:"LE-9",name:"WC DIMSUM SQ 30CM",mrp:0,cmrp:15480,k2d:0,k1f:4,k2f:0,re:1,boxCtn:18,cont:""},
-  {id:16,code:"LE-10",name:"WC DIMSUM SQ 32CM",mrp:0,cmrp:18540,k2d:0,k1f:4,k2f:0,re:1,boxCtn:18,cont:""}
+  {id:16,code:"LE-10",name:"WC DIMSUM SQ 32CM",mrp:0,cmrp:18540,k2d:0,k1f:4,k2f:0,re:1,boxCtn:18,cont:""},
+  {id:17,code:"PB-20x30",name:"WC PIZZA BAT 20x30 CM",mrp:0,cmrp:6600,k2d:0,k1f:5,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:18,code:"PB-22x32",name:"WC PIZZA BAT 22x32 CM",mrp:0,cmrp:8100,k2d:0,k1f:2,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:19,code:"PB-24x35",name:"WC PIZZA BAT 24x35 CM",mrp:0,cmrp:9840,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:20,code:"PB-25x35",name:"WC PIZZA BAT 25x35 CM",mrp:0,cmrp:12240,k2d:0,k1f:0,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:21,code:"PB-27x37",name:"WC PIZZA BAT 27x37 CM",mrp:0,cmrp:13080,k2d:0,k1f:3,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:22,code:"PB-28x40",name:"WC PIZZA BAT 28x40 CM",mrp:0,cmrp:12100,k2d:0,k1f:0,k2f:0,re:1,boxCtn:50,cont:""}
 ]};
 function Stocks(){
   const [tab,setTab]=useState("Ocean");
