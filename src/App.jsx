@@ -173,7 +173,7 @@ function Dashboard({role,currentUser,onNav,notifs,isDesktop:isD}){
   const allDisp=useMemo(()=>Object.values(_disp||{}).flat(),[_disp]);
   const todayDispCount=useMemo(()=>allDisp.filter(d=>d.date===TODAY).length,[allDisp]);
   const pendingCount=useMemo(()=>(_tasks||[]).filter(t=>t.status!=="Done").length,[_tasks]);
-  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Bar||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Misc||[]),...(_stocks?.Wok||[]),...(_stocks?.GN||[]),...(_stocks?.Dim||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
+  const allStockItems=useMemo(()=>[...(_stocks?.Ocean||[]),...(_stocks?.Ukiyo||[]),...(_stocks?.Tray||[]),...(_stocks?.Knife||[]),...(_stocks?.Basket||[]),...(_stocks?.Misc||[]),...(_stocks?.Wok||[]),...(_stocks?.GN||[]),...(_stocks?.Dim||[]),...(_stocks?.Solo||[]),...(_stocks?.Awk||[])],[_stocks]);
   const lowStockCount=useMemo(()=>allStockItems.filter(it=>{const tot=it.qtyCtn!=null?it.qtyCtn:(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return tot===0||(tot>0&&tot<=(it.re||0));}).length,[allStockItems]);
   const monthSales=useMemo(()=>[...(_sales?.Ocean||[]),...(_sales?.Ukiyo||[]),...(_kaiSales||[])].filter(e=>new Date(e.date+"T00:00:00").getMonth()===CM).reduce((s,e)=>s+e.amount,0),[_sales,_kaiSales]);
   const openTickets=useMemo(()=>(_sup||[]).filter(s=>s.status!=="Resolved").length,[_sup]);
@@ -870,16 +870,26 @@ function Stocks(){
   const [showAdd,setShowAdd]=useState(false);
   const [addForm,setAddForm]=useState({code:"",name:"",cmrp:"",boxCtn:""});
   const isSilver=tab==="Solo"||tab==="Awk";
-  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Bar"||tab==="Knife"||tab==="Basket"||tab==="Misc"||tab==="Wok"||tab==="GN"||tab==="Dim";
+  const isUkiyoLike=tab==="Ukiyo"||tab==="Tray"||tab==="Knife"||tab==="Basket"||tab==="Misc"||tab==="Wok"||tab==="GN"||tab==="Dim";
+  useEffect(()=>{
+    if(loading)return;
+    const bar=stocks.Bar||[];
+    if(bar.length>0){
+      const maxId=(stocks.Tray||[]).reduce((m,i)=>Math.max(m,i.id||0),0);
+      const reNum=bar.map((i,idx)=>({...i,id:maxId+idx+1}));
+      setStocks(p=>({...p,Tray:[...(p.Tray||[]),...reNum],Bar:[]}));
+    }
+  },[loading]);
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Bar"?C.green:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Awk"?C.red:tab==="Tray"?C.purple:tab==="Knife"?"#ca8a04":tab==="Basket"?"#92400e":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
   function reloadCatalog(){
-    if(!window.confirm(`Replace ${tab} stock list with the full ${ST0[tab].length}-item catalog from the warehouse sheet? Any custom items/edits you added beyond the catalog will be lost.`))return;
-    setStocks(p=>({...p,[tab]:ST0[tab]}));
+    const catalog=tab==="Tray"?[...ST0.Tray,...ST0.Bar.map((i,idx)=>({...i,id:ST0.Tray.length+idx+1}))]:ST0[tab];
+    if(!window.confirm(`Replace ${tab} stock list with the full ${catalog.length}-item catalog from the warehouse sheet? Any custom items/edits you added beyond the catalog will be lost.`))return;
+    setStocks(p=>({...p,[tab]:catalog,...(tab==="Tray"?{Bar:[]}:{})}));
   }
   function addItem(){
     if(!addForm.code.trim()||!addForm.name.trim())return;
@@ -950,7 +960,7 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Bar",i:"🍺",c:C.green},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal},{k:"Tray",i:"🫙",c:C.purple},{k:"Knife",i:"🔪",c:"#ca8a04"},{k:"Basket",i:"🧺",c:"#92400e"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Solo",i:"🥄",c:C.orange},{k:"Awk",i:"🍴",c:C.red}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:1,background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t.i}</span><span style={{color:tab===t.k?t.c:C.muted,fontSize:11,fontWeight:700}}>{t.k}</span></button>)}</div>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -959,8 +969,7 @@ function Stocks(){
       </div>
     </div>
     {tab==="Ukiyo"&&<div style={{background:C.teal+"15",border:`1px solid ${C.teal}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🛏️</div><div style={{fontWeight:800,fontSize:15,color:C.teal,letterSpacing:1}}>TABLE MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — All items are table mats</div></div>}
-    {tab==="Tray"&&<div style={{background:C.purple+"15",border:`1px solid ${C.purple}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🫙</div><div style={{fontWeight:800,fontSize:15,color:C.purple,letterSpacing:1}}>ANTI-SKID TRAYS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Black &amp; Brown oval and round trays</div></div>}
-    {tab==="Bar"&&<div style={{background:C.green+"15",border:`1px solid ${C.green}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🍺</div><div style={{fontWeight:800,fontSize:15,color:C.green,letterSpacing:1}}>BAR MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Yellow &amp; Red rubber bar mats</div></div>}
+    {tab==="Tray"&&<div style={{background:C.purple+"15",border:`1px solid ${C.purple}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🫙</div><div style={{fontWeight:800,fontSize:15,color:C.purple,letterSpacing:1}}>ANTI-SKID TRAYS &amp; BAR MATS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Black &amp; Brown trays · Yellow &amp; Red rubber bar mats</div></div>}
     {tab==="Knife"&&<div style={{background:"#ca8a0415",border:"1px solid #ca8a0433",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🔪</div><div style={{fontWeight:800,fontSize:15,color:"#ca8a04",letterSpacing:1}}>UTILITY KNIVES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — 6&quot;, 8&quot; &amp; 10&quot; in Yellow, Red, Green &amp; White</div></div>}
     {tab==="Basket"&&<div style={{background:"#92400e15",border:"1px solid #92400e33",borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>🧺</div><div style={{fontWeight:800,fontSize:15,color:"#92400e",letterSpacing:1}}>BREAD BASKETS</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Brown, Dual Colour &amp; Cream baskets + Cutlery holders</div></div>}
     {tab==="Misc"&&<div style={{background:C.acc+"15",border:`1px solid ${C.acc}33`,borderRadius:11,padding:"14px",marginBottom:11,display:"flex",flexDirection:"column",alignItems:"center",gap:6}}><div style={{fontSize:36}}>📦</div><div style={{fontWeight:800,fontSize:15,color:C.acc,letterSpacing:1}}>MISC ACCESSORIES</div><div style={{fontSize:11,color:C.muted}}>Ukiyo Collection — Pourers, Condiment Trays, Bottles, Plungers &amp; More</div></div>}
