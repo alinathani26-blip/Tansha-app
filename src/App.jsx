@@ -1031,9 +1031,15 @@ function Stocks(){
       setStocks(p=>({...p,Solo:[...(p.Solo||[]),...reNum],Awk:[]}));
     }
   },[loading]);
+  const isAll=tab==="All";
+  const ALL_STOCK_TABS=["Ukiyo","Tray","Knife","Misc","Wok","GN","Dim","Rack","Mach","Solo"];
+  const TAB_COLORS={Ukiyo:C.teal,Tray:C.purple,Knife:"#ca8a04",Misc:C.acc,Wok:"#64748b",GN:"#0284c7",Dim:"#b45309",Rack:"#2563eb",Mach:"#dc2626",Solo:C.orange};
+  const TAB_SHORT={Ukiyo:"T.Mat",Tray:"Tray",Knife:"Knife",Misc:"Misc",Wok:"Wok",GN:"GN",Dim:"Dim",Rack:"Rack",Mach:"Mach",Solo:"Solo"};
+  const allRaw=isAll?ALL_STOCK_TABS.flatMap(t=>(stocks[t]||[]).map(i=>({...i,_tab:t}))):[];
+  const allShown=isAll?(search?allRaw.filter(i=>(i.name||"").toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):allRaw):[];
   const items=isSilver?(stocks[tab]||[]).map(it=>{const totalDoz=(it.qtyCtn||0)*(it.dozCtn||0);return{...it,tot:it.qtyCtn||0,totalDoz,val:totalDoz*(it.rate||0),isZ:(it.qtyCtn||0)===0};}):(stocks[tab]||[]).map(it=>{const tot=(it.k2d||0)+(it.k1f||0)+(it.k2f||0);return{...it,tot,val:tot*it.cmrp,totBox:tot*(it.boxCtn||0),isZ:tot===0,isL:tot>0&&tot<=it.re};});
   const shown=search?items.filter(i=>i.name.toLowerCase().includes(search.toLowerCase())||(i.code||"").toLowerCase().includes(search.toLowerCase())||(i.brand||"").toLowerCase().includes(search.toLowerCase())):items;
-  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Tray"?C.purple:tab==="Knife"?"#ca8a04":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":tab==="Rack"?"#2563eb":tab==="Mach"?"#dc2626":C.teal;
+  const ac=tab==="Ocean"?C.blue:tab==="Solo"?C.orange:tab==="Tray"?C.purple:tab==="Knife"?"#ca8a04":tab==="Misc"?C.acc:tab==="Wok"?"#64748b":tab==="GN"?"#0284c7":tab==="Dim"?"#b45309":tab==="Rack"?"#2563eb":tab==="Mach"?"#dc2626":tab==="All"?"#6366f1":C.teal;
   const LKs=["k2d","k1f","k2f"];const LC2=[C.blue,C.purple,C.teal];
   function setItem(id,changes){setStocks(p=>({...p,[tab]:p[tab].map(i=>i.id===id?{...i,...changes}:i)}));}
   function delItem(id){setStocks(p=>({...p,[tab]:p[tab].filter(i=>i.id!==id)}));setEditIt(null);}
@@ -1111,7 +1117,26 @@ function Stocks(){
         <button onClick={addItem} style={{background:ac,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Add Item ✓</button>
       </div>
     </Mod>}
-    <div style={{overflowX:"auto",marginBottom:12}}><div style={{display:"flex",gap:5,background:C.card,borderRadius:11,padding:4,minWidth:"max-content"}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"Ukiyo",i:"🍽️",c:C.teal,l:"T.Mat"},{k:"Tray",i:"🫙",c:C.purple,l:"Bar Mat +\nAnti.S Tray"},{k:"Knife",i:"🔪",c:"#ca8a04",l:"Knife &\nBasket"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b",l:"Wok +\nJhara"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Rack",i:"📦",c:"#2563eb"},{k:"Mach",i:"⚙️",c:"#dc2626"},{k:"Solo",i:"🥄",c:C.orange,l:"Solo &\nAwk"}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:"0 0 auto",background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46}}><span style={{color:tab===t.k?t.c:C.muted,fontSize:10,fontWeight:700,whiteSpace:"pre-line",textAlign:"center",lineHeight:1.2}}>{t.l||t.k}</span></button>)}</div></div>
+    <div style={{overflowX:"auto",marginBottom:12}}><div style={{display:"flex",gap:5,background:C.card,borderRadius:11,padding:4,minWidth:"max-content"}}>{[{k:"Ocean",i:"🥂",c:C.blue},{k:"All",i:"📋",c:"#6366f1",l:"All\nStock"},{k:"Ukiyo",i:"🍽️",c:C.teal,l:"T.Mat"},{k:"Tray",i:"🫙",c:C.purple,l:"Bar Mat +\nAnti.S Tray"},{k:"Knife",i:"🔪",c:"#ca8a04",l:"Knife &\nBasket"},{k:"Misc",i:"📦",c:C.acc},{k:"Wok",i:"🥘",c:"#64748b",l:"Wok +\nJhara"},{k:"GN",i:"🍱",c:"#0284c7"},{k:"Dim",i:"🥟",c:"#b45309"},{k:"Rack",i:"📦",c:"#2563eb"},{k:"Mach",i:"⚙️",c:"#dc2626"},{k:"Solo",i:"🥄",c:C.orange,l:"Solo &\nAwk"}].map(t=><button key={t.k} onClick={()=>setTab(t.k)} style={{flex:"0 0 auto",background:tab===t.k?t.c+"33":"transparent",border:`1px solid ${tab===t.k?t.c+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2,minWidth:46}}><span style={{color:tab===t.k?t.c:C.muted,fontSize:10,fontWeight:700,whiteSpace:"pre-line",textAlign:"center",lineHeight:1.2}}>{t.l||t.k}</span></button>)}</div></div>
+    {isAll?(<>
+    <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}>
+      <Pill label="Items" value={allRaw.length} color="#6366f1"/>
+      <Pill label="Value" value={fmt(allRaw.reduce((s,i)=>s+(i._tab==="Solo"?(i.qtyCtn||0)*(i.dozCtn||0)*(i.rate||0):(i.k1f||0)*(i.cmrp||0)),0))} color={C.green}/>
+      {allRaw.filter(i=>i._tab!=="Solo"&&(i.k1f||0)===0).length>0&&<Pill label="Zero" value={allRaw.filter(i=>i._tab!=="Solo"&&(i.k1f||0)===0).length} color={C.red}/>}
+    </div>
+    <div style={{background:"#6366f115",border:"1px solid #6366f133",borderRadius:7,padding:"5px 12px",marginBottom:8,display:"flex",alignItems:"center",gap:8}}><span style={{fontWeight:800,fontSize:11,color:"#6366f1",flexShrink:0}}>ALL STOCK</span><span style={{fontSize:10,color:C.muted,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>All categories except Ocean · Search · Edit qty live</span></div>
+    <input style={{...INP,marginBottom:11,padding:"7px 11px"}} placeholder="🔍 Search items, codes..." value={search} onChange={e=>setSearch(e.target.value)}/>
+    <div style={{overflowX:"auto",borderRadius:9,border:`1px solid ${C.cb}`}}><table style={{width:"100%",borderCollapse:"collapse",fontSize:11,minWidth:460}}>
+      <thead><tr style={{background:C.card}}>{["Cat","Code","Item","Qty","Value"].map(h=><th key={h} style={{padding:"6px 7px",color:C.muted,fontWeight:700,textAlign:h==="Item"||h==="Cat"?"left":"center",borderBottom:`1px solid ${C.cb}`,fontSize:10,whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+      <tbody>{allShown.map((it,i)=>{const isSolo=it._tab==="Solo";const qty=isSolo?(it.qtyCtn||0):(it.k1f||0);const val=isSolo?(it.qtyCtn||0)*(it.dozCtn||0)*(it.rate||0):(it.k1f||0)*(it.cmrp||0);const isZ=qty===0;const tc=TAB_COLORS[it._tab]||C.teal;return(<tr key={`${it._tab}-${it.id}`} style={{background:isZ?C.red+"11":i%2===0?C.card:"#F9FAFB",borderBottom:`1px solid ${C.cb}22`}}>
+        <td style={{padding:"5px 7px"}}><span style={{background:tc+"22",color:tc,borderRadius:4,padding:"2px 6px",fontSize:9,fontWeight:800,whiteSpace:"nowrap"}}>{TAB_SHORT[it._tab]}</span></td>
+        <td style={{padding:"5px 7px",fontFamily:"monospace",fontSize:10,color:C.muted,whiteSpace:"nowrap"}}>{it.code||"—"}</td>
+        <td style={{padding:"5px 7px",color:C.text,maxWidth:160,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{isSolo?`${it.brand} ${it.name}`:it.name}</td>
+        <td style={{padding:"3px 5px",textAlign:"center"}}><input type="number" min="0" value={qty} onChange={e=>{const v=parseInt(e.target.value)||0;setStocks(p=>({...p,[it._tab]:p[it._tab].map(r=>r.id===it.id?{...r,...(isSolo?{qtyCtn:v}:{k1f:v})}:r)}));}} style={{...INP,width:52,padding:"3px 5px",textAlign:"center",fontSize:11,borderColor:isZ?C.red+"66":C.cb}}/></td>
+        <td style={{padding:"5px 7px",textAlign:"center",color:C.green,fontWeight:700,fontSize:10}}>{fmt(val)}</td>
+      </tr>);})}</tbody>
+    </table></div>
+    </>):(<>
     <div style={{display:"flex",gap:7,marginBottom:11,flexWrap:"wrap",alignItems:"center"}}><Pill label="CTN" value={items.reduce((s,i)=>s+i.tot,0)} color={ac}/>{isSilver&&<Pill label="Total DOZ" value={items.reduce((s,i)=>s+(i.totalDoz||0),0)} color={ac}/>}<Pill label="Value" value={fmt(items.reduce((s,i)=>s+i.val,0))} color={C.green}/>{!isSilver&&items.filter(i=>i.isL).length>0&&<Pill label="Low" value={items.filter(i=>i.isL).length} color={C.acc}/>}{items.filter(i=>i.isZ).length>0&&<Pill label="Zero" value={items.filter(i=>i.isZ).length} color={C.red}/>}
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowAdd(true)} style={{background:ac,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ Item</button>
@@ -1149,6 +1174,7 @@ function Stocks(){
         <td style={{padding:"3px 5px",textAlign:"center"}}><button onClick={()=>setEditIt({...it})} style={{background:C.cb,border:"none",color:C.muted,borderRadius:4,width:20,height:20,cursor:"pointer",fontSize:10}}>✏</button></td>
       </tr>)}</tbody>
     </table></div>
+    </>)}
   </div>);
 }
 
