@@ -471,6 +471,7 @@ function Dispatch({role}){
   const [_dSales]=useFirestoreState("sales",{});
   const [_dKaiSales]=useFirestoreState("salesKai",[]);
   const salesClients=useMemo(()=>{const s=new Set();Object.values(_dSales||{}).flat().forEach(e=>e.client&&s.add(e.client));(_dKaiSales||[]).forEach(e=>e.client&&s.add(e.client));return[...s].sort((a,b)=>a.localeCompare(b));},[_dSales,_dKaiSales]);
+  const [showClientDrop,setShowClientDrop]=useState(false);
   const [sel,setSel]=useState(null);
   const [editForm,setEditForm]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -532,6 +533,8 @@ function Dispatch({role}){
     doc.text(`Pending LR (${pendingLR.length}): ${pendingLR.length?pendingLR.map(d=>d.client).join(", "):"None — all LRs received"}`,14,y,{maxWidth:180});
     doc.save(`Dispatch_${loc.replace(/\s+/g,"_")}_${TODAY}.pdf`);
   }
+  const fltDispCli=salesClients.filter(c=>!form.client||c.toLowerCase().includes(form.client.toLowerCase())).slice(0,8);
+  const fltEditCli=editForm?salesClients.filter(c=>!editForm.client||c.toLowerCase().includes(editForm.client.toLowerCase())).slice(0,8):[];
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {/* Detail Modal */}
@@ -579,7 +582,7 @@ function Dispatch({role}){
     {/* Edit Modal */}
     {editForm&&<Mod onClose={()=>setEditForm(null)} title="Edit Dispatch" sub={editForm.client}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
-        <div><label style={LBL}>Client</label><input list="dc-clients" style={INP} value={editForm.client} onChange={e=>setEditForm(f=>({...f,client:e.target.value}))}/></div>
+        <div><label style={LBL}>Client</label><div style={{position:"relative"}}><input style={INP} value={editForm.client} onFocus={()=>setShowClientDrop(true)} onBlur={()=>setTimeout(()=>setShowClientDrop(false),150)} onChange={e=>{setEditForm(f=>({...f,client:e.target.value}));setShowClientDrop(true);}}/>{showClientDrop&&fltEditCli.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:200,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltEditCli.map(name=><div key={name} onClick={()=>{setEditForm(f=>({...f,client:name}));setShowClientDrop(false);}} style={{padding:"10px 13px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></div>
         <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setEditForm(f=>({...f,transport:t}))} style={{background:editForm.transport===t?C.green+"33":C.cb,color:editForm.transport===t?C.green:C.muted,border:`1px solid ${editForm.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:10}}><div><label style={LBL}>Qty</label><input type="number" style={INP} value={editForm.qty||""} onChange={e=>setEditForm(f=>({...f,qty:parseInt(e.target.value)||null}))}/></div><div><label style={LBL}>Unit</label><select style={{...INP,appearance:"none"}} value={editForm.unit} onChange={e=>setEditForm(f=>({...f,unit:e.target.value}))}><option>Ctn</option><option>Jota</option><option>Bag</option></select></div></div>
         <div><label style={LBL}>Date</label><input type="date" style={INP} value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))}/></div>
@@ -590,7 +593,7 @@ function Dispatch({role}){
     {/* New Dispatch Modal */}
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Dispatch" sub={loc}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
-        <div><label style={LBL}>Client *</label><input list="dc-clients" style={INP} placeholder="Type or pick from monthly report…" value={form.client} onChange={e=>setForm({...form,client:e.target.value})}/><datalist id="dc-clients">{salesClients.map(c=><option key={c} value={c}/>)}</datalist></div>
+        <div><label style={LBL}>Client *</label><div style={{position:"relative"}}><input style={INP} placeholder="Type or pick from monthly report…" value={form.client} onFocus={()=>setShowClientDrop(true)} onBlur={()=>setTimeout(()=>setShowClientDrop(false),150)} onChange={e=>{setForm({...form,client:e.target.value});setShowClientDrop(true);}}/>{showClientDrop&&fltDispCli.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:200,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltDispCli.map(name=><div key={name} onClick={()=>{setForm(f=>({...f,client:name}));setShowClientDrop(false);}} style={{padding:"10px 13px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></div>
         <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setForm({...form,transport:t})} style={{background:form.transport===t?C.green+"33":C.cb,color:form.transport===t?C.green:C.muted,border:`1px solid ${form.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
         <div><label style={LBL}>Date</label><input type="date" style={INP} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         <button onClick={add} style={{background:lc,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Save — Add Qty Later ›</button>
@@ -1629,7 +1632,8 @@ const UP=[
 ];
 function Quotation(){
   const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
-  const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");
+  const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");const [showClientDrop,setShowClientDrop]=useState(false);
+  const [_qKaiSales]=useFirestoreState("salesKai",[]);const [_qOcnSales]=useFirestoreState("sales",{});
   const [saved,setSaved,loading]=useFirestoreState("quotes",[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
@@ -1720,11 +1724,13 @@ function Quotation(){
     }
     doc.save(fileName);
   }
+  const qClients=useMemo(()=>{const s=new Set();if(team==="Ukiyo"){(_qKaiSales||[]).forEach(e=>e.client&&s.add(e.client));}else{((_qOcnSales||{}).Ocean||[]).forEach(e=>e.client&&s.add(e.client));}return[...s].sort((a,b)=>a.localeCompare(b));},[team,_qKaiSales,_qOcnSales]);
+  const fltQCli=qClients.filter(c=>!client||c.toLowerCase().includes(client.toLowerCase())).slice(0,8);
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {editingId&&<div style={{background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.orange,fontWeight:700,fontSize:13}}>✏️ Editing {qNo}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>Make changes then save to update</div></div><button onClick={cancelEdit} style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,color:C.orange,borderRadius:7,padding:"4px 11px",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button></div>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>{setTeam(t);setItems([]);}} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t} Team</span></button>)}</div>
-    <Card style={{marginBottom:11}}><label style={LBL}>Client Name</label><input style={INP} placeholder="e.g. Taj Hotels" value={client} onChange={e=>setClient(e.target.value)}/></Card>
+    <Card style={{marginBottom:11}}><label style={LBL}>Client Name</label><div style={{position:"relative"}}><input style={INP} placeholder="e.g. Taj Hotels" value={client} onFocus={()=>setShowClientDrop(true)} onBlur={()=>setTimeout(()=>setShowClientDrop(false),150)} onChange={e=>{setClient(e.target.value);setShowClientDrop(true);}}/>{showClientDrop&&fltQCli.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:200,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltQCli.map(name=><div key={name} onClick={()=>{setClient(name);setShowClientDrop(false);}} style={{padding:"10px 13px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></Card>
     <Card style={{marginBottom:11}}>
       <div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:7}}>Search Products</div>
       <div style={{position:"relative"}}>
