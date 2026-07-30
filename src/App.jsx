@@ -731,7 +731,10 @@ Bar:[
   {id:2,code:"60*8*1",name:"UKIYO BAR MAT YELLOW 60x8 CM",mrp:0,cmrp:10400,k2d:0,k1f:3,k2f:0,re:2,boxCtn:50,cont:""},
   {id:3,code:"40*30*1",name:"UKIYO BAR MAT YELLOW 40x30 CM",mrp:0,cmrp:6600,k2d:0,k1f:7,k2f:0,re:2,boxCtn:25,cont:""},
   {id:4,code:"60*8*1R",name:"UKIYO BAR MAT RED 60x8 CM",mrp:0,cmrp:10400,k2d:0,k1f:3,k2f:0,re:2,boxCtn:50,cont:""},
-  {id:5,code:"40*30*1R",name:"UKIYO BAR MAT RED 40x30 CM",mrp:0,cmrp:6600,k2d:0,k1f:5,k2f:0,re:2,boxCtn:25,cont:""}
+  {id:5,code:"40*30*1R",name:"UKIYO BAR MAT RED 40x30 CM",mrp:0,cmrp:6600,k2d:0,k1f:5,k2f:0,re:2,boxCtn:25,cont:""},
+  {id:6,code:"PE-0KITO-30x15",name:"PE-0KITO RUBBER MAT 30x15x1 CM",mrp:0,cmrp:0,k2d:0,k1f:1,k2f:0,re:1,boxCtn:60,cont:""},
+  {id:7,code:"PE-0KITO-60x15",name:"PE-0KITO RUBBER MAT 60x15x1 CM",mrp:0,cmrp:0,k2d:0,k1f:2,k2f:0,re:1,boxCtn:40,cont:""},
+  {id:8,code:"PE-0KITO-60x8",name:"PE-0KITO RUBBER MAT 60x8x1 CM",mrp:0,cmrp:0,k2d:0,k1f:1,k2f:0,re:1,boxCtn:50,cont:""}
 ],
 Knife:[
   {id:1,code:"20-6",name:"UKIYO UTILITY KNIFE 06 INCH YELLOW",mrp:0,cmrp:0,k2d:0,k1f:0,k2f:0,re:2,boxCtn:120,cont:""},
@@ -783,7 +786,21 @@ Misc:[
   {id:16,code:"PIZZA-CUT",name:"PIZZA CUTTER 3.5\" BLACK",mrp:0,cmrp:11400,k2d:0,k1f:1,k2f:0,re:1,boxCtn:120,cont:""},
   {id:17,code:"49YC",name:"MAGNETIC KNIFE BAR 48CM",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:50,cont:""},
   {id:18,code:"XF-8888",name:"RICE CONTAINER 100L (XF-8888)",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:1,cont:""},
-  {id:19,code:"QH-IB81",name:"RICE CONTAINER 81L (QH-IB81)",mrp:0,cmrp:0,k2d:0,k1f:9,k2f:0,re:1,boxCtn:1,cont:""}
+  {id:19,code:"QH-IB81",name:"RICE CONTAINER 81L (QH-IB81)",mrp:0,cmrp:0,k2d:0,k1f:9,k2f:0,re:1,boxCtn:1,cont:""},
+  {id:20,code:"MS-41229-20",name:"UKIYO FRYPAN 20CM",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:21,code:"MS-41229-22",name:"UKIYO FRYPAN 22CM",mrp:0,cmrp:0,k2d:0,k1f:2,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:22,code:"MS-41229-24",name:"UKIYO FRYPAN 24CM",mrp:0,cmrp:0,k2d:0,k1f:2,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:23,code:"MS-41229-26",name:"UKIYO FRYPAN 26CM",mrp:0,cmrp:0,k2d:0,k1f:6,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:24,code:"MS-41229-28",name:"UKIYO FRYPAN 28CM",mrp:0,cmrp:0,k2d:0,k1f:12,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:25,code:"MS-41229-30",name:"UKIYO FRYPAN 30CM",mrp:0,cmrp:0,k2d:0,k1f:12,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:26,code:"MS-41229-32",name:"UKIYO FRYPAN 32CM",mrp:0,cmrp:0,k2d:0,k1f:8,k2f:0,re:1,boxCtn:12,cont:""},
+  {id:27,code:"491-1",name:"MEGAPLATTER BAGUETTE TRAY",mrp:0,cmrp:0,k2d:0,k1f:2,k2f:0,re:1,boxCtn:10,cont:""},
+  {id:28,code:"BT-BLACK-IC73",name:"MEGAPLATTER BAGUETTE TRAY BLACK",mrp:0,cmrp:0,k2d:0,k1f:2,k2f:0,re:1,boxCtn:10,cont:""},
+  {id:29,code:"HHJ-3300",name:"UKIYO CHICKEN BONE SCISSORS RED",mrp:0,cmrp:0,k2d:0,k1f:7,k2f:0,re:1,boxCtn:72,cont:""},
+  {id:30,code:"HHJ-3300",name:"UKIYO CHICKEN BONE SCISSORS GREEN",mrp:0,cmrp:0,k2d:0,k1f:8,k2f:0,re:1,boxCtn:72,cont:""},
+  {id:31,code:"FOOD-TONG-16",name:"FOOD TONGS 16\"",mrp:0,cmrp:0,k2d:0,k1f:3,k2f:0,re:1,boxCtn:144,cont:""},
+  {id:32,code:"SILICONE-SET-5",name:"SILICONE SET-5",mrp:0,cmrp:0,k2d:0,k1f:8,k2f:0,re:1,boxCtn:50,cont:""},
+  {id:33,code:"PE0477",name:"SHOVEL",mrp:0,cmrp:0,k2d:0,k1f:0,k2f:0,re:1,boxCtn:120,cont:""}
 ],
 Wok:[
   {id:1,code:"PE0468",name:"SILICON SPATULA BLUE 27.5CM",mrp:0,cmrp:10800,k2d:0,k1f:0,k2f:0,re:1,boxCtn:360,cont:""},
