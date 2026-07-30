@@ -468,6 +468,9 @@ function DCard({d,lc,onOpen,onTdy,showTdy}){
 function Dispatch({role}){
   const [loc,setLoc]=useState("Bhiwandi");
   const [disps,setDisps,loading]=useFirestoreState("dispatch",DISP0);
+  const [_dSales]=useFirestoreState("sales",{});
+  const [_dKaiSales]=useFirestoreState("salesKai",[]);
+  const salesClients=useMemo(()=>{const s=new Set();Object.values(_dSales||{}).flat().forEach(e=>e.client&&s.add(e.client));(_dKaiSales||[]).forEach(e=>e.client&&s.add(e.client));return[...s].sort((a,b)=>a.localeCompare(b));},[_dSales,_dKaiSales]);
   const [sel,setSel]=useState(null);
   const [editForm,setEditForm]=useState(null);
   const [showNew,setShowNew]=useState(false);
@@ -576,7 +579,7 @@ function Dispatch({role}){
     {/* Edit Modal */}
     {editForm&&<Mod onClose={()=>setEditForm(null)} title="Edit Dispatch" sub={editForm.client}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
-        <div><label style={LBL}>Client</label><input style={INP} value={editForm.client} onChange={e=>setEditForm(f=>({...f,client:e.target.value}))}/></div>
+        <div><label style={LBL}>Client</label><input list="dc-clients" style={INP} value={editForm.client} onChange={e=>setEditForm(f=>({...f,client:e.target.value}))}/></div>
         <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setEditForm(f=>({...f,transport:t}))} style={{background:editForm.transport===t?C.green+"33":C.cb,color:editForm.transport===t?C.green:C.muted,border:`1px solid ${editForm.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
         <div style={{display:"grid",gridTemplateColumns:"2fr 1fr",gap:10}}><div><label style={LBL}>Qty</label><input type="number" style={INP} value={editForm.qty||""} onChange={e=>setEditForm(f=>({...f,qty:parseInt(e.target.value)||null}))}/></div><div><label style={LBL}>Unit</label><select style={{...INP,appearance:"none"}} value={editForm.unit} onChange={e=>setEditForm(f=>({...f,unit:e.target.value}))}><option>Ctn</option><option>Jota</option><option>Bag</option></select></div></div>
         <div><label style={LBL}>Date</label><input type="date" style={INP} value={editForm.date} onChange={e=>setEditForm(f=>({...f,date:e.target.value}))}/></div>
@@ -587,7 +590,7 @@ function Dispatch({role}){
     {/* New Dispatch Modal */}
     {showNew&&<Mod onClose={()=>setShowNew(false)} title="+ New Dispatch" sub={loc}>
       <div style={{display:"flex",flexDirection:"column",gap:11}}>
-        <div><label style={LBL}>Client *</label><input style={INP} placeholder="e.g. Taj Hotels" value={form.client} onChange={e=>setForm({...form,client:e.target.value})}/></div>
+        <div><label style={LBL}>Client *</label><input list="dc-clients" style={INP} placeholder="Type or pick from monthly report…" value={form.client} onChange={e=>setForm({...form,client:e.target.value})}/><datalist id="dc-clients">{salesClients.map(c=><option key={c} value={c}/>)}</datalist></div>
         <div><label style={LBL}>Transport</label><div style={{display:"flex",flexWrap:"wrap",gap:5}}>{TR.map(t=><button key={t} type="button" onClick={()=>setForm({...form,transport:t})} style={{background:form.transport===t?C.green+"33":C.cb,color:form.transport===t?C.green:C.muted,border:`1px solid ${form.transport===t?C.green+"55":"transparent"}`,borderRadius:6,padding:"4px 9px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{t}</button>)}</div></div>
         <div><label style={LBL}>Date</label><input type="date" style={INP} value={form.date} onChange={e=>setForm({...form,date:e.target.value})}/></div>
         <button onClick={add} style={{background:lc,border:"none",color:"#fff",borderRadius:10,padding:13,fontWeight:800,cursor:"pointer"}}>Save — Add Qty Later ›</button>
