@@ -483,7 +483,7 @@ function Dispatch({role}){
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
   const [form,setForm]=useState({client:"",transport:"Rajesh",date:TODAY});
-  const [dispDate,setDispDate]=useState("");
+  const [dispDate,setDispDate]=useState(TODAY);
   const YESTERDAY=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split("T")[0];})();
   const [copyDate,setCopyDate]=useState(YESTERDAY);
   const lc=LC[loc];
