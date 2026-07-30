@@ -439,13 +439,16 @@ function Tasks({role,currentUser,setNotifs}){
 // ── Dispatch ──
 const LC={"Bhiwandi":C.purple,"Local Tansha":C.blue,"Local Kaizen":C.acc};
 const DSC={Pending:C.acc,Ready:C.orange,"On Hold":C.red,Dispatched:C.green};
-const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"Rajesh",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:""},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"Gujarat",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"Hand Delivery",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:""},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"Porter",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"Munshi",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:""}]};
-function DCard({d,lc,onOpen}){
+const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"Rajesh",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"Gujarat",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"Hand Delivery",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"Porter",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"Munshi",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}]};
+function DCard({d,lc,onOpen,onTdy,showTdy}){
   const isO=["Porter","Hand Delivery"].includes(d.transport);const sc=DSC[d.status]||C.acc;
-  return (<div onClick={()=>onOpen(d)} style={{background:d.status==="Dispatched"?C.green+"0D":d.status==="On Hold"?C.red+"08":d.status==="Ready"?C.orange+"08":C.card,border:`1px solid ${d.status==="Dispatched"?C.green+"33":d.status==="On Hold"?C.red+"33":d.status==="Ready"?C.orange+"33":C.cb}`,borderLeft:`3px solid ${sc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
+  return (<div onClick={()=>onOpen(d)} style={{background:d.tdy?"#f59e0b0A":d.status==="Dispatched"?C.green+"0D":d.status==="On Hold"?C.red+"08":d.status==="Ready"?C.orange+"08":C.card,border:`1px solid ${d.tdy?"#f59e0b44":d.status==="Dispatched"?C.green+"33":d.status==="On Hold"?C.red+"33":d.status==="Ready"?C.orange+"33":C.cb}`,borderLeft:`3px solid ${d.tdy?"#f59e0b":sc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
     <div style={{display:"flex",justifyContent:"space-between",gap:7,alignItems:"center"}}>
       <div style={{flex:1,minWidth:0}}>
-        <div style={{color:d.status==="Dispatched"?C.muted:C.text,fontWeight:700,fontSize:13,textDecoration:d.status==="Dispatched"?"line-through":"none",marginBottom:4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{d.client}</div>
+        <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
+          <span style={{color:d.status==="Dispatched"?C.muted:C.text,fontWeight:700,fontSize:13,textDecoration:d.status==="Dispatched"?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,minWidth:0}}>{d.client}</span>
+          {showTdy&&<span onClick={e=>{e.stopPropagation();onTdy();}} style={{background:d.tdy?"#f59e0b":"transparent",color:d.tdy?"#fff":"#f59e0b",border:`1.5px solid ${d.tdy?"#f59e0b":"#f59e0b88"}`,borderRadius:5,padding:"1px 6px",fontSize:9,fontWeight:800,cursor:"pointer",letterSpacing:.5,flexShrink:0,...(d.tdy?{boxShadow:"0 0 7px #f59e0b55"}:{})}} title="Toggle Today Priority">TDY</span>}
+        </div>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           {d.qty?<span style={{background:lc+"22",color:lc,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${lc}33`}}>{d.qty} {d.unit}</span>:<span style={{background:C.red+"18",color:C.red,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${C.red}33`}}>No Qty</span>}
           <span style={{color:isO?C.blue:C.muted,fontSize:11}}>{isO?"🚶":"🚛"} {d.transport}</span>
@@ -490,7 +493,7 @@ function Dispatch({role}){
   const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
   const TR=["Rajesh","Munshi","Tukaram","Gujarat","VRL","Thane Motor","New Super","Porter","Hand Delivery"];
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
-  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:""}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
+  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
   function openD(d){setSel(d);setShowDel(false);setShowHold(false);setHoldInput("");setQtyInp(d.qty?String(d.qty):"");setQtyUnit(d.unit||"Ctn");}
   function saveQty(){const q=parseInt(qtyInp);if(!q)return;upd(sel.id,{qty:q,unit:qtyUnit,status:"Ready"});}
   function deleteD(){setDisps(p=>({...p,[loc]:p[loc].filter(d=>d.id!==sel.id)}));setSel(null);setShowDel(false);}
@@ -613,10 +616,10 @@ function Dispatch({role}){
         <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
       </div>
     </div>
-    {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
-    {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
-    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
-    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD}/>)}</div></>}
+    {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
+    {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
+    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
+    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
   </div>);
 }
 
