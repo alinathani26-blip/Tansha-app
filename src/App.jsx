@@ -436,6 +436,7 @@ function Tasks({role,currentUser,setNotifs}){
   </div>);
 }
 
+const TR=["RAJESH","MUNSHI","TUKARAM","A S PATEL","BEST CARRIER","BOMBAY MAHA","CHINTAMANI","CHOCOLATE","DUTT KRUPA","FALCON","GLOBAL BUS","GUJARAT","GUJARAT GOODS","JAY BABA","JEEVDANI","JETHA BAI","MAHANAGAR","NATIONAL TRAVELS","NEW ROYAL","NEW SUPER","THAKUR","THANE MOTOR","VRL","PORTER","HAND DELIVERY"];
 // ── Dispatch ──
 const LC={"Bhiwandi":C.purple,"Local Tansha":C.blue,"Local Kaizen":C.acc};
 const DSC={Pending:C.acc,Ready:C.orange,"On Hold":C.red,Dispatched:C.green};
@@ -496,7 +497,6 @@ function Dispatch({role}){
   const disp=all.filter(d=>d.status==="Dispatched");
   const pendingLR=disp.filter(d=>!d.lr);
   const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
-  const TR=["RAJESH","MUNSHI","TUKARAM","A S PATEL","BEST CARRIER","BOMBAY MAHA","CHINTAMANI","CHOCOLATE","DUTT KRUPA","FALCON","GLOBAL BUS","GUJARAT","GUJARAT GOODS","JAY BABA","JEEVDANI","JETHA BAI","MAHANAGAR","NATIONAL TRAVELS","NEW ROYAL","NEW SUPER","THAKUR","THANE MOTOR","VRL","PORTER","HAND DELIVERY"];
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
   function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false}]}));setForm({client:"",transport:"RAJESH",date:TODAY});setShowNew(false);}
   function openD(d){setSel(d);setShowDel(false);setShowHold(false);setHoldInput("");setQtyInp(d.qty?String(d.qty):"");setQtyUnit(d.unit||"Ctn");}
@@ -1634,23 +1634,23 @@ const UP=[
 {n:"WC DIMSUM RD 30CM",a:"DS RD 30",p:540,g:5},
 ];
 function Quotation(){
-  const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
-  const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");const [showClientDrop,setShowClientDrop]=useState(false);
+  const [team,setTeam]=useState("Ocean");const [client,setClient]=useState("");const [transport,setTransport]=useState("RAJESH");const [items,setItems]=useState([]);const [search,setSearch]=useState("");const [disc,setDisc]=useState(0);
+  const [editingId,setEditingId]=useState(null);const [qSearch,setQSearch]=useState("");const [showClientDrop,setShowClientDrop]=useState(false);const [showTransDrop,setShowTransDrop]=useState(false);
   const [_qKaiSales]=useFirestoreState("salesKai",[]);const [_qOcnSales]=useFirestoreState("sales",{});
   const [saved,setSaved,loading]=useFirestoreState("quotes",[{id:1,q:"TH-Q101",client:"Taj Hotels",team:"Ocean",grand:143175,date:"20 Apr",items:[],disc:0},{id:2,q:"TH-Q102",client:"Hyatt",team:"Ukiyo",grand:87654,date:"22 Apr",items:[],disc:0}]);
   const prods=team==="Ocean"?OP:UP;const results=search.length>1?prods.filter(p=>p.n.toLowerCase().includes(search.toLowerCase())||p.a.toLowerCase().includes(search.toLowerCase())):[];
   const sub=items.reduce((s,i)=>s+i.qty*i.p,0);const gst=items.reduce((s,i)=>s+i.qty*i.p*(1-disc/100)*i.g/100,0);const grand=sub*(1-disc/100)+gst;
   const qNo=editingId?saved.find(s=>s.id===editingId)?.q:"TH-Q"+(200+saved.length+1);
-  function loadForEdit(q){setTeam(q.team);setClient(q.client);setItems((q.items||[]).map(i=>({...i})));setDisc(q.disc||0);setEditingId(q.id);window.scrollTo(0,0);}
-  function cancelEdit(){setEditingId(null);setClient("");setItems([]);setDisc(0);setSearch("");}
+  function loadForEdit(q){setTeam(q.team);setClient(q.client);setTransport(q.transport||"RAJESH");setItems((q.items||[]).map(i=>({...i})));setDisc(q.disc||0);setEditingId(q.id);window.scrollTo(0,0);}
+  function cancelEdit(){setEditingId(null);setClient("");setTransport("RAJESH");setItems([]);setDisc(0);setSearch("");}
   function deleteQuotation(id){if(window.confirm("Delete this quotation?"))setSaved(p=>p.filter(s=>s.id!==id));}
   function findByNumber(){const q=saved.find(s=>s.q.toLowerCase()===qSearch.trim().toLowerCase());if(q){loadForEdit(q);setQSearch("");}else alert(`Quote "${qSearch}" not found`);}
   function saveQuotation(){
     if(!client||!items.length)return;
-    const entry={id:editingId||Date.now(),q:qNo,client,team,grand,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"}),items:items.map(i=>({...i})),disc};
+    const entry={id:editingId||Date.now(),q:qNo,client,team,transport,grand,date:new Date().toLocaleDateString("en-IN",{day:"numeric",month:"short"}),items:items.map(i=>({...i})),disc};
     if(editingId){setSaved(p=>p.map(s=>s.id===editingId?entry:s));setEditingId(null);}
     else setSaved(p=>[entry,...p]);
-    setClient("");setItems([]);setDisc(0);setSearch("");
+    setClient("");setTransport("RAJESH");setItems([]);setDisc(0);setSearch("");
   }
   const fmtN=n=>Number(n).toLocaleString("en-IN",{maximumFractionDigits:0});
   async function generatePDF(){
@@ -1729,11 +1729,13 @@ function Quotation(){
   }
   const qClients=useMemo(()=>{const s=new Set();if(team==="Ukiyo"){(_qKaiSales||[]).forEach(e=>e.client&&s.add(e.client));}else{((_qOcnSales||{}).Ocean||[]).forEach(e=>e.client&&s.add(e.client));}return[...s].sort((a,b)=>a.localeCompare(b));},[team,_qKaiSales,_qOcnSales]);
   const fltQCli=qClients.filter(c=>!client||c.toLowerCase().includes(client.toLowerCase())).slice(0,8);
+  const fltQTrans=TR.filter(t=>!transport||t.toLowerCase().includes(transport.toLowerCase()));
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {editingId&&<div style={{background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:10,padding:"10px 14px",marginBottom:12,display:"flex",justifyContent:"space-between",alignItems:"center"}}><div><div style={{color:C.orange,fontWeight:700,fontSize:13}}>✏️ Editing {qNo}</div><div style={{color:C.muted,fontSize:11,marginTop:1}}>Make changes then save to update</div></div><button onClick={cancelEdit} style={{background:C.orange+"22",border:`1px solid ${C.orange}44`,color:C.orange,borderRadius:7,padding:"4px 11px",fontWeight:700,cursor:"pointer",fontSize:12}}>Cancel</button></div>}
     <div style={{display:"flex",gap:5,marginBottom:12,background:C.card,borderRadius:11,padding:4}}>{["Ocean","Ukiyo"].map(t=><button key={t} onClick={()=>{setTeam(t);setItems([]);}} style={{flex:1,background:team===t?(t==="Ocean"?C.blue:C.teal)+"33":"transparent",border:`1px solid ${team===t?(t==="Ocean"?C.blue:C.teal)+"55":"transparent"}`,borderRadius:9,padding:"9px 6px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:16}}>{t==="Ocean"?"🥂":"🍽️"}</span><span style={{color:team===t?(t==="Ocean"?C.blue:C.teal):C.muted,fontSize:11,fontWeight:700}}>{t} Team</span></button>)}</div>
     <Card style={{marginBottom:11}}><label style={LBL}>Client Name</label><div style={{position:"relative"}}><input style={INP} placeholder="e.g. Taj Hotels" value={client} onFocus={()=>setShowClientDrop(true)} onBlur={()=>setTimeout(()=>setShowClientDrop(false),150)} onChange={e=>{setClient(e.target.value);setShowClientDrop(true);}}/>{showClientDrop&&fltQCli.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:200,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltQCli.map(name=><div key={name} onClick={()=>{setClient(name);setShowClientDrop(false);}} style={{padding:"10px 13px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></Card>
+    <Card style={{marginBottom:11}}><label style={LBL}>Transport</label><div style={{position:"relative"}}><input style={INP} placeholder="Type or pick transport…" value={transport} onFocus={()=>setShowTransDrop(true)} onBlur={()=>setTimeout(()=>setShowTransDrop(false),150)} onChange={e=>{setTransport(e.target.value.toUpperCase());setShowTransDrop(true);}}/>{showTransDrop&&fltQTrans.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:200,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltQTrans.map(name=><div key={name} onClick={()=>{setTransport(name);setShowTransDrop(false);}} style={{padding:"10px 13px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></Card>
     <Card style={{marginBottom:11}}>
       <div style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:1,marginBottom:7}}>Search Products</div>
       <div style={{position:"relative"}}>
