@@ -439,9 +439,9 @@ function Tasks({role,currentUser,setNotifs}){
 // ── Dispatch ──
 const LC={"Bhiwandi":C.purple,"Local Tansha":C.blue,"Local Kaizen":C.acc};
 const DSC={Pending:C.acc,Ready:C.orange,"On Hold":C.red,Dispatched:C.green};
-const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"Rajesh",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"Gujarat",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"Hand Delivery",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"Porter",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"Munshi",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}]};
+const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"RAJESH",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"GUJARAT",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"HAND DELIVERY",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"PORTER",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"MUNSHI",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}]};
 function DCard({d,lc,onOpen,onTdy,showTdy}){
-  const isO=["Porter","Hand Delivery"].includes(d.transport);const sc=DSC[d.status]||C.acc;
+  const isO=["PORTER","HAND DELIVERY"].includes(d.transport);const sc=DSC[d.status]||C.acc;
   return (<div onClick={()=>onOpen(d)} style={{background:d.tdy?"#f59e0b0A":d.status==="Dispatched"?C.green+"0D":d.status==="On Hold"?C.red+"08":d.status==="Ready"?C.orange+"08":C.card,border:`1px solid ${d.tdy?"#f59e0b44":d.status==="Dispatched"?C.green+"33":d.status==="On Hold"?C.red+"33":d.status==="Ready"?C.orange+"33":C.cb}`,borderLeft:`3px solid ${d.tdy?"#f59e0b":sc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
     <div style={{display:"flex",justifyContent:"space-between",gap:7,alignItems:"center"}}>
       <div style={{flex:1,minWidth:0}}>
@@ -482,7 +482,7 @@ function Dispatch({role}){
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
-  const [form,setForm]=useState({client:"",transport:"Rajesh",date:TODAY});
+  const [form,setForm]=useState({client:"",transport:"RAJESH",date:TODAY});
   const [dispDate,setDispDate]=useState(TODAY);
   const YESTERDAY=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split("T")[0];})();
   const [copyDate,setCopyDate]=useState(YESTERDAY);
@@ -495,9 +495,9 @@ function Dispatch({role}){
   const disp=all.filter(d=>d.status==="Dispatched");
   const pendingLR=disp.filter(d=>!d.lr);
   const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
-  const TR=["Rajesh","Munshi","Tukaram","A S Patel","Best Carrier","Bombay Maha","Chintamani","Chocolate","Dutt Krupa","Falcon","Global Bus","Gujarat","Gujarat Goods","Jay Baba","Jeevdani","Jetha Bai","Mahanagar","National Travels","New Royal","New Super","Thakur","Thane Motor","VRL","Porter","Hand Delivery"];
+  const TR=["RAJESH","MUNSHI","TUKARAM","A S PATEL","BEST CARRIER","BOMBAY MAHA","CHINTAMANI","CHOCOLATE","DUTT KRUPA","FALCON","GLOBAL BUS","GUJARAT","GUJARAT GOODS","JAY BABA","JEEVDANI","JETHA BAI","MAHANAGAR","NATIONAL TRAVELS","NEW ROYAL","NEW SUPER","THAKUR","THANE MOTOR","VRL","PORTER","HAND DELIVERY"];
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
-  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false}]}));setForm({client:"",transport:"Rajesh",date:TODAY});setShowNew(false);}
+  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false}]}));setForm({client:"",transport:"RAJESH",date:TODAY});setShowNew(false);}
   function openD(d){setSel(d);setShowDel(false);setShowHold(false);setHoldInput("");setQtyInp(d.qty?String(d.qty):"");setQtyUnit(d.unit||"Ctn");}
   function saveQty(){const q=parseInt(qtyInp);if(!q)return;upd(sel.id,{qty:q,unit:qtyUnit,status:"Ready"});}
   function deleteD(){setDisps(p=>({...p,[loc]:p[loc].filter(d=>d.id!==sel.id)}));setSel(null);setShowDel(false);}
