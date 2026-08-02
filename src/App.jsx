@@ -515,24 +515,80 @@ function Dispatch({role}){
   async function exportDispatchPDF(){
     const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const doc=new jsPDF();
-    const rows=arr=>arr.map(d=>[d.client,d.qty?`${d.qty} ${d.unit}`:"—",d.transport,d.date,d.lr?"Y":"—"]);
-    const head=[["Client","Qty","Transport","Date","LR"]];
-    doc.setFontSize(14);doc.text("Tansha Hospitality — Dispatch Sheet",14,15);
-    doc.setFontSize(10);doc.setTextColor(120);doc.text(`${loc} · Generated ${new Date().toLocaleString("en-IN")}`,14,21);
-    let y=27;
-    const section=(title,arr)=>{
+    const PW=210;
+    const locColor=loc==="Bhiwandi"?[109,40,217]:loc==="Local Tansha"?[29,78,216]:[5,150,105];
+    // ── Header band ──
+    doc.setFillColor(...locColor);doc.rect(0,0,PW,34,"F");
+    doc.setFillColor(255,255,255,30);doc.rect(0,28,PW,6,"F");
+    doc.setFontSize(22);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
+    doc.text("TANSHA HOSPITALITY",14,14);
+    doc.setFontSize(9);doc.setFont(undefined,"normal");
+    doc.text("Dispatch Sheet  —  "+loc,14,21);
+    doc.text("Date: "+(dispDate||TODAY)+"   Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,27);
+    // ── Summary chips ──
+    const chips=[{l:"READY",n:ready.length,c:[249,115,22]},{l:"PENDING",n:pend.length,c:[99,102,241]},{l:"HOLD",n:held.length,c:[239,68,68]},{l:"DONE",n:disp.length,c:[34,197,94]}];
+    let cx=199;
+    chips.slice().reverse().forEach(ch=>{
+      doc.setFillColor(255,255,255);doc.rect(cx-24,3,24,26,"F");
+      doc.setFontSize(16);doc.setTextColor(...ch.c);doc.setFont(undefined,"bold");
+      doc.text(String(ch.n),cx-12,16,{align:"center"});
+      doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+      doc.text(ch.l,cx-12,23,{align:"center"});
+      cx-=28;
+    });
+    let y=40;
+    // ── Section helper ──
+    const section=(title,arr,sc)=>{
       if(!arr.length)return;
-      doc.setFontSize(11);doc.setTextColor(30);doc.text(`${title} (${arr.length})`,14,y);
-      autoTable(doc,{head,body:rows(arr),startY:y+2,styles:{fontSize:9},headStyles:{fillColor:[230,230,230],textColor:30}});
-      y=doc.lastAutoTable.finalY+8;
+      if(y>255){doc.addPage();y=14;}
+      doc.setFillColor(...sc);doc.rect(14,y,182,8,"F");
+      doc.setFontSize(9);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
+      doc.text(title+" ("+arr.length+")",17,y+5.5);
+      y+=8;
+      autoTable(doc,{
+        startY:y,
+        head:[["#","Client","Qty","Transport","Date","LR","TDY"]],
+        body:arr.map((d,i)=>[String(i+1),d.client,d.qty?d.qty+" "+d.unit:"—",d.transport||"—",d.date,d.lr?"YES":"—",d.tdy?"TDY":"—"]),
+        headStyles:{fillColor:[30,41,59],textColor:[255,255,255],fontSize:8,fontStyle:"bold",cellPadding:3},
+        bodyStyles:{fontSize:8,textColor:[15,23,42],cellPadding:3},
+        columnStyles:{0:{cellWidth:8,halign:"center"},2:{cellWidth:20,halign:"center"},4:{cellWidth:22,halign:"center"},5:{cellWidth:14,halign:"center"},6:{cellWidth:14,halign:"center"}},
+        alternateRowStyles:{fillColor:[248,250,252]},
+        didParseCell:(data)=>{
+          if(data.column.index===5&&data.section==="body"&&data.cell.raw==="YES"){data.cell.styles.textColor=[22,163,74];data.cell.styles.fontStyle="bold";}
+          if(data.column.index===6&&data.section==="body"&&data.cell.raw==="TDY"){data.cell.styles.textColor=[217,119,6];data.cell.styles.fontStyle="bold";}
+        },
+        margin:{left:14,right:14},
+      });
+      y=doc.lastAutoTable.finalY+5;
     };
-    section("Ready to Dispatch (CTN)",ready);
-    section("Not Ready / Pending",pend);
-    section("On Hold",held);
-    section("Dispatched / Done",disp);
-    doc.setFontSize(11);doc.setTextColor(217,119,6);
-    doc.text(`Pending LR (${pendingLR.length}): ${pendingLR.length?pendingLR.map(d=>d.client).join(", "):"None — all LRs received"}`,14,y,{maxWidth:180});
-    doc.save(`Dispatch_${loc.replace(/\s+/g,"_")}_${TODAY}.pdf`);
+    section("READY TO DISPATCH",ready,[234,88,12]);
+    section("PENDING",pend,[79,70,229]);
+    section("ON HOLD",held,[220,38,38]);
+    section("DISPATCHED",disp,[22,163,74]);
+    // ── Pending LR ──
+    if(y>265){doc.addPage();y=14;}
+    if(pendingLR.length){
+      doc.setFillColor(254,243,199);doc.rect(14,y,182,8,"F");
+      doc.setDrawColor(217,119,6);doc.setLineWidth(0.5);doc.rect(14,y,182,8,"S");
+      doc.setFontSize(9);doc.setTextColor(146,64,14);doc.setFont(undefined,"bold");
+      doc.text("PENDING LR ("+pendingLR.length+"):  "+pendingLR.map(d=>d.client).join(", "),17,y+5.5,{maxWidth:176});
+      y+=14;
+    }else{
+      doc.setFillColor(220,252,231);doc.rect(14,y,182,8,"F");
+      doc.setFontSize(9);doc.setTextColor(22,101,52);doc.setFont(undefined,"bold");
+      doc.text("ALL LRs RECEIVED",17,y+5.5);
+      y+=12;
+    }
+    // ── Footer on every page ──
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(14,289,196,289);
+      doc.setFontSize(7);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");
+      doc.text("TANSHA HOSPITALITY  —  CONFIDENTIAL",14,294);
+      doc.text("Page "+i+" of "+pages,196,294,{align:"right"});
+    }
+    doc.save("Dispatch_"+loc.replace(/\s+/g,"_")+"_"+(dispDate||TODAY)+".pdf");
   }
   const fltDispCli=salesClients.filter(c=>!form.client||c.toLowerCase().includes(form.client.toLowerCase())).slice(0,8);
   const fltEditCli=editForm?salesClients.filter(c=>!editForm.client||c.toLowerCase().includes(editForm.client.toLowerCase())).slice(0,8):[];
