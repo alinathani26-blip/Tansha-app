@@ -518,25 +518,26 @@ function Dispatch({role}){
     const PW=210;
     const locColor=loc==="Bhiwandi"?[109,40,217]:loc==="Local Tansha"?[29,78,216]:[5,150,105];
     // ── Header band ──
-    doc.setFillColor(...locColor);doc.rect(0,0,PW,34,"F");
-    doc.setFillColor(255,255,255,30);doc.rect(0,28,PW,6,"F");
-    doc.setFontSize(22);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
-    doc.text("TANSHA HOSPITALITY",14,14);
-    doc.setFontSize(9);doc.setFont(undefined,"normal");
+    doc.setFillColor(...locColor);doc.rect(0,0,PW,38,"F");
+    // Company name & details — left side (max x ≈ 110 to stay clear of chips)
+    doc.setFontSize(19);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
+    doc.text("TANSHA HOSPITALITY",14,13);
+    doc.setFontSize(9);doc.setFont(undefined,"normal");doc.setTextColor(210,220,255);
     doc.text("Dispatch Sheet  —  "+loc,14,21);
-    doc.text("Date: "+(dispDate||TODAY)+"   Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,27);
-    // ── Summary chips ──
+    doc.setFontSize(7.5);doc.setTextColor(180,195,240);
+    doc.text("Date: "+(dispDate||TODAY)+"   Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,28);
+    // ── Summary chips — right side, inside header ──
     const chips=[{l:"READY",n:ready.length,c:[249,115,22]},{l:"PENDING",n:pend.length,c:[99,102,241]},{l:"HOLD",n:held.length,c:[239,68,68]},{l:"DONE",n:disp.length,c:[34,197,94]}];
-    let cx=199;
+    let cx=207;
     chips.slice().reverse().forEach(ch=>{
-      doc.setFillColor(255,255,255);doc.rect(cx-24,3,24,26,"F");
-      doc.setFontSize(16);doc.setTextColor(...ch.c);doc.setFont(undefined,"bold");
-      doc.text(String(ch.n),cx-12,16,{align:"center"});
-      doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
-      doc.text(ch.l,cx-12,23,{align:"center"});
-      cx-=28;
+      doc.setFillColor(255,255,255);doc.rect(cx-21,3,21,32,"F");
+      doc.setFontSize(15);doc.setTextColor(...ch.c);doc.setFont(undefined,"bold");
+      doc.text(String(ch.n),cx-10.5,17,{align:"center"});
+      doc.setFontSize(5.5);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+      doc.text(ch.l,cx-10.5,24,{align:"center"});
+      cx-=25;
     });
-    let y=40;
+    let y=44;
     // ── Section helper ──
     const section=(title,arr,sc)=>{
       if(!arr.length)return;
