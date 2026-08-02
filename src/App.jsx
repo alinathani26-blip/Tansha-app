@@ -1672,15 +1672,19 @@ function Quotation(){
     doc.text("Date: "+date,194,25,{align:"right"});
     // Divider
     doc.setDrawColor(79,70,229);doc.setLineWidth(0.5);doc.line(14,29,196,29);
-    // Client block
-    doc.setFillColor(248,250,252);doc.rect(14,33,182,18,"F");
-    doc.setDrawColor(79,70,229);doc.setLineWidth(1);doc.line(14,33,14,51);
+    // Client + Transport block
+    doc.setFillColor(248,250,252);doc.rect(14,33,182,20,"F");
+    doc.setDrawColor(79,70,229);doc.setLineWidth(1);doc.line(14,33,14,53);
     doc.setFontSize(8);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
     doc.text("QUOTATION FOR",17,40);
-    doc.setFontSize(13);doc.setTextColor(15,23,42);doc.text(client,17,48);
+    doc.setFontSize(13);doc.setTextColor(15,23,42);doc.setFont(undefined,"normal");doc.text(client,17,49);
+    doc.setFontSize(8);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+    doc.text("TRANSPORT",194,40,{align:"right"});
+    doc.setFontSize(11);doc.setTextColor(15,23,42);doc.setFont(undefined,"bold");
+    doc.text(transport,194,49,{align:"right"});
     // Items table
     autoTable(doc,{
-      startY:57,
+      startY:59,
       head:[["Product","Code","Qty","Unit Price","Amount"]],
       body:items.map(it=>[it.n,it.a||"—",String(it.qty),rs(it.p),rs(it.qty*it.p)]),
       headStyles:{fillColor:[15,23,42],textColor:255,fontSize:9,fontStyle:"bold"},
