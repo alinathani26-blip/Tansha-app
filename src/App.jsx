@@ -437,22 +437,27 @@ function Tasks({role,currentUser,setNotifs}){
 }
 
 const TR=["RAJESH","MUNSHI","TUKARAM","A S PATEL","BEST CARRIER","BOMBAY MAHA","CHINTAMANI","CHOCOLATE","DUTT KRUPA","FALCON","GLOBAL BUS","GUJARAT","GUJARAT GOODS","JAY BABA","JEEVDANI","JETHA BAI","MAHANAGAR","NATIONAL TRAVELS","NEW ROYAL","NEW SUPER","THAKUR","THANE MOTOR","VRL","PORTER","HAND DELIVERY"];
+const IBRAHIM_RATES={"RAJESH":20,"MUNSHI":20,"TUKARAM":10,"A S PATEL":40,"BEST CARRIER":20,"BOMBAY MAHA":20,"CHINTAMANI":40,"CHOCOLATE":30,"DUTT KRUPA":20,"FALCON":20,"GLOBAL BUS":30,"GUJARAT":20,"GUJARAT GOODS":20,"JAY BABA":20,"JEEVDANI":30,"JETHA BAI":30,"MAHANAGAR":20,"NATIONAL TRAVELS":30,"NEW ROYAL":20,"NEW SUPER":20,"THAKUR":10,"THANE MOTOR":20,"VRL":20};
 // ── Dispatch ──
 const LC={"Bhiwandi":C.purple,"Local Tansha":C.blue,"Local Kaizen":C.acc};
 const DSC={Pending:C.acc,Ready:C.orange,"On Hold":C.red,Dispatched:C.green};
-const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"RAJESH",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"GUJARAT",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"HAND DELIVERY",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"PORTER",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"MUNSHI",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false}]};
-function DCard({d,lc,onOpen,onTdy,showTdy}){
+const DISP0={Bhiwandi:[{id:1,client:"Metro Hospitality",qty:10,unit:"Ctn",transport:"RAJESH",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false},{id:2,client:"Radisson Blu",qty:null,unit:"Ctn",transport:"GUJARAT",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false},{id:3,client:"Novotel Mumbai",qty:null,unit:"Ctn",transport:"VRL",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false}],"Local Tansha":[{id:4,client:"Taj Hotels",qty:2,unit:"Ctn",transport:"HAND DELIVERY",lr:true,status:"Dispatched",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false},{id:5,client:"ITC Grand Central",qty:null,unit:"Ctn",transport:"PORTER",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false}],"Local Kaizen":[{id:6,client:"Hyatt Regency",qty:null,unit:"Ctn",transport:"MUNSHI",lr:false,status:"Pending",date:TODAY,photo:null,audio:null,holdNote:"",tdy:false,ibr:false}]};
+function DCard({d,lc,onOpen,onTdy,showTdy,onIbr}){
   const isO=["PORTER","HAND DELIVERY"].includes(d.transport);const sc=DSC[d.status]||C.acc;
+  const ibrRate=IBRAHIM_RATES[d.transport];
+  const ibrAmt=d.ibr&&d.qty&&ibrRate?d.qty*ibrRate:null;
   return (<div onClick={()=>onOpen(d)} style={{background:d.tdy?"#f59e0b0A":d.status==="Dispatched"?C.green+"0D":d.status==="On Hold"?C.red+"08":d.status==="Ready"?C.orange+"08":C.card,border:`1px solid ${d.tdy?"#f59e0b44":d.status==="Dispatched"?C.green+"33":d.status==="On Hold"?C.red+"33":d.status==="Ready"?C.orange+"33":C.cb}`,borderLeft:`3px solid ${d.tdy?"#f59e0b":sc}`,borderRadius:11,padding:"11px 13px",cursor:"pointer"}} onMouseEnter={e=>e.currentTarget.style.opacity=".85"} onMouseLeave={e=>e.currentTarget.style.opacity="1"}>
     <div style={{display:"flex",justifyContent:"space-between",gap:7,alignItems:"center"}}>
       <div style={{flex:1,minWidth:0}}>
         <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:4}}>
           <span style={{color:d.status==="Dispatched"?C.muted:C.text,fontWeight:700,fontSize:13,textDecoration:d.status==="Dispatched"?"line-through":"none",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",flex:1,minWidth:0}}>{d.client}</span>
           {showTdy&&<span onClick={e=>{e.stopPropagation();onTdy();}} style={{background:d.tdy?"#f59e0b":"transparent",color:d.tdy?"#fff":"#f59e0b",border:`1.5px solid ${d.tdy?"#f59e0b":"#f59e0b88"}`,borderRadius:5,padding:"1px 6px",fontSize:9,fontWeight:800,cursor:"pointer",letterSpacing:.5,flexShrink:0,...(d.tdy?{boxShadow:"0 0 7px #f59e0b55"}:{})}} title="Toggle Today Priority">TDY</span>}
+          {ibrRate&&<span onClick={e=>{e.stopPropagation();onIbr();}} style={{background:d.ibr?"#0E7490":"transparent",color:d.ibr?"#fff":"#0E7490",border:`1.5px solid ${d.ibr?"#0E7490":"#0E749088"}`,borderRadius:5,padding:"1px 6px",fontSize:9,fontWeight:800,cursor:"pointer",letterSpacing:.5,flexShrink:0,...(d.ibr?{boxShadow:"0 0 7px #0E749055"}:{})}} title="Toggle Ibrahim Bhai">IB</span>}
         </div>
         <div style={{display:"flex",gap:6,alignItems:"center",flexWrap:"wrap"}}>
           {d.qty?<span style={{background:lc+"22",color:lc,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${lc}33`}}>{d.qty} {d.unit}</span>:<span style={{background:C.red+"18",color:C.red,borderRadius:5,padding:"1px 7px",fontSize:10,fontWeight:700,border:`1px solid ${C.red}33`}}>No Qty</span>}
           <span style={{color:isO?C.blue:C.muted,fontSize:11}}>{isO?"🚶":"🚛"} {d.transport}</span>
+          {ibrAmt&&<span style={{background:"#0E749022",color:"#0E7490",border:"1px solid #0E749044",borderRadius:4,padding:"1px 6px",fontSize:9,fontWeight:700}}>IB ₹{ibrAmt}</span>}
           {d.photo&&<span style={{fontSize:11}}>📎</span>}
           {d.audio&&<span style={{fontSize:11}}>🎤</span>}
           {d.lr&&<span style={{background:C.green+"22",color:C.green,border:`1px solid ${C.green}44`,borderRadius:4,padding:"1px 6px",fontSize:9,fontWeight:700}}>LR ✓</span>}
@@ -481,6 +486,7 @@ function Dispatch({role}){
   const [showHold,setShowHold]=useState(false);
   const [showLR,setShowLR]=useState(false);
   const [showCopy,setShowCopy]=useState(false);
+  const [showIbrSheet,setShowIbrSheet]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -498,7 +504,7 @@ function Dispatch({role}){
   const pendingLR=disp.filter(d=>!d.lr);
   const allPendingLR=["Bhiwandi","Local Tansha","Local Kaizen"].reduce((s,l)=>s+(disps[l]||[]).filter(d=>!d.lr&&d.status==="Dispatched").length,0);
   function upd(id,changes){setDisps(p=>({...p,[loc]:p[loc].map(d=>d.id===id?{...d,...changes}:d)}));setSel(p=>p&&p.id===id?{...p,...changes}:p);}
-  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false}]}));setForm({client:"",transport:"RAJESH",date:TODAY});setShowNew(false);}
+  function add(){if(!form.client.trim())return;setDisps(p=>({...p,[loc]:[...p[loc],{id:Date.now(),...form,qty:null,unit:"Ctn",lr:false,status:"Pending",photo:null,audio:null,holdNote:"",tdy:false,ibr:false}]}));setForm({client:"",transport:"RAJESH",date:TODAY});setShowNew(false);}
   function openD(d){setSel(d);setShowDel(false);setShowHold(false);setHoldInput("");setQtyInp(d.qty?String(d.qty):"");setQtyUnit(d.unit||"Ctn");}
   function saveQty(){const q=parseInt(qtyInp);if(!q)return;upd(sel.id,{qty:q,unit:qtyUnit,status:"Ready"});}
   function deleteD(){setDisps(p=>({...p,[loc]:p[loc].filter(d=>d.id!==sel.id)}));setSel(null);setShowDel(false);}
@@ -667,6 +673,27 @@ function Dispatch({role}){
     <div style={{display:"flex",gap:5,marginBottom:14,background:C.card,borderRadius:11,padding:4}}>{["Bhiwandi","Local Tansha","Local Kaizen"].map(l=>{const lcc=LC[l];const act=loc===l;return<button key={l} onClick={()=>setLoc(l)} style={{flex:1,background:act?lcc+"33":"transparent",border:`1px solid ${act?lcc+"55":"transparent"}`,borderRadius:9,padding:"9px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:2}}><span style={{fontSize:13}}>{l==="Bhiwandi"?"🏭":l==="Local Tansha"?"🏬":"🏢"}</span><span style={{color:act?lcc:C.muted,fontSize:9,fontWeight:700,textAlign:"center"}}>{l}</span></button>;})}
     </div>
     {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
+    {showIbrSheet&&(()=>{
+      const ibrEntries=["Bhiwandi","Local Tansha","Local Kaizen"].flatMap(l=>(disps[l]||[]).filter(d=>d.ibr&&IBRAHIM_RATES[d.transport]).map(d=>({...d,loc:l,rate:IBRAHIM_RATES[d.transport],total:d.qty?d.qty*IBRAHIM_RATES[d.transport]:0})));
+      const grandTotal=ibrEntries.reduce((s,e)=>s+e.total,0);
+      const grandCtn=ibrEntries.reduce((s,e)=>s+(e.qty||0),0);
+      return (<Mod onClose={()=>setShowIbrSheet(false)} title="👷 Ibrahim Bhai Expense Sheet" sub="Auto-calculated from IB-tagged dispatches">
+        {ibrEntries.length===0?(<div style={{textAlign:"center",padding:"28px 0",color:C.muted,fontSize:13}}>No IB-tagged dispatches yet.<br/><span style={{fontSize:11}}>Tap the teal <strong>IB</strong> badge on any dispatch card to include it.</span></div>):(
+          <>
+            <div style={{overflowX:"auto",marginBottom:14}}>
+              <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
+                <thead><tr style={{background:"#ECFEFF"}}>{["#","Client","Transport","Rate/CTN","CTN","Total"].map(h=><th key={h} style={{padding:"8px 10px",color:"#0E7490",fontWeight:700,textAlign:h==="CTN"||h==="Rate/CTN"||h==="Total"||h==="#"?"center":"left",borderBottom:"2px solid #A5F3FC",whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+                <tbody>{ibrEntries.map((e,i)=><tr key={e.id+e.loc} style={{borderBottom:`1px solid ${C.cb}`,background:i%2===0?C.card:"#F0FDFF"}}><td style={{padding:"8px 10px",textAlign:"center",color:C.muted,fontWeight:600}}>{i+1}</td><td style={{padding:"8px 10px",color:C.text,fontWeight:700}}>{e.client}</td><td style={{padding:"8px 10px",color:C.muted}}>{e.transport}</td><td style={{padding:"8px 10px",textAlign:"center",color:"#0E7490",fontWeight:700}}>₹{e.rate}</td><td style={{padding:"8px 10px",textAlign:"center",color:e.qty?C.text:C.red,fontWeight:700}}>{e.qty||"—"}</td><td style={{padding:"8px 10px",textAlign:"right",color:e.total?C.text:C.muted,fontWeight:700}}>{e.total?`₹${e.total.toLocaleString("en-IN")}`:"—"}</td></tr>)}</tbody>
+                <tfoot><tr style={{background:"#ECFEFF",borderTop:"2px solid #0E7490"}}><td colSpan={3} style={{padding:"9px 10px",color:"#0E7490",fontWeight:800,fontSize:13}}>TOTAL</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>—</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>{grandCtn}</td><td style={{padding:"9px 10px",textAlign:"right",color:"#0E7490",fontWeight:900,fontSize:14}}>₹{grandTotal.toLocaleString("en-IN")}</td></tr></tfoot>
+              </table>
+            </div>
+            <div style={{background:"#ECFEFF",border:"1px solid #A5F3FC",borderRadius:10,padding:"10px 14px",color:"#0E7490",fontSize:12,fontWeight:600}}>
+              {ibrEntries.length} entr{ibrEntries.length===1?"y":"ies"} · {grandCtn} CTN total · Grand total <strong>₹{grandTotal.toLocaleString("en-IN")}</strong>
+            </div>
+          </>
+        )}
+      </Mod>);
+    })()}
     {showCopy&&<Mod onClose={()=>setShowCopy(false)} title="📋 Copy to Today" sub={`${loc} — paste Ready & Pending items`}>
       <div style={{marginBottom:12}}>
         <label style={LBL}>Copy from Date</label>
@@ -678,14 +705,15 @@ function Dispatch({role}){
       <div style={{marginLeft:"auto",display:"flex",gap:6}}>
         <button onClick={()=>setShowCopy(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Copy</button>
         <button onClick={()=>setShowLR(true)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📋 Pending LR</button>
+        <button onClick={()=>setShowIbrSheet(true)} style={{background:"#ECFEFF",border:"1px solid #A5F3FC",color:"#0E7490",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>👷 IB Sheet</button>
         <button onClick={exportDispatchPDF} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📄 PDF</button>
         <button onClick={()=>setShowNew(true)} style={{background:lc,border:"none",color:"#fff",borderRadius:7,padding:"5px 12px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>
       </div>
     </div>
-    {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
-    {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
-    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
-    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})}/>)}</div></>}
+    {ready.length>0&&<><SL text={`Ready to Dispatch (${ready.length})`} color={C.orange}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{ready.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})} onIbr={()=>upd(d.id,{ibr:!d.ibr})}/>)}</div></>}
+    {held.length>0&&<><SL text={`On Hold (${held.length})`} color={C.red}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{held.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})} onIbr={()=>upd(d.id,{ibr:!d.ibr})}/>)}</div></>}
+    {pend.length>0&&<><SL text={`Pending (${pend.length})`} color={C.acc}/><div style={{display:"flex",flexDirection:"column",gap:7,marginBottom:14}}>{pend.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})} onIbr={()=>upd(d.id,{ibr:!d.ibr})}/>)}</div></>}
+    {disp.length>0&&<><SL text={`Dispatched (${disp.length})`} color={C.green}/><div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(d=><DCard key={d.id} d={d} lc={lc} onOpen={openD} showTdy={loc!=="Bhiwandi"} onTdy={()=>upd(d.id,{tdy:!d.tdy})} onIbr={()=>upd(d.id,{ibr:!d.ibr})}/>)}</div></>}
   </div>);
 }
 
