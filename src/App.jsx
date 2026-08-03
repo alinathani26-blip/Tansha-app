@@ -487,6 +487,10 @@ function Dispatch({role}){
   const [showLR,setShowLR]=useState(false);
   const [showCopy,setShowCopy]=useState(false);
   const [showIbrSheet,setShowIbrSheet]=useState(false);
+  const [ibrManual,setIbrManual]=useFirestoreState("ibrahimExpenses",[]);
+  const [showIbrAdd,setShowIbrAdd]=useState(false);
+  const [ibrForm,setIbrForm]=useState({client:"",transport:"RAJESH",date:TODAY,qty:""});
+  const [showIbrTransDrop,setShowIbrTransDrop]=useState(false);
   const [holdInput,setHoldInput]=useState("");
   const [qtyInp,setQtyInp]=useState("");
   const [qtyUnit,setQtyUnit]=useState("Ctn");
@@ -511,6 +515,43 @@ function Dispatch({role}){
   function setHold(){upd(sel.id,{status:"On Hold",holdNote:holdInput.trim()||"On Hold"});setShowHold(false);setHoldInput("");}
   function unhold(){upd(sel.id,{status:sel.qty?"Ready":"Pending",holdNote:""});}
   function saveEdit(){upd(editForm.id,editForm);setEditForm(null);}
+  function addIbrEntry(){if(!ibrForm.client.trim()||!ibrForm.qty)return;const rate=IBRAHIM_RATES[ibrForm.transport]||0;setIbrManual(p=>[...(p||[]),{id:Date.now(),client:ibrForm.client.trim(),transport:ibrForm.transport,date:ibrForm.date,qty:parseInt(ibrForm.qty),rate,manual:true}]);setIbrForm({client:"",transport:"RAJESH",date:TODAY,qty:""});setShowIbrAdd(false);}
+  function delIbrEntry(id){setIbrManual(p=>(p||[]).filter(e=>e.id!==id));}
+  async function exportIbrPDF(entries,grandTotal,grandCtn){
+    const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
+    const doc=new jsPDF();const PW=210;
+    doc.setFillColor(14,116,144);doc.rect(0,0,PW,32,"F");
+    doc.setFontSize(17);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
+    doc.text("IBRAHIM BHAI EXPENSE SHEET",14,14);
+    doc.setFontSize(8);doc.setFont(undefined,"normal");doc.setTextColor(186,230,253);
+    doc.text("Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,22);
+    doc.setFillColor(255,255,255);doc.rect(136,3,35,26,"F");
+    doc.setFontSize(14);doc.setTextColor(14,116,144);doc.setFont(undefined,"bold");
+    doc.text(String(grandCtn),153,16,{align:"center"});
+    doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+    doc.text("TOTAL CTN",153,23,{align:"center"});
+    doc.setFillColor(255,255,255);doc.rect(173,3,34,26,"F");
+    doc.setFontSize(12);doc.setTextColor(14,116,144);doc.setFont(undefined,"bold");
+    doc.text("₹"+grandTotal.toLocaleString("en-IN"),190,15,{align:"right"});
+    doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
+    doc.text("GRAND TOTAL",190,22,{align:"right"});
+    autoTable(doc,{
+      startY:38,
+      head:[["#","Date","Client","Transport","Rate/CTN","CTN","Total","Src"]],
+      body:entries.map((e,i)=>[String(i+1),e.date||"—",e.client,e.transport||"—",e.rate?"₹"+e.rate:"—",e.qty||"—",e.total?"₹"+e.total.toLocaleString("en-IN"):"—",e.manual?"Manual":"Auto"]),
+      headStyles:{fillColor:[14,116,144],textColor:[255,255,255],fontSize:8,fontStyle:"bold",cellPadding:3},
+      bodyStyles:{fontSize:8,textColor:[15,23,42],cellPadding:3},
+      columnStyles:{0:{cellWidth:8,halign:"center"},1:{cellWidth:22},4:{cellWidth:18,halign:"center"},5:{cellWidth:12,halign:"center"},6:{cellWidth:24,halign:"right"},7:{cellWidth:14,halign:"center"}},
+      alternateRowStyles:{fillColor:[240,253,255]},
+      didParseCell:(data)=>{if(data.column.index===7&&data.section==="body"){data.cell.styles.textColor=data.cell.raw==="Manual"?[14,116,144]:[100,116,139];data.cell.styles.fontStyle="bold";}},
+      foot:[["","","","","TOTAL",String(grandCtn),"₹"+grandTotal.toLocaleString("en-IN"),""]],
+      footStyles:{fillColor:[236,254,255],textColor:[14,116,144],fontStyle:"bold",fontSize:9},
+      margin:{left:14,right:14},
+    });
+    const pages=doc.getNumberOfPages();
+    for(let i=1;i<=pages;i++){doc.setPage(i);doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(14,289,196,289);doc.setFontSize(7);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");doc.text("TANSHA HOSPITALITY  —  Ibrahim Bhai Expense  —  CONFIDENTIAL",14,294);doc.text("Page "+i+" of "+pages,196,294,{align:"right"});}
+    doc.save("Ibrahim_Expense_"+TODAY+".pdf");
+  }
   function pasteItems(){
     const src=(disps[loc]||[]).filter(d=>d.date===copyDate&&(d.status==="Ready"||d.status==="Pending"));
     if(!src.length)return;
@@ -601,6 +642,7 @@ function Dispatch({role}){
   const fltEditCli=editForm?salesClients.filter(c=>!editForm.client||c.toLowerCase().includes(editForm.client.toLowerCase())).slice(0,8):[];
   const fltDispTrans=TR.filter(t=>!form.transport||t.toLowerCase().includes(form.transport.toLowerCase()));
   const fltEditTrans=editForm?TR.filter(t=>!editForm.transport||t.toLowerCase().includes(editForm.transport.toLowerCase())):[];
+  const fltIbrTrans=TR.filter(t=>!ibrForm.transport||t.toLowerCase().includes(ibrForm.transport.toLowerCase()));
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return (<div>
     {/* Detail Modal */}
@@ -674,21 +716,53 @@ function Dispatch({role}){
     </div>
     {showLR&&<LRSummary disps={disps} setDisps={setDisps} onClose={()=>setShowLR(false)}/>}
     {showIbrSheet&&(()=>{
-      const ibrEntries=["Bhiwandi","Local Tansha","Local Kaizen"].flatMap(l=>(disps[l]||[]).filter(d=>d.ibr&&IBRAHIM_RATES[d.transport]).map(d=>({...d,loc:l,rate:IBRAHIM_RATES[d.transport],total:d.qty?d.qty*IBRAHIM_RATES[d.transport]:0})));
-      const grandTotal=ibrEntries.reduce((s,e)=>s+e.total,0);
-      const grandCtn=ibrEntries.reduce((s,e)=>s+(e.qty||0),0);
-      return (<Mod onClose={()=>setShowIbrSheet(false)} title="👷 Ibrahim Bhai Expense Sheet" sub="Auto-calculated from IB-tagged dispatches">
-        {ibrEntries.length===0?(<div style={{textAlign:"center",padding:"28px 0",color:C.muted,fontSize:13}}>No IB-tagged dispatches yet.<br/><span style={{fontSize:11}}>Tap the teal <strong>IB</strong> badge on any dispatch card to include it.</span></div>):(
+      const ibrAuto=["Bhiwandi","Local Tansha","Local Kaizen"].flatMap(l=>(disps[l]||[]).filter(d=>d.ibr&&IBRAHIM_RATES[d.transport]).map(d=>({...d,loc:l,rate:IBRAHIM_RATES[d.transport],total:d.qty?d.qty*IBRAHIM_RATES[d.transport]:0,manual:false})));
+      const ibrAll=[...ibrAuto,...(ibrManual||[]).map(e=>({...e,total:e.qty&&e.rate?e.qty*e.rate:0}))].sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+      const grandTotal=ibrAll.reduce((s,e)=>s+e.total,0);
+      const grandCtn=ibrAll.reduce((s,e)=>s+(e.qty||0),0);
+      return (<Mod onClose={()=>{setShowIbrSheet(false);setShowIbrAdd(false);}} title="👷 Ibrahim Bhai Expense Sheet" sub="Dispatch auto-entries + manual additions">
+        {/* Toolbar */}
+        <div style={{display:"flex",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+          <button onClick={()=>setShowIbrAdd(p=>!p)} style={{background:showIbrAdd?"#ECFEFF":"#0E7490",border:"1px solid #0E7490",color:showIbrAdd?"#0E7490":"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>{showIbrAdd?"✕ Cancel":"+ Add Entry"}</button>
+          <button onClick={()=>exportIbrPDF(ibrAll,grandTotal,grandCtn)} style={{background:C.bg,border:`1px solid ${C.cb}`,color:C.muted,borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer",marginLeft:"auto"}}>📄 Export PDF</button>
+        </div>
+        {/* Add Entry Form */}
+        {showIbrAdd&&<div style={{background:"#F0FDFF",border:"1.5px solid #A5F3FC",borderRadius:11,padding:"13px 13px 11px",marginBottom:14}}>
+          <div style={{color:"#0E7490",fontWeight:700,fontSize:12,marginBottom:10}}>New Manual Entry</div>
+          <div style={{display:"flex",flexDirection:"column",gap:9}}>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+              <div><label style={LBL}>Client *</label><input style={INP} placeholder="Client name…" value={ibrForm.client} onChange={e=>setIbrForm(f=>({...f,client:e.target.value}))}/></div>
+              <div><label style={LBL}>Date</label><input type="date" style={INP} value={ibrForm.date} onChange={e=>setIbrForm(f=>({...f,date:e.target.value}))}/></div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:9}}>
+              <div><label style={LBL}>Transport</label><div style={{position:"relative"}}><input style={INP} value={ibrForm.transport} onFocus={()=>setShowIbrTransDrop(true)} onBlur={()=>setTimeout(()=>setShowIbrTransDrop(false),150)} onChange={e=>{setIbrForm(f=>({...f,transport:e.target.value}));setShowIbrTransDrop(true);}}/>{showIbrTransDrop&&fltIbrTrans.length>0&&<div style={{position:"absolute",top:"100%",left:0,right:0,background:C.card,border:`1px solid ${C.cb}`,borderRadius:9,zIndex:20,maxHeight:160,overflowY:"auto",marginTop:3,boxShadow:"0 8px 24px #0000001a"}}>{fltIbrTrans.map(name=><div key={name} onClick={()=>{setIbrForm(f=>({...f,transport:name}));setShowIbrTransDrop(false);}} style={{padding:"9px 12px",cursor:"pointer",borderBottom:`1px solid ${C.cb}20`,color:C.text,fontSize:12,fontWeight:600}} onMouseEnter={e=>e.currentTarget.style.background=C.bg} onMouseLeave={e=>e.currentTarget.style.background="transparent"}>{name}</div>)}</div>}</div></div>
+              <div><label style={LBL}>CTN *</label><input type="number" style={INP} placeholder="0" value={ibrForm.qty} onChange={e=>setIbrForm(f=>({...f,qty:e.target.value}))}/></div>
+            </div>
+            {ibrForm.transport&&IBRAHIM_RATES[ibrForm.transport]&&<div style={{background:"#ECFEFF",border:"1px solid #A5F3FC",borderRadius:8,padding:"7px 11px",fontSize:12,color:"#0E7490",fontWeight:600}}>Rate: ₹{IBRAHIM_RATES[ibrForm.transport]}/CTN{ibrForm.qty?` · Total: ₹${parseInt(ibrForm.qty)*IBRAHIM_RATES[ibrForm.transport]}`:""}  {!IBRAHIM_RATES[ibrForm.transport]&&<span style={{color:C.red}}>(No rate for this transport)</span>}</div>}
+            <button onClick={addIbrEntry} style={{background:"#0E7490",border:"none",color:"#fff",borderRadius:9,padding:"11px 0",fontWeight:800,fontSize:13,cursor:"pointer"}}>Save Entry ✓</button>
+          </div>
+        </div>}
+        {/* Table */}
+        {ibrAll.length===0?(<div style={{textAlign:"center",padding:"28px 0",color:C.muted,fontSize:13}}>No entries yet.<br/><span style={{fontSize:11}}>Tag dispatch cards with <strong>IB</strong> or add manual entries above.</span></div>):(
           <>
             <div style={{overflowX:"auto",marginBottom:14}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:12}}>
-                <thead><tr style={{background:"#ECFEFF"}}>{["#","Date","Client","Transport","Rate/CTN","CTN","Total"].map(h=><th key={h} style={{padding:"8px 10px",color:"#0E7490",fontWeight:700,textAlign:h==="CTN"||h==="Rate/CTN"||h==="Total"||h==="#"?"center":"left",borderBottom:"2px solid #A5F3FC",whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
-                <tbody>{ibrEntries.map((e,i)=><tr key={e.id+e.loc} style={{borderBottom:`1px solid ${C.cb}`,background:i%2===0?C.card:"#F0FDFF"}}><td style={{padding:"8px 10px",textAlign:"center",color:C.muted,fontWeight:600}}>{i+1}</td><td style={{padding:"8px 10px",color:C.muted,whiteSpace:"nowrap"}}>{e.date||"—"}</td><td style={{padding:"8px 10px",color:C.text,fontWeight:700}}>{e.client}</td><td style={{padding:"8px 10px",color:C.muted}}>{e.transport}</td><td style={{padding:"8px 10px",textAlign:"center",color:"#0E7490",fontWeight:700}}>₹{e.rate}</td><td style={{padding:"8px 10px",textAlign:"center",color:e.qty?C.text:C.red,fontWeight:700}}>{e.qty||"—"}</td><td style={{padding:"8px 10px",textAlign:"right",color:e.total?C.text:C.muted,fontWeight:700}}>{e.total?`₹${e.total.toLocaleString("en-IN")}`:"—"}</td></tr>)}</tbody>
-                <tfoot><tr style={{background:"#ECFEFF",borderTop:"2px solid #0E7490"}}><td colSpan={4} style={{padding:"9px 10px",color:"#0E7490",fontWeight:800,fontSize:13}}>TOTAL</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>—</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>{grandCtn}</td><td style={{padding:"9px 10px",textAlign:"right",color:"#0E7490",fontWeight:900,fontSize:14}}>₹{grandTotal.toLocaleString("en-IN")}</td></tr></tfoot>
+                <thead><tr style={{background:"#ECFEFF"}}>{["#","Date","Client","Transport","Rate/CTN","CTN","Total",""].map((h,hi)=><th key={hi} style={{padding:"8px 10px",color:"#0E7490",fontWeight:700,textAlign:hi>=4&&hi<=6?"center":hi===7?"center":"left",borderBottom:"2px solid #A5F3FC",whiteSpace:"nowrap"}}>{h}</th>)}</tr></thead>
+                <tbody>{ibrAll.map((e,i)=><tr key={e.id+(e.loc||"m")} style={{borderBottom:`1px solid ${C.cb}`,background:i%2===0?C.card:"#F0FDFF"}}>
+                  <td style={{padding:"8px 10px",textAlign:"center",color:C.muted,fontWeight:600}}>{i+1}</td>
+                  <td style={{padding:"8px 10px",color:C.muted,whiteSpace:"nowrap"}}>{e.date||"—"}</td>
+                  <td style={{padding:"8px 10px",color:C.text,fontWeight:700}}>{e.client}</td>
+                  <td style={{padding:"8px 10px",color:C.muted}}>{e.transport||"—"}</td>
+                  <td style={{padding:"8px 10px",textAlign:"center",color:"#0E7490",fontWeight:700}}>{e.rate?"₹"+e.rate:"—"}</td>
+                  <td style={{padding:"8px 10px",textAlign:"center",color:e.qty?C.text:C.red,fontWeight:700}}>{e.qty||"—"}</td>
+                  <td style={{padding:"8px 10px",textAlign:"right",color:e.total?C.text:C.muted,fontWeight:700}}>{e.total?"₹"+e.total.toLocaleString("en-IN"):"—"}</td>
+                  <td style={{padding:"4px 6px",textAlign:"center"}}>{e.manual?<button onClick={()=>delIbrEntry(e.id)} style={{background:"#FEE2E2",border:"none",color:C.red,borderRadius:5,padding:"3px 7px",fontSize:10,fontWeight:700,cursor:"pointer"}}>✕</button>:<span style={{fontSize:9,color:C.dim,fontWeight:600}}>AUTO</span>}</td>
+                </tr>)}</tbody>
+                <tfoot><tr style={{background:"#ECFEFF",borderTop:"2px solid #0E7490"}}><td colSpan={4} style={{padding:"9px 10px",color:"#0E7490",fontWeight:800,fontSize:13}}>TOTAL</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>—</td><td style={{padding:"9px 10px",textAlign:"center",color:"#0E7490",fontWeight:800}}>{grandCtn}</td><td style={{padding:"9px 10px",textAlign:"right",color:"#0E7490",fontWeight:900,fontSize:14}}>₹{grandTotal.toLocaleString("en-IN")}</td><td/></tr></tfoot>
               </table>
             </div>
             <div style={{background:"#ECFEFF",border:"1px solid #A5F3FC",borderRadius:10,padding:"10px 14px",color:"#0E7490",fontSize:12,fontWeight:600}}>
-              {ibrEntries.length} entr{ibrEntries.length===1?"y":"ies"} · {grandCtn} CTN total · Grand total <strong>₹{grandTotal.toLocaleString("en-IN")}</strong>
+              {ibrAll.length} entr{ibrAll.length===1?"y":"ies"} · {grandCtn} CTN total · Grand total <strong>₹{grandTotal.toLocaleString("en-IN")}</strong>
             </div>
           </>
         )}
