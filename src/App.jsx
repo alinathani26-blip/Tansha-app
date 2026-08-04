@@ -321,7 +321,7 @@ function Tasks({role,currentUser,setNotifs}){
   const PC={High:C.red,Medium:C.acc,Low:C.green};
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
   const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
-  const visPerson=personFilter?vis.filter(t=>t.to===personFilter||t.by===personFilter):vis;
+  const visPerson=personFilter?vis.filter(t=>t.to===personFilter):vis;
   const cnt={Pending:visPerson.filter(t=>t.status==="Pending").length,"In Progress":visPerson.filter(t=>t.status==="In Progress").length,Done:visPerson.filter(t=>t.status==="Done").length};
   const disp=filter==="All"?visPerson:visPerson.filter(t=>t.status===filter);
   const [toast,setToast]=useState(null);const toastTmr=useRef(null);
