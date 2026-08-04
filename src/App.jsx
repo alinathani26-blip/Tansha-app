@@ -520,36 +520,74 @@ function Dispatch({role}){
   async function exportIbrPDF(entries,grandTotal,grandCtn){
     const [{jsPDF},{default:autoTable}]=await Promise.all([import("jspdf"),import("jspdf-autotable")]);
     const doc=new jsPDF();const PW=210;
-    doc.setFillColor(14,116,144);doc.rect(0,0,PW,32,"F");
-    doc.setFontSize(17);doc.setTextColor(255,255,255);doc.setFont(undefined,"bold");
-    doc.text("IBRAHIM BHAI EXPENSE SHEET",14,14);
-    doc.setFontSize(8);doc.setFont(undefined,"normal");doc.setTextColor(186,230,253);
-    doc.text("Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,22);
-    doc.setFillColor(255,255,255);doc.rect(136,3,35,26,"F");
-    doc.setFontSize(14);doc.setTextColor(14,116,144);doc.setFont(undefined,"bold");
-    doc.text(String(grandCtn),153,16,{align:"center"});
-    doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
-    doc.text("TOTAL CTN",153,23,{align:"center"});
-    doc.setFillColor(255,255,255);doc.rect(173,3,34,26,"F");
-    doc.setFontSize(12);doc.setTextColor(14,116,144);doc.setFont(undefined,"bold");
-    doc.text("₹"+grandTotal.toLocaleString("en-IN"),190,15,{align:"right"});
-    doc.setFontSize(6);doc.setTextColor(100,116,139);doc.setFont(undefined,"bold");
-    doc.text("GRAND TOTAL",190,22,{align:"right"});
+    const fmtR=n=>"Rs."+Number(n).toLocaleString("en-IN");
+    // Header band
+    doc.setFillColor(14,116,144);doc.rect(0,0,PW,36,"F");
+    doc.setFontSize(16);doc.setTextColor(255,255,255);doc.setFont("helvetica","bold");
+    doc.text("IBRAHIM BHAI EXPENSE SHEET",14,13);
+    doc.setFontSize(8);doc.setFont("helvetica","normal");doc.setTextColor(186,230,253);
+    doc.text("Tansha Hospitality",14,21);
+    doc.setFontSize(7);doc.setTextColor(164,210,240);
+    doc.text("Generated: "+new Date().toLocaleString("en-IN",{day:"numeric",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"}),14,28);
+    // Right chips — CTN
+    doc.setFillColor(255,255,255);doc.rect(136,3,30,30,"F");
+    doc.setFontSize(18);doc.setTextColor(14,116,144);doc.setFont("helvetica","bold");
+    doc.text(String(grandCtn),151,18,{align:"center"});
+    doc.setFontSize(5.5);doc.setTextColor(100,116,139);doc.setFont("helvetica","bold");
+    doc.text("TOTAL CTN",151,26,{align:"center"});
+    // Right chips — Amount
+    doc.setFillColor(255,255,255);doc.rect(168,3,38,30,"F");
+    doc.setFontSize(grandTotal>=10000?10:12);doc.setTextColor(14,116,144);doc.setFont("helvetica","bold");
+    doc.text(fmtR(grandTotal),204,17,{align:"right"});
+    doc.setFontSize(5.5);doc.setTextColor(100,116,139);doc.setFont("helvetica","bold");
+    doc.text("GRAND TOTAL",204,25,{align:"right"});
+    // Table
     autoTable(doc,{
-      startY:38,
+      startY:42,
       head:[["#","Date","Client","Transport","Rate/CTN","CTN","Total","Src"]],
-      body:entries.map((e,i)=>[String(i+1),e.date||"—",e.client,e.transport||"—",e.rate?"₹"+e.rate:"—",e.qty||"—",e.total?"₹"+e.total.toLocaleString("en-IN"):"—",e.manual?"Manual":"Auto"]),
-      headStyles:{fillColor:[14,116,144],textColor:[255,255,255],fontSize:8,fontStyle:"bold",cellPadding:3},
-      bodyStyles:{fontSize:8,textColor:[15,23,42],cellPadding:3},
-      columnStyles:{0:{cellWidth:8,halign:"center"},1:{cellWidth:22},4:{cellWidth:18,halign:"center"},5:{cellWidth:12,halign:"center"},6:{cellWidth:24,halign:"right"},7:{cellWidth:14,halign:"center"}},
+      body:entries.map((e,i)=>[
+        String(i+1),
+        e.date||"—",
+        e.client,
+        e.transport||"—",
+        e.rate?fmtR(e.rate):"—",
+        e.qty!=null?String(e.qty):"—",
+        e.total?fmtR(e.total):"—",
+        e.manual?"Manual":"Auto",
+      ]),
+      headStyles:{fillColor:[14,116,144],textColor:[255,255,255],fontSize:8,fontStyle:"bold",cellPadding:3.5},
+      bodyStyles:{fontSize:8,textColor:[15,23,42],cellPadding:3.5},
+      columnStyles:{
+        0:{cellWidth:9,halign:"center"},
+        1:{cellWidth:24},
+        4:{cellWidth:20,halign:"center"},
+        5:{cellWidth:12,halign:"center"},
+        6:{cellWidth:26,halign:"right"},
+        7:{cellWidth:16,halign:"center"},
+      },
       alternateRowStyles:{fillColor:[240,253,255]},
-      didParseCell:(data)=>{if(data.column.index===7&&data.section==="body"){data.cell.styles.textColor=data.cell.raw==="Manual"?[14,116,144]:[100,116,139];data.cell.styles.fontStyle="bold";}},
-      foot:[["","","","","TOTAL",String(grandCtn),"₹"+grandTotal.toLocaleString("en-IN"),""]],
-      footStyles:{fillColor:[236,254,255],textColor:[14,116,144],fontStyle:"bold",fontSize:9},
+      didParseCell:(data)=>{
+        if(data.column.index===7&&data.section==="body"){
+          data.cell.styles.textColor=data.cell.raw==="Manual"?[14,116,144]:[148,163,184];
+          data.cell.styles.fontStyle="bold";
+        }
+        if(data.column.index===6&&data.section==="body"&&data.cell.raw!=="—"){
+          data.cell.styles.textColor=[14,116,144];
+          data.cell.styles.fontStyle="bold";
+        }
+      },
+      foot:[["","","","","TOTAL",String(grandCtn),fmtR(grandTotal),""]],
+      footStyles:{fillColor:[207,250,254],textColor:[14,116,144],fontStyle:"bold",fontSize:9},
       margin:{left:14,right:14},
     });
     const pages=doc.getNumberOfPages();
-    for(let i=1;i<=pages;i++){doc.setPage(i);doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(14,289,196,289);doc.setFontSize(7);doc.setTextColor(148,163,184);doc.setFont(undefined,"normal");doc.text("TANSHA HOSPITALITY  —  Ibrahim Bhai Expense  —  CONFIDENTIAL",14,294);doc.text("Page "+i+" of "+pages,196,294,{align:"right"});}
+    for(let i=1;i<=pages;i++){
+      doc.setPage(i);
+      doc.setDrawColor(226,232,240);doc.setLineWidth(0.3);doc.line(14,289,196,289);
+      doc.setFontSize(7);doc.setTextColor(148,163,184);doc.setFont("helvetica","normal");
+      doc.text("TANSHA HOSPITALITY  —  Ibrahim Bhai Expense Sheet  —  CONFIDENTIAL",14,294);
+      doc.text("Page "+i+" of "+pages,196,294,{align:"right"});
+    }
     doc.save("Ibrahim_Expense_"+TODAY+".pdf");
   }
   function pasteItems(){
