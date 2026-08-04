@@ -309,6 +309,7 @@ function fmtDue(due){
 function Tasks({role,currentUser,setNotifs}){
   const [tasks,setTasks,tasksLoading]=useFirestoreState("tasks",TASKS0);
   const [filter,setFilter]=useState("All");
+  const [personFilter,setPersonFilter]=useState("");
   const [sel,setSel]=useState(null);
   const [showNew,setShowNew]=useState(false);
   const [editForm,setEditForm]=useState(null);
@@ -320,8 +321,9 @@ function Tasks({role,currentUser,setNotifs}){
   const PC={High:C.red,Medium:C.acc,Low:C.green};
   const SC={Pending:C.acc,"In Progress":C.blue,Done:C.green};
   const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
-  const cnt={Pending:vis.filter(t=>t.status==="Pending").length,"In Progress":vis.filter(t=>t.status==="In Progress").length,Done:vis.filter(t=>t.status==="Done").length};
-  const disp=filter==="All"?vis:vis.filter(t=>t.status===filter);
+  const visPerson=personFilter?vis.filter(t=>t.to===personFilter||t.by===personFilter):vis;
+  const cnt={Pending:visPerson.filter(t=>t.status==="Pending").length,"In Progress":visPerson.filter(t=>t.status==="In Progress").length,Done:visPerson.filter(t=>t.status==="Done").length};
+  const disp=filter==="All"?visPerson:visPerson.filter(t=>t.status===filter);
   const [toast,setToast]=useState(null);const toastTmr=useRef(null);
   function pushNotif(icon,title,body,color){
     setNotifs(p=>[{id:Date.now(),icon,title,body,time:"Just now",read:false,color},...p]);
@@ -333,7 +335,11 @@ function Tasks({role,currentUser,setNotifs}){
     const targets=[...new Set(persons)].filter(p=>p&&p!==currentUser);
     if(targets.length)sendPush(targets,title,body);
   }
-  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,replies:[],reminded:false};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);notify([form.to,...(form.loop||[])],"New Task Assigned",`Assigned by: ${currentUser}\nTitle: ${form.title}\nPriority: ${form.pri}\nDue: ${fmtDue(t.due)}`);setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});}
+  function add(){if(!form.title||!form.to||!form.due)return;const t={...form,id:Date.now(),status:"Pending",by:currentUser,replies:[],reminded:false};setTasks(p=>[t,...p]);pushNotif("📋","Task Assigned",`${form.title} → ${form.to}`,C.blue);
+    // Always notify assignee (even self-assignment) + loop members excluding self
+    const _addTargets=[...new Set([form.to,...(form.loop||[])])].filter(p=>p&&(p!==currentUser||p===form.to));
+    if(_addTargets.length)sendPush(_addTargets,"New Task Assigned",`Assigned by: ${currentUser}\nTitle: ${form.title}\nPriority: ${form.pri}\nDue: ${fmtDue(t.due)}`);
+    setShowNew(false);setLoopOpen(false);setForm({title:"",to:"",due:"",pri:"Medium",notes:"",audio:null,loop:[],reminder:"none"});}
   function advance(id){const tsk=tasks.find(t=>t.id===id);if(!tsk||tsk.status==="Done")return;const n=tsk.status==="Pending"?"In Progress":"Done";setTasks(p=>p.map(t=>t.id===id?{...t,status:n}:t));pushNotif(n==="Done"?"✅":"▶️",n==="Done"?"Task Completed":"Task In Progress",tsk.title,n==="Done"?C.green:C.blue);notify([tsk.by,tsk.to,...(tsk.loop||[])],n==="Done"?"Task Completed":"Task In Progress",`Updated by: ${currentUser}\nTitle: ${tsk.title}\nStatus: ${n}\nPriority: ${tsk.pri}`);if(sel?.id===id)setSel(p=>({...p,status:n}));}
   function addReply(){if(!replyText.trim()&&!replyAudio)return;const r={id:Date.now(),by:currentUser,time:"Just now",text:replyText.trim(),audio:replyAudio};setTasks(p=>p.map(t=>t.id===sel.id?{...t,replies:[...(t.replies||[]),r]}:t));setSel(p=>({...p,replies:[...(p.replies||[]),r]}));pushNotif("💬","Update Sent",sel.title,C.teal);notify([sel.by,sel.to,...(sel.loop||[])],"Task Update",`Task: ${sel.title}\nFrom: ${currentUser}\nMessage: ${replyText.trim()||"sent a voice note"}`);setReplyText("");setReplyAudio(null);setShowReply(false);}
   function openSel(t){setSel(t);setShowReply(false);setReplyText("");setReplyAudio(null);setShowDel(false);}
@@ -430,8 +436,20 @@ function Tasks({role,currentUser,setNotifs}){
         {sel.status!=="Done"?<button onClick={()=>advance(sel.id)} style={{flex:2,background:sel.status==="Pending"?C.blue:C.green,border:"none",color:"#fff",borderRadius:10,padding:11,fontWeight:800,cursor:"pointer",fontSize:12}}>{sel.status==="Pending"?"▶ In Progress":"✅ Mark Done"}</button>:<div style={{flex:2,textAlign:"center",padding:11,background:C.green+"22",borderRadius:9,color:C.green,fontWeight:700,fontSize:12}}>✅ Completed</div>}
       </div>
     </Mod>}
-    <div style={{display:"flex",gap:7,marginBottom:13,flexWrap:"wrap"}}><Pill label="Pending" value={cnt.Pending} color={C.acc}/><Pill label="In Progress" value={cnt["In Progress"]} color={C.blue}/><Pill label="Done" value={cnt.Done} color={C.green}/>{can&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:C.blue,border:"none",color:"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
-    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?vis.length:cnt[s]||0})</button>)}</div>
+    <div style={{display:"flex",gap:7,marginBottom:10,flexWrap:"wrap"}}><Pill label="Pending" value={cnt.Pending} color={C.acc}/><Pill label="In Progress" value={cnt["In Progress"]} color={C.blue}/><Pill label="Done" value={cnt.Done} color={C.green}/>{can&&<button onClick={()=>setShowNew(true)} style={{marginLeft:"auto",background:C.blue,border:"none",color:"#fff",borderRadius:7,padding:"6px 13px",fontWeight:700,fontSize:12,cursor:"pointer"}}>+ New</button>}</div>
+    {/* Person filter */}
+    <div style={{display:"flex",gap:6,marginBottom:9,alignItems:"center",flexWrap:"wrap"}}>
+      <span style={{color:C.dim,fontSize:10,fontWeight:700,textTransform:"uppercase",letterSpacing:.5,marginRight:2}}>View</span>
+      <button onClick={()=>setPersonFilter("")} style={{background:personFilter===""?C.blue+"22":"transparent",color:personFilter===""?C.blue:C.muted,border:`1px solid ${personFilter===""?C.blue+"44":C.cb}`,borderRadius:20,padding:"3px 11px",fontSize:11,fontWeight:700,cursor:"pointer"}}>Everyone</button>
+      <button onClick={()=>setPersonFilter(currentUser)} style={{background:personFilter===currentUser?"#DBEAFE":"transparent",color:personFilter===currentUser?"#1D4ED8":C.muted,border:`1px solid ${personFilter===currentUser?"#93C5FD":C.cb}`,borderRadius:20,padding:"3px 11px",fontSize:11,fontWeight:700,cursor:"pointer"}}>👤 Mine</button>
+      {can&&<select value={personFilter} onChange={e=>setPersonFilter(e.target.value)} style={{background:personFilter&&personFilter!==currentUser?"#DBEAFE":C.card,border:`1px solid ${personFilter&&personFilter!==currentUser?"#93C5FD":C.cb}`,borderRadius:20,padding:"3px 12px",fontSize:11,fontWeight:600,color:personFilter&&personFilter!==currentUser?"#1D4ED8":C.muted,cursor:"pointer",outline:"none",appearance:"none"}}>
+        <option value="">Pick person…</option>
+        {TEAM.map(m=><option key={m} value={m}>{m}</option>)}
+      </select>}
+      {personFilter&&<button onClick={()=>setPersonFilter("")} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:12,padding:"0 2px"}} title="Clear filter">✕</button>}
+    </div>
+    {/* Status filter */}
+    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?visPerson.length:cnt[s]||0})</button>)}</div>
     <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {fmtDue(t.due)} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
   </div>);
 }
