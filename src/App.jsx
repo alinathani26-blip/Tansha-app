@@ -347,6 +347,11 @@ function Tasks({role,currentUser,setNotifs}){
   function startEdit(){setEditForm({...sel});setEditLoopOpen(false);}
   function saveEdit(){if(!editForm.title||!editForm.to)return;const updated={...editForm,reminded:false};setTasks(p=>p.map(t=>t.id===editForm.id?updated:t));setSel(updated);pushNotif("✏️","Task Updated",editForm.title,C.acc);notify([editForm.to,editForm.by,...(editForm.loop||[])],"Task Updated",`Updated by: ${currentUser}\nTitle: ${editForm.title}\nStatus: ${editForm.status}\nPriority: ${editForm.pri}\nDue: ${fmtDue(editForm.due)}`);setEditForm(null);}
   function togLoop(name,isEd){if(isEd){setEditForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}else{setForm(p=>({...p,loop:(p.loop||[]).includes(name)?(p.loop||[]).filter(n=>n!==name):[...(p.loop||[]),name]}));}}
+  // Time-based alerts include all parties (to, by, loop) regardless of who is logged in
+  function notifyAll(persons,title,body){
+    const targets=[...new Set(persons)].filter(Boolean);
+    if(targets.length)sendPush(targets,title,body);
+  }
   useEffect(()=>{
     const check=()=>{
       const now=Date.now();
@@ -354,19 +359,20 @@ function Tasks({role,currentUser,setNotifs}){
         if(t.status==="Done"||!t.due||!t.due.includes("T"))return;
         const dueTime=new Date(t.due).getTime();
         if(isNaN(dueTime))return;
-        // reminder before due time
+        // Reminder — fire as soon as remindAt is reached, even if app was closed during that time
+        // No upper-bound check so it still fires if app reopened after due time
         if(!t.reminded&&t.reminder&&t.reminder!=="none"){
           const remindAt=dueTime-Number(t.reminder)*60000;
-          if(now>=remindAt&&now<dueTime){
+          if(now>=remindAt){
             pushNotif("⏰","Task Reminder",`${t.title} — due ${fmtDue(t.due)}`,C.orange);
-            notify([t.to,t.by,...(t.loop||[])],"Task Reminder",`Title: ${t.title}\nPriority: ${t.pri}\nAssigned to: ${t.to}\nDue: ${fmtDue(t.due)}`);
+            notifyAll([t.to,t.by,...(t.loop||[])],"Task Reminder",`Title: ${t.title}\nPriority: ${t.pri}\nAssigned to: ${t.to}\nDue: ${fmtDue(t.due)}`);
             setTasks(p=>p.map(x=>x.id===t.id?{...x,reminded:true}:x));
           }
         }
-        // notification exactly when due time is reached
-        if(!t.dueFired&&now>=dueTime&&now<dueTime+120000){
+        // Due notification — no 2-min upper window; fires whenever app is opened after due time
+        if(!t.dueFired&&now>=dueTime){
           pushNotif("🔴","Task Due Now",`${t.title} — assigned to ${t.to}`,C.red);
-          notify([t.to,t.by,...(t.loop||[])],"Task Due Now",`Title: ${t.title}\nPriority: ${t.pri}\nAssigned to: ${t.to}\nAssigned by: ${t.by}`);
+          notifyAll([t.to,t.by,...(t.loop||[])],"Task Due Now",`Title: ${t.title}\nPriority: ${t.pri}\nAssigned to: ${t.to}\nAssigned by: ${t.by}`);
           setTasks(p=>p.map(x=>x.id===t.id?{...x,dueFired:true}:x));
         }
       });
