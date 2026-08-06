@@ -2786,25 +2786,68 @@ function EmpCalMod({name,attLog,onClose}){
     </div>
   </Mod>);
 }
-function Operations({role,currentUser}){
-  const [sub,setSub]=useState("att");
+function AttendanceSection({role,currentUser}){
   const [attLog,setAttLog,loading]=useFirestoreState("attLog",{});
   const [salaries,setSalaries]=useFirestoreState("salaries",{});
   const [attDate,setAttDate]=useState(TODAY);
   const [showSalary,setShowSalary]=useState(false);
+  const [empCal,setEmpCal]=useState(null);
+  const [editId,setEditId]=useState(null);
+  const can=MANAGERS.includes(role);
+  const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
+  const DEF_REC={status:"Present",inTime:"",outTime:"",advance:0,travelExp:0,notes:""};
+  function getRec(date,name){return(attLog[date]&&attLog[date][name])||DEF_REC;}
+  function setRec(date,name,changes){setAttLog(p=>({...p,[date]:{...(p[date]||{}),[name]:{...getRec(date,name),...changes}}}));}
+  const pr=TEAM.filter(n=>getRec(attDate,n).status==="Present").length;
+  const ab=TEAM.filter(n=>getRec(attDate,n).status==="Absent").length;
+  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.orange,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
+  return(<div>
+    {showSalary&&<SalaryReport attLog={attLog} salaries={salaries} setSalaries={setSalaries} onClose={()=>setShowSalary(false)}/>}
+    {empCal&&<EmpCalMod name={empCal} attLog={attLog} onClose={()=>setEmpCal(null)}/>}
+    <div style={{display:"flex",gap:7,marginBottom:can?8:12,flexWrap:"wrap",alignItems:"center"}}>
+      <input type="date" style={{...INP,width:150}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
+      <Pill label="Present" value={pr} color={C.green}/><Pill label="Absent" value={ab} color={C.red}/>
+    </div>
+    {can&&<button onClick={()=>setShowSalary(true)} style={{width:"100%",marginBottom:12,background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"9px 11px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📊 Salary Report</button>}
+    <div style={{display:"flex",flexDirection:"column",gap:7}}>{TEAM.map(name=>{const a=getRec(attDate,name);const isMe=name===currentUser,cE=isMe||can,ed=editId===name;const sc=SC2[a.status]||C.dim;return<div key={name} style={{background:C.card,border:`1px solid ${a.status==="Present"?C.green+"33":a.status==="Absent"?C.red+"33":C.acc+"33"}`,borderRadius:11,padding:"10px 13px"}}>
+      <div style={{display:"flex",alignItems:"center",gap:9}}>
+        <Av name={name} size={28}/>
+        <div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{name}</div>
+          <div style={{color:C.muted,fontSize:10,marginTop:1,display:"flex",gap:6,flexWrap:"wrap"}}>
+            {a.inTime&&<span>In: {a.inTime}{a.outTime?` · Out: ${a.outTime}`:""}</span>}
+            {a.advance>0&&<span style={{color:C.red}}>Advance: {fmt(a.advance)}</span>}
+            {a.travelExp>0&&<span style={{color:C.blue}}>Travel: {fmt(a.travelExp)}</span>}
+          </div>
+        </div>
+        {cE?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1px solid ${sc}44`,color:sc,borderRadius:18,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{a.status}</button>:<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>}
+        {cE&&<button onClick={()=>setEditId(ed?null:name)} style={{background:ed?C.orange+"33":C.cb,border:`1px solid ${ed?C.orange+"55":"transparent"}`,color:ed?C.orange:C.muted,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}}>✏️</button>}
+        <button onClick={()=>setEmpCal(name)} style={{background:C.acc+"18",border:`1px solid ${C.acc}44`,color:C.acc,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}} title="Monthly report">📅</button>
+      </div>
+      {ed&&<div style={{marginTop:7,borderTop:`1px solid ${C.cb}`,paddingTop:7,display:"flex",flexDirection:"column",gap:6}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>In Time</label><input type="time" value={a.inTime||""} onChange={e=>setRec(attDate,name,{inTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Out Time</label><input type="time" value={a.outTime||""} onChange={e=>setRec(attDate,name,{outTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+        </div>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Advance Taken (₹)</label><input type="number" min="0" value={a.advance||0} onChange={e=>setRec(attDate,name,{advance:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Travel Expense (₹)</label><input type="number" min="0" value={a.travelExp||0} onChange={e=>setRec(attDate,name,{travelExp:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+        </div>
+        <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Notes</label><input value={a.notes||""} placeholder="e.g. reason for advance / travel" onChange={e=>setRec(attDate,name,{notes:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+        <button onClick={()=>setEditId(null)} style={{background:C.orange,border:"none",color:"#fff",borderRadius:6,padding:"7px",fontWeight:700,fontSize:11,cursor:"pointer"}}>✓ Done</button>
+      </div>}
+    </div>;})}
+    </div>
+  </div>);
+}
+function Operations({role,currentUser}){
+  const [sub,setSub]=useState("exp");
   const [sup,setSup]=useFirestoreState("support",SUP0);const [notes,setNotes]=useFirestoreState("opsnotes",NOTES0);
   const [selTkt,setSelTkt]=useState(null);const [selNote,setSelNote]=useState(null);
   const [showNewT,setShowNewT]=useState(false);const [showNewN,setShowNewN]=useState(false);
   const [tf,setTf]=useState({date:TODAY,client:"",invNo:"",reason:"",status:"Open",assignedTo:currentUser,notes:""});
   const [nf,setNf]=useState({title:"",body:"",tag:"General",pinned:false});
-  const [editId,setEditId]=useState(null);const [empCal,setEmpCal]=useState(null);const can=MANAGERS.includes(role);
-  const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
-  const DEF_REC={status:"Present",inTime:"",outTime:"",advance:0,travelExp:0,notes:""};
-  function getRec(date,name){return (attLog[date]&&attLog[date][name])||DEF_REC;}
-  function setRec(date,name,changes){setAttLog(p=>({...p,[date]:{...(p[date]||{}),[name]:{...getRec(date,name),...changes}}}));}
-  const pr=TEAM.filter(n=>getRec(attDate,n).status==="Present").length;const ab=TEAM.filter(n=>getRec(attDate,n).status==="Absent").length;
-  const SUBS=[{id:"att",i:"🗓️",l:"Attendance"},{id:"exp",i:"💸",l:"Expenses"},{id:"sup",i:"🎫",l:"Support",b:sup.filter(t=>t.status==="Open").length},{id:"nts",i:"📝",l:"Notes"},{id:"sht",i:"📊",l:"Sheets"}];
-  if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.acc,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
+  const can=MANAGERS.includes(role);
+  const SUBS=[{id:"exp",i:"💸",l:"Expenses"},{id:"sup",i:"🎫",l:"Support",b:sup.filter(t=>t.status==="Open").length},{id:"nts",i:"📝",l:"Notes"},{id:"sht",i:"📊",l:"Sheets"}];
   return (<div>
     {showNewT&&<Mod onClose={()=>setShowNewT(false)} title="🎫 New Support Ticket" sub="Log a claim, damage or shortage">
       <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -2840,43 +2883,6 @@ function Operations({role,currentUser}){
 
     <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:5,marginBottom:14}}>{SUBS.map(s=><button key={s.id} onClick={()=>setSub(s.id)} style={{background:sub===s.id?C.orange+"33":C.card,border:`1px solid ${sub===s.id?C.orange+"55":C.cb}`,borderRadius:11,padding:"10px 4px",cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:3,position:"relative"}}><span style={{fontSize:18}}>{s.i}</span><span style={{color:sub===s.id?C.orange:C.muted,fontSize:10,fontWeight:700}}>{s.l}</span>{s.b>0&&<div style={{position:"absolute",top:5,right:7,width:14,height:14,borderRadius:"50%",background:C.red,display:"flex",alignItems:"center",justifyContent:"center",color:"#fff",fontSize:9,fontWeight:800}}>{s.b}</div>}</button>)}</div>
 
-    {sub==="att"&&<div>
-      {showSalary&&<SalaryReport attLog={attLog} salaries={salaries} setSalaries={setSalaries} onClose={()=>setShowSalary(false)}/>}
-      {empCal&&<EmpCalMod name={empCal} attLog={attLog} onClose={()=>setEmpCal(null)}/>}
-      <div style={{display:"flex",gap:7,marginBottom:can?8:12,flexWrap:"wrap",alignItems:"center"}}>
-        <input type="date" style={{...INP,width:150}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
-        <Pill label="Present" value={pr} color={C.green}/><Pill label="Absent" value={ab} color={C.red}/>
-      </div>
-      {can&&<button onClick={()=>setShowSalary(true)} style={{width:"100%",marginBottom:12,background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"9px 11px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📊 Salary Report</button>}
-      <div style={{display:"flex",flexDirection:"column",gap:7}}>{TEAM.map(name=>{const a=getRec(attDate,name);const isMe=name===currentUser,cE=isMe||can,ed=editId===name;const sc=SC2[a.status]||C.dim;return<div key={name} style={{background:C.card,border:`1px solid ${a.status==="Present"?C.green+"33":a.status==="Absent"?C.red+"33":C.acc+"33"}`,borderRadius:11,padding:"10px 13px"}}>
-        <div style={{display:"flex",alignItems:"center",gap:9}}>
-          <Av name={name} size={28}/>
-          <div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{name}</div>
-            <div style={{color:C.muted,fontSize:10,marginTop:1,display:"flex",gap:6,flexWrap:"wrap"}}>
-              {a.inTime&&<span>In: {a.inTime}{a.outTime?` · Out: ${a.outTime}`:""}</span>}
-              {a.advance>0&&<span style={{color:C.red}}>Advance: {fmt(a.advance)}</span>}
-              {a.travelExp>0&&<span style={{color:C.blue}}>Travel: {fmt(a.travelExp)}</span>}
-            </div>
-          </div>
-          {cE?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1px solid ${sc}44`,color:sc,borderRadius:18,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{a.status}</button>:<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>}
-          {cE&&<button onClick={()=>setEditId(ed?null:name)} style={{background:ed?C.orange+"33":C.cb,border:`1px solid ${ed?C.orange+"55":"transparent"}`,color:ed?C.orange:C.muted,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}}>✏️</button>}
-          <button onClick={()=>setEmpCal(name)} style={{background:C.acc+"18",border:`1px solid ${C.acc}44`,color:C.acc,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}} title="Monthly report">📅</button>
-        </div>
-        {ed&&<div style={{marginTop:7,borderTop:`1px solid ${C.cb}`,paddingTop:7,display:"flex",flexDirection:"column",gap:6}}>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-            <div><label style={{...LBL,fontSize:9,marginBottom:2}}>In Time</label><input type="time" value={a.inTime||""} onChange={e=>setRec(attDate,name,{inTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-            <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Out Time</label><input type="time" value={a.outTime||""} onChange={e=>setRec(attDate,name,{outTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-            <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Advance Taken (₹)</label><input type="number" min="0" value={a.advance||0} onChange={e=>setRec(attDate,name,{advance:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-            <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Travel Expense (₹)</label><input type="number" min="0" value={a.travelExp||0} onChange={e=>setRec(attDate,name,{travelExp:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-          </div>
-          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Notes</label><input value={a.notes||""} placeholder="e.g. reason for advance / travel" onChange={e=>setRec(attDate,name,{notes:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-          <button onClick={()=>setEditId(null)} style={{background:C.orange,border:"none",color:"#fff",borderRadius:6,padding:"7px",fontWeight:700,fontSize:11,cursor:"pointer"}}>✓ Done</button>
-        </div>}
-      </div>;})}
-      </div>
-    </div>}
 
     {sub==="exp"&&<div>
       <div style={{background:C.card,border:`1px solid ${C.cb}`,borderRadius:11,padding:"11px 13px",marginBottom:12}}>
@@ -3147,11 +3153,11 @@ function PendingOrders(){
 }
 
 // ── App Shell ──
-const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"payment",i:"💰",l:"Payments"},{id:"pending",i:"📌",l:"Pending"},{id:"ops",i:"⚙️",l:"Ops"},{id:"chat",i:"💬",l:"Chat"}];
+const NAV=[{id:"home",i:"📊",l:"Home"},{id:"tasks",i:"✅",l:"Tasks"},{id:"dispatch",i:"🚚",l:"Dispatch"},{id:"quote",i:"📋",l:"Quote"},{id:"stocks",i:"📦",l:"Stocks"},{id:"sales",i:"📈",l:"Sales"},{id:"payment",i:"💰",l:"Payments"},{id:"pending",i:"📌",l:"Pending"},{id:"ops",i:"⚙️",l:"Ops"},{id:"att",i:"🗓️",l:"Attendance"},{id:"chat",i:"💬",l:"Chat"}];
 const _ALL=NAV.map(n=>n.id);
 const RA=Object.fromEntries(TEAM.map(n=>[n,_ALL]));
 const UM=Object.fromEntries(TEAM.map(n=>[n,n]));
-const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",pending:"Pending Orders",ops:"Operations",chat:"Team Chat"};
+const TITLES={home:"Dashboard",tasks:"Tasks",dispatch:"Dispatch",quote:"Sales Quotation",stocks:"Bhiwandi Stocks",sales:"Sales",payment:"Payment Collection",pending:"Pending Orders",ops:"Operations",att:"Attendance",chat:"Team Chat"};
 
 function LoginScreen({onLogin}){
   const [u,setU]=useState("");const [p,setP]=useState("");const [err,setErr]=useState("");const [show,setShow]=useState(false);
@@ -3276,6 +3282,7 @@ export default function App(){
         {active==="payment"&&<Payment setNotifs={setNotifs}/>}
         {active==="pending"&&<PendingOrders/>}
         {active==="ops"&&<Operations role={role} currentUser={cu}/>}
+        {active==="att"&&<AttendanceSection role={role} currentUser={cu}/>}
         {active==="chat"&&<Chat currentUser={cu}/>}
       </div>
     </div>
