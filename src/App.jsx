@@ -2704,6 +2704,88 @@ function SalaryReport({attLog,salaries,setSalaries,onClose}){
     </div>
   </Mod>);
 }
+function EmpCalMod({name,attLog,onClose}){
+  const [month,setMonth]=useState(TODAY.slice(0,7));
+  const [yr,mn]=month.split("-").map(Number);
+  const daysInMonth=new Date(yr,mn,0).getDate();
+  const firstDay=new Date(yr,mn-1,1).getDay();
+  const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
+  const DAY_LABELS=["Su","Mo","Tu","We","Th","Fr","Sa"];
+  let present=0,half=0,absent=0,totalAdv=0,totalTravel=0;
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${month}-${String(d).padStart(2,"0")}`;
+    const r=(attLog[ds]||{})[name]||{};
+    if(r.status==="Present")present++;
+    else if(r.status==="Half Day")half++;
+    else if(r.status==="Absent")absent++;
+    totalAdv+=Number(r.advance)||0;
+    totalTravel+=Number(r.travelExp)||0;
+  }
+  const cells=[];
+  for(let i=0;i<firstDay;i++)cells.push(null);
+  for(let d=1;d<=daysInMonth;d++){const ds=`${month}-${String(d).padStart(2,"0")}`;cells.push({d,ds,rec:(attLog[ds]||{})[name]||null});}
+  const monthLabel=new Date(yr,mn-1).toLocaleString("en-IN",{month:"long",year:"numeric"});
+  return(<Mod onClose={onClose} title={name} sub={`Monthly Attendance · ${monthLabel}`}>
+    {/* Month picker */}
+    <input type="month" style={{...INP,marginBottom:12}} value={month} onChange={e=>setMonth(e.target.value)}/>
+    {/* Header stats */}
+    <div style={{background:"#F8FAFC",border:`1px solid ${C.cb}`,borderRadius:11,padding:"10px 13px",marginBottom:13}}>
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:totalAdv||totalTravel?8:0}}>
+        <div style={{display:"flex",alignItems:"center",gap:5,background:C.green+"18",border:`1px solid ${C.green}44`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{width:7,height:7,borderRadius:2,background:C.green,display:"inline-block"}}/>
+          <span style={{color:C.green,fontWeight:700,fontSize:11}}>{present} Present</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:5,background:C.acc+"18",border:`1px solid ${C.acc}44`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{width:7,height:7,borderRadius:2,background:C.acc,display:"inline-block"}}/>
+          <span style={{color:C.acc,fontWeight:700,fontSize:11}}>{half} Half Day</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:5,background:C.red+"18",border:`1px solid ${C.red}44`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{width:7,height:7,borderRadius:2,background:C.red,display:"inline-block"}}/>
+          <span style={{color:C.red,fontWeight:700,fontSize:11}}>{absent} Absent</span>
+        </div>
+        <div style={{display:"flex",alignItems:"center",gap:5,background:C.cb,border:`1px solid ${C.cb}`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{color:C.muted,fontWeight:700,fontSize:11}}>{daysInMonth-(present+half+absent)} Unmarked</span>
+        </div>
+      </div>
+      {(totalAdv>0||totalTravel>0)&&<div style={{display:"flex",gap:6,flexWrap:"wrap",borderTop:`1px solid ${C.cb}`,paddingTop:8}}>
+        {totalAdv>0&&<div style={{display:"flex",alignItems:"center",gap:5,background:C.orange+"18",border:`1px solid ${C.orange}44`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{color:C.orange,fontWeight:700,fontSize:11}}>Advance Rs.{totalAdv.toLocaleString("en-IN")}</span>
+        </div>}
+        {totalTravel>0&&<div style={{display:"flex",alignItems:"center",gap:5,background:C.blue+"18",border:`1px solid ${C.blue}44`,borderRadius:6,padding:"3px 9px"}}>
+          <span style={{color:C.blue,fontWeight:700,fontSize:11}}>Travel Rs.{totalTravel.toLocaleString("en-IN")}</span>
+        </div>}
+      </div>}
+    </div>
+    {/* Day-of-week headers */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3,marginBottom:4}}>
+      {DAY_LABELS.map(d=><div key={d} style={{textAlign:"center",color:C.dim,fontSize:9,fontWeight:700,letterSpacing:.5}}>{d}</div>)}
+    </div>
+    {/* Calendar grid */}
+    <div style={{display:"grid",gridTemplateColumns:"repeat(7,1fr)",gap:3}}>
+      {cells.map((cell,i)=>{
+        if(!cell)return<div key={"x"+i}/>;
+        const {d,ds,rec}=cell;
+        const sc=rec?(SC2[rec.status]||C.dim):null;
+        const isToday=ds===TODAY;
+        return(<div key={d} style={{background:rec?sc+"12":C.bg,border:`1px solid ${isToday?"#38BDF8":rec?sc+"55":C.cb}`,borderTop:`3px solid ${isToday?"#38BDF8":rec?sc:C.cb}`,borderRadius:8,padding:"5px 3px",minHeight:68,boxShadow:isToday?"0 0 0 1.5px #38BDF822":"none",display:"flex",flexDirection:"column",alignItems:"center"}}>
+          <div style={{color:isToday?"#0EA5E9":rec?sc:C.muted,fontWeight:isToday?800:600,fontSize:10,marginBottom:2}}>{d}</div>
+          {rec&&<>
+            <div style={{color:sc,fontSize:8,fontWeight:800,letterSpacing:.2,marginBottom:1}}>{rec.status==="Present"?"P":rec.status==="Half Day"?"H":"A"}</div>
+            {rec.inTime&&<div style={{color:C.muted,fontSize:6.5,lineHeight:1.4}}>↓{rec.inTime}</div>}
+            {rec.outTime&&<div style={{color:C.muted,fontSize:6.5,lineHeight:1.4}}>↑{rec.outTime}</div>}
+            {Number(rec.advance)>0&&<div style={{background:C.red+"22",color:C.red,fontSize:6,borderRadius:3,padding:"1px 3px",marginTop:2,fontWeight:700,whiteSpace:"nowrap"}}>Rs.{rec.advance}</div>}
+          </>}
+        </div>);
+      })}
+    </div>
+    {/* Legend */}
+    <div style={{display:"flex",gap:11,marginTop:12,paddingTop:9,borderTop:`1px solid ${C.cb}`,flexWrap:"wrap"}}>
+      {[["P",C.green,"Present"],["H",C.acc,"Half Day"],["A",C.red,"Absent"],["·","#38BDF8","Today"]].map(([l,c,t])=>
+        <div key={t} style={{display:"flex",alignItems:"center",gap:4}}><span style={{width:7,height:7,borderRadius:2,background:c,display:"inline-block"}}/><span style={{color:C.muted,fontSize:9}}>{t}</span></div>
+      )}
+    </div>
+  </Mod>);
+}
 function Operations({role,currentUser}){
   const [sub,setSub]=useState("att");
   const [attLog,setAttLog,loading]=useFirestoreState("attLog",{});
@@ -2715,7 +2797,7 @@ function Operations({role,currentUser}){
   const [showNewT,setShowNewT]=useState(false);const [showNewN,setShowNewN]=useState(false);
   const [tf,setTf]=useState({date:TODAY,client:"",invNo:"",reason:"",status:"Open",assignedTo:currentUser,notes:""});
   const [nf,setNf]=useState({title:"",body:"",tag:"General",pinned:false});
-  const [editId,setEditId]=useState(null);const can=MANAGERS.includes(role);
+  const [editId,setEditId]=useState(null);const [empCal,setEmpCal]=useState(null);const can=MANAGERS.includes(role);
   const SC2={Present:C.green,Absent:C.red,"Half Day":C.acc};
   const DEF_REC={status:"Present",inTime:"",outTime:"",advance:0,travelExp:0,notes:""};
   function getRec(date,name){return (attLog[date]&&attLog[date][name])||DEF_REC;}
@@ -2760,6 +2842,7 @@ function Operations({role,currentUser}){
 
     {sub==="att"&&<div>
       {showSalary&&<SalaryReport attLog={attLog} salaries={salaries} setSalaries={setSalaries} onClose={()=>setShowSalary(false)}/>}
+      {empCal&&<EmpCalMod name={empCal} attLog={attLog} onClose={()=>setEmpCal(null)}/>}
       <div style={{display:"flex",gap:7,marginBottom:can?8:12,flexWrap:"wrap",alignItems:"center"}}>
         <input type="date" style={{...INP,width:150}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
         <Pill label="Present" value={pr} color={C.green}/><Pill label="Absent" value={ab} color={C.red}/>
@@ -2777,6 +2860,7 @@ function Operations({role,currentUser}){
           </div>
           {cE?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1px solid ${sc}44`,color:sc,borderRadius:18,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{a.status}</button>:<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>}
           {cE&&<button onClick={()=>setEditId(ed?null:name)} style={{background:ed?C.orange+"33":C.cb,border:`1px solid ${ed?C.orange+"55":"transparent"}`,color:ed?C.orange:C.muted,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}}>✏️</button>}
+          <button onClick={()=>setEmpCal(name)} style={{background:C.acc+"18",border:`1px solid ${C.acc}44`,color:C.acc,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}} title="Monthly report">📅</button>
         </div>
         {ed&&<div style={{marginTop:7,borderTop:`1px solid ${C.cb}`,paddingTop:7,display:"flex",flexDirection:"column",gap:6}}>
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
