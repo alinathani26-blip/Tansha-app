@@ -2771,8 +2771,8 @@ function EmpCalMod({name,attLog,onClose}){
           <div style={{color:isToday?"#0EA5E9":rec?sc:C.muted,fontWeight:isToday?800:600,fontSize:10,marginBottom:2}}>{d}</div>
           {rec&&<>
             <div style={{color:sc,fontSize:8,fontWeight:800,letterSpacing:.2,marginBottom:1}}>{rec.status==="Present"?"P":rec.status==="Half Day"?"H":"A"}</div>
-            {rec.inTime&&<div style={{color:C.muted,fontSize:6.5,lineHeight:1.4}}>↓{rec.inTime}</div>}
-            {rec.outTime&&<div style={{color:C.muted,fontSize:6.5,lineHeight:1.4}}>↑{rec.outTime}</div>}
+            {rec.inTime&&<div style={{color:C.muted,fontSize:8,lineHeight:1.4}}>↓{rec.inTime}</div>}
+            {rec.outTime&&<div style={{color:C.muted,fontSize:8,lineHeight:1.4}}>↑{rec.outTime}</div>}
             {Number(rec.advance)>0&&<div style={{background:C.red+"22",color:C.red,fontSize:6,borderRadius:3,padding:"1px 3px",marginTop:2,fontWeight:700,whiteSpace:"nowrap"}}>Rs.{rec.advance}</div>}
           </>}
         </div>);
