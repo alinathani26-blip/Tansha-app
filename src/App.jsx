@@ -2800,42 +2800,76 @@ function AttendanceSection({role,currentUser}){
   function setRec(date,name,changes){setAttLog(p=>({...p,[date]:{...(p[date]||{}),[name]:{...getRec(date,name),...changes}}}));}
   const pr=TEAM.filter(n=>getRec(attDate,n).status==="Present").length;
   const ab=TEAM.filter(n=>getRec(attDate,n).status==="Absent").length;
+  const hd=TEAM.filter(n=>getRec(attDate,n).status==="Half Day").length;
   if(loading)return(<div style={{display:"flex",alignItems:"center",justifyContent:"center",height:200,color:C.muted,fontSize:13,gap:8}}><span style={{display:"inline-block",width:18,height:18,border:`2px solid ${C.cb}`,borderTopColor:C.orange,borderRadius:"50%",animation:"spin .7s linear infinite"}}/><style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>Loading…</div>);
   return(<div>
     {showSalary&&<SalaryReport attLog={attLog} salaries={salaries} setSalaries={setSalaries} onClose={()=>setShowSalary(false)}/>}
     {empCal&&<EmpCalMod name={empCal} attLog={attLog} onClose={()=>setEmpCal(null)}/>}
-    <div style={{display:"flex",gap:7,marginBottom:can?8:12,flexWrap:"wrap",alignItems:"center"}}>
-      <input type="date" style={{...INP,width:150}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
-      <Pill label="Present" value={pr} color={C.green}/><Pill label="Absent" value={ab} color={C.red}/>
+    {/* Header card */}
+    <div style={{background:C.card,borderRadius:14,padding:"13px 14px",marginBottom:11,border:`1px solid ${C.cb}`}}>
+      <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:11}}>
+        <input type="date" style={{...INP,flex:1,fontWeight:600,fontSize:13}} value={attDate} onChange={e=>setAttDate(e.target.value)}/>
+        {can&&<button onClick={()=>setShowSalary(true)} style={{background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"8px 11px",fontWeight:700,fontSize:11,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0}}>📊 Salary</button>}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:7}}>
+        {[[C.green,"Present",pr],[C.red,"Absent",ab],[C.acc,"Half Day",hd]].map(([c,l,v])=>
+          <div key={l} style={{background:c+"14",border:`1px solid ${c}33`,borderRadius:10,padding:"9px 6px",textAlign:"center"}}>
+            <div style={{fontSize:22,fontWeight:900,color:c,lineHeight:1}}>{v}</div>
+            <div style={{fontSize:9,color:c,fontWeight:700,marginTop:3,letterSpacing:.3}}>{l}</div>
+          </div>
+        )}
+      </div>
+      <div style={{marginTop:10,height:5,borderRadius:5,background:C.cb,overflow:"hidden"}}>
+        <div style={{height:"100%",width:`${Math.round((pr/TEAM.length)*100)}%`,background:C.green,borderRadius:5}}/>
+      </div>
+      <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>
+        <span style={{color:C.muted,fontSize:9}}>{Math.round((pr/TEAM.length)*100)}% present today</span>
+        <span style={{color:C.muted,fontSize:9}}>{TEAM.length} total</span>
+      </div>
     </div>
-    {can&&<button onClick={()=>setShowSalary(true)} style={{width:"100%",marginBottom:12,background:C.green+"22",border:`1px solid ${C.green}44`,color:C.green,borderRadius:8,padding:"9px 11px",fontWeight:700,fontSize:12,cursor:"pointer"}}>📊 Salary Report</button>}
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>{TEAM.map(name=>{const a=getRec(attDate,name);const isMe=name===currentUser,cE=isMe||can,ed=editId===name;const sc=SC2[a.status]||C.dim;return<div key={name} style={{background:C.card,border:`1px solid ${a.status==="Present"?C.green+"33":a.status==="Absent"?C.red+"33":C.acc+"33"}`,borderRadius:11,padding:"10px 13px"}}>
-      <div style={{display:"flex",alignItems:"center",gap:9}}>
-        <Av name={name} size={28}/>
-        <div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{name}</div>
-          <div style={{color:C.muted,fontSize:10,marginTop:1,display:"flex",gap:6,flexWrap:"wrap"}}>
-            {a.inTime&&<span>In: {a.inTime}{a.outTime?` · Out: ${a.outTime}`:""}</span>}
-            {a.advance>0&&<span style={{color:C.red}}>Advance: {fmt(a.advance)}</span>}
-            {a.travelExp>0&&<span style={{color:C.blue}}>Travel: {fmt(a.travelExp)}</span>}
+    {/* Employee list */}
+    <div style={{display:"flex",flexDirection:"column",gap:6}}>{TEAM.map(name=>{
+      const a=getRec(attDate,name);const isMe=name===currentUser,cE=isMe||can,ed=editId===name;const sc=SC2[a.status]||C.dim;
+      return<div key={name} style={{background:C.card,borderRadius:11,overflow:"hidden",border:`1px solid ${C.cb}`}}>
+        <div style={{display:"flex"}}>
+          <div style={{width:4,background:sc,flexShrink:0}}/>
+          <div style={{flex:1,padding:"10px 11px"}}>
+            <div style={{display:"flex",alignItems:"center",gap:8}}>
+              <Av name={name} size={30}/>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{color:C.text,fontWeight:700,fontSize:12,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{name}</div>
+                <div style={{display:"flex",gap:5,marginTop:3,flexWrap:"wrap",alignItems:"center"}}>
+                  {a.inTime
+                    ?<span style={{color:C.muted,fontSize:9,background:C.bg,border:`1px solid ${C.cb}`,borderRadius:4,padding:"1px 5px"}}>⏱ {a.inTime}{a.outTime?` – ${a.outTime}`:""}</span>
+                    :<span style={{color:C.dim,fontSize:9,fontStyle:"italic"}}>no time</span>
+                  }
+                  {a.advance>0&&<span style={{color:C.red,fontSize:9,background:C.red+"11",border:`1px solid ${C.red}22`,borderRadius:4,padding:"1px 5px"}}>↑ {fmt(a.advance)}</span>}
+                  {a.travelExp>0&&<span style={{color:C.blue,fontSize:9,background:C.blue+"11",border:`1px solid ${C.blue}22`,borderRadius:4,padding:"1px 5px"}}>✈ {fmt(a.travelExp)}</span>}
+                </div>
+              </div>
+              {cE
+                ?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1.5px solid ${sc}55`,color:sc,borderRadius:16,padding:"4px 10px",fontWeight:800,fontSize:10,cursor:"pointer",flexShrink:0}}>{a.status==="Half Day"?"Half":a.status}</button>
+                :<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>
+              }
+              {cE&&<button onClick={()=>setEditId(ed?null:name)} style={{background:ed?C.orange+"22":C.bg,border:`1px solid ${ed?C.orange+"55":C.cb}`,color:ed?C.orange:C.muted,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,flexShrink:0}}>{ed?"Done":"Edit"}</button>}
+              <button onClick={()=>setEmpCal(name)} style={{background:C.teal+"15",border:`1px solid ${C.teal}33`,color:C.teal,borderRadius:7,padding:"4px 9px",cursor:"pointer",fontSize:10,fontWeight:700,flexShrink:0}}>Cal</button>
+            </div>
+            {ed&&<div style={{marginTop:8,borderTop:`1px solid ${C.cb}`,paddingTop:8,display:"flex",flexDirection:"column",gap:6}}>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                <div><label style={{...LBL,fontSize:9,marginBottom:2}}>In Time</label><input type="time" value={a.inTime||""} onChange={e=>setRec(attDate,name,{inTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+                <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Out Time</label><input type="time" value={a.outTime||""} onChange={e=>setRec(attDate,name,{outTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+              </div>
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
+                <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Advance (₹)</label><input type="number" min="0" value={a.advance||0} onChange={e=>setRec(attDate,name,{advance:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+                <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Travel (₹)</label><input type="number" min="0" value={a.travelExp||0} onChange={e=>setRec(attDate,name,{travelExp:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+              </div>
+              <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Notes</label><input value={a.notes||""} placeholder="reason for advance / travel" onChange={e=>setRec(attDate,name,{notes:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
+              <button onClick={()=>setEditId(null)} style={{background:C.orange,border:"none",color:"#fff",borderRadius:6,padding:"7px",fontWeight:700,fontSize:11,cursor:"pointer"}}>✓ Done</button>
+            </div>}
           </div>
         </div>
-        {cE?<button onClick={()=>{const cy={Present:"Absent",Absent:"Half Day","Half Day":"Present"};setRec(attDate,name,{status:cy[a.status]||"Present"});}} style={{background:sc+"22",border:`1px solid ${sc}44`,color:sc,borderRadius:18,padding:"3px 9px",fontWeight:700,fontSize:10,cursor:"pointer"}}>{a.status}</button>:<Bdg label={a.status} color={sc} bg={sc+"22"} border={sc+"44"}/>}
-        {cE&&<button onClick={()=>setEditId(ed?null:name)} style={{background:ed?C.orange+"33":C.cb,border:`1px solid ${ed?C.orange+"55":"transparent"}`,color:ed?C.orange:C.muted,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}}>✏️</button>}
-        <button onClick={()=>setEmpCal(name)} style={{background:C.acc+"18",border:`1px solid ${C.acc}44`,color:C.acc,borderRadius:6,padding:"3px 7px",cursor:"pointer",fontSize:11}} title="Monthly report">📅</button>
-      </div>
-      {ed&&<div style={{marginTop:7,borderTop:`1px solid ${C.cb}`,paddingTop:7,display:"flex",flexDirection:"column",gap:6}}>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>In Time</label><input type="time" value={a.inTime||""} onChange={e=>setRec(attDate,name,{inTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Out Time</label><input type="time" value={a.outTime||""} onChange={e=>setRec(attDate,name,{outTime:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:6}}>
-          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Advance Taken (₹)</label><input type="number" min="0" value={a.advance||0} onChange={e=>setRec(attDate,name,{advance:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-          <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Travel Expense (₹)</label><input type="number" min="0" value={a.travelExp||0} onChange={e=>setRec(attDate,name,{travelExp:parseInt(e.target.value)||0})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-        </div>
-        <div><label style={{...LBL,fontSize:9,marginBottom:2}}>Notes</label><input value={a.notes||""} placeholder="e.g. reason for advance / travel" onChange={e=>setRec(attDate,name,{notes:e.target.value})} style={{...INP,padding:"4px 6px",fontSize:11}}/></div>
-        <button onClick={()=>setEditId(null)} style={{background:C.orange,border:"none",color:"#fff",borderRadius:6,padding:"7px",fontWeight:700,fontSize:11,cursor:"pointer"}}>✓ Done</button>
-      </div>}
-    </div>;})}
+      </div>;
+    })}
     </div>
   </div>);
 }
