@@ -323,7 +323,9 @@ function Tasks({role,currentUser,setNotifs}){
   const vis=can?tasks:tasks.filter(t=>t.to===currentUser||t.by===currentUser||(t.loop||[]).includes(currentUser));
   const visPerson=personFilter?vis.filter(t=>t.to===personFilter):vis;
   const cnt={Pending:visPerson.filter(t=>t.status==="Pending").length,"In Progress":visPerson.filter(t=>t.status==="In Progress").length,Done:visPerson.filter(t=>t.status==="Done").length};
-  const disp=filter==="All"?visPerson:visPerson.filter(t=>t.status===filter);
+  const disp=filter==="All"?visPerson.filter(t=>t.status!=="Done"):visPerson.filter(t=>t.status===filter);
+  const doneTasks=visPerson.filter(t=>t.status==="Done");
+  const [showCompleted,setShowCompleted]=useState(false);
   const [toast,setToast]=useState(null);const toastTmr=useRef(null);
   function pushNotif(icon,title,body,color){
     setNotifs(p=>[{id:Date.now(),icon,title,body,time:"Just now",read:false,color},...p]);
@@ -455,8 +457,30 @@ function Tasks({role,currentUser,setNotifs}){
       {personFilter&&<button onClick={()=>setPersonFilter("")} style={{background:"none",border:"none",color:C.muted,cursor:"pointer",fontSize:12,padding:"0 2px"}} title="Clear filter">✕</button>}
     </div>
     {/* Status filter */}
-    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress","Done"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?visPerson.length:cnt[s]||0})</button>)}</div>
-    <div style={{display:"flex",flexDirection:"column",gap:7}}>{disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {fmtDue(t.due)} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}</div>
+    <div style={{display:"flex",gap:5,marginBottom:12,flexWrap:"wrap"}}>{["All","Pending","In Progress"].map(s=><button key={s} onClick={()=>setFilter(s)} style={{background:filter===s?C.blue+"33":"transparent",color:filter===s?C.blue:C.muted,border:`1px solid ${filter===s?C.blue+"55":C.cb}`,borderRadius:7,padding:"4px 11px",fontSize:11,fontWeight:600,cursor:"pointer"}}>{s} ({s==="All"?(visPerson.length-cnt.Done):cnt[s]||0})</button>)}</div>
+    {/* Active tasks */}
+    <div style={{display:"flex",flexDirection:"column",gap:7}}>
+      {disp.length===0&&<div style={{textAlign:"center",padding:"32px 0",color:C.muted,fontSize:13}}>No tasks here 🎉</div>}
+      {disp.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${PC[t.pri]}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center"}} onMouseEnter={e=>e.currentTarget.style.background="#F8F9FF"} onMouseLeave={e=>e.currentTarget.style.background=C.card}><span style={{width:7,height:7,borderRadius:"50%",background:PC[t.pri],flexShrink:0}}/><div style={{flex:1,minWidth:0}}><div style={{color:C.text,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{t.title}</div><div style={{color:C.muted,fontSize:11,marginTop:2}}>{t.type} · {fmtDue(t.due)} · {t.to.split(" ")[0]}{t.audio?" 🎤":""}{(t.loop||[]).length>0?` 🔄${(t.loop||[]).length}`:""}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div></div><Bdg label={t.status} color={SC[t.status]} bg={SC[t.status]+"22"} border={SC[t.status]+"44"}/><span style={{color:C.dim}}>›</span></div>)}
+    </div>
+    {/* Completed section */}
+    {doneTasks.length>0&&<div style={{marginTop:16}}>
+      <button onClick={()=>setShowCompleted(p=>!p)} style={{width:"100%",display:"flex",alignItems:"center",justifyContent:"space-between",background:showCompleted?C.green+"18":C.card,border:`1px solid ${C.green}44`,borderRadius:11,padding:"11px 15px",cursor:"pointer",color:C.green,fontWeight:700,fontSize:13}}>
+        <span>✅ Completed ({doneTasks.length})</span>
+        <span style={{fontSize:11,fontWeight:600,opacity:.7,transform:showCompleted?"rotate(90deg)":"rotate(0deg)",transition:"transform .2s"}}>›</span>
+      </button>
+      {showCompleted&&<div style={{display:"flex",flexDirection:"column",gap:6,marginTop:7}}>
+        {doneTasks.map(t=><div key={t.id} onClick={()=>openSel(t)} style={{background:C.card,border:`1px solid ${C.cb}`,borderLeft:`3px solid ${C.green}`,borderRadius:11,padding:"11px 13px",cursor:"pointer",display:"flex",gap:9,alignItems:"center",opacity:.75}} onMouseEnter={e=>e.currentTarget.style.opacity="1"} onMouseLeave={e=>e.currentTarget.style.opacity=".75"}>
+          <span style={{width:7,height:7,borderRadius:"50%",background:C.green,flexShrink:0}}/>
+          <div style={{flex:1,minWidth:0}}>
+            <div style={{color:C.muted,fontWeight:600,fontSize:13,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",textDecoration:"line-through"}}>{t.title}</div>
+            <div style={{color:C.dim,fontSize:11,marginTop:2}}>{fmtDue(t.due)} · {t.to.split(" ")[0]}{(t.replies||[]).length>0?` · ${(t.replies||[]).length} reply`:""}</div>
+          </div>
+          <Bdg label="Done" color={C.green} bg={C.green+"22"} border={C.green+"44"}/>
+          <span style={{color:C.dim}}>›</span>
+        </div>)}
+      </div>}
+    </div>}
   </div>);
 }
 
